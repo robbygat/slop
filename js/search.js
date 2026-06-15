@@ -109,35 +109,50 @@ function highlight(next) {
   rows[activeIndex]?.scrollIntoView({ block: 'nearest' });
 }
 
-export function initSearch() {
-  input = document.getElementById('nav-search-input');
-  if (!input) return;
+export function initSearch(options = {}) {
+  const { filterGrid = true } = options;
+  const inputs = [
+    document.getElementById('nav-search-input'),
+    document.getElementById('nav-drawer-search-input'),
+  ].filter(Boolean);
+  if (!inputs.length) return;
+  input = inputs[0];
   let debounce = null;
 
-  input.addEventListener('input', () => {
-    const q = input.value.trim();
-    setSearchQuery(input.value); // keep filtering the browse grid too
+  const onInput = (source) => {
+    const q = source.value.trim();
+    inputs.forEach((el) => { if (el !== source) el.value = source.value; });
+    if (filterGrid) setSearchQuery(source.value);
     clearTimeout(debounce);
     if (q.length < 1) { close(); return; }
     debounce = setTimeout(() => run(q), 160);
-  });
+  };
 
-  input.addEventListener('keydown', (e) => {
-    if (pop && !pop.classList.contains('hidden')) {
-      if (e.key === 'ArrowDown') { e.preventDefault(); highlight(activeIndex + 1); return; }
-      if (e.key === 'ArrowUp') { e.preventDefault(); highlight(activeIndex - 1); return; }
-      if (e.key === 'Enter' && activeIndex >= 0 && items[activeIndex]) {
-        e.preventDefault();
-        window.location.href = items[activeIndex].href;
-        return;
+  inputs.forEach((el) => {
+    el.addEventListener('input', () => onInput(el));
+
+    el.addEventListener('keydown', (e) => {
+      if (pop && !pop.classList.contains('hidden')) {
+        if (e.key === 'ArrowDown') { e.preventDefault(); highlight(activeIndex + 1); return; }
+        if (e.key === 'ArrowUp') { e.preventDefault(); highlight(activeIndex - 1); return; }
+        if (e.key === 'Enter' && activeIndex >= 0 && items[activeIndex]) {
+          e.preventDefault();
+          window.location.href = items[activeIndex].href;
+          return;
+        }
+        if (e.key === 'Escape') { close(); return; }
       }
-      if (e.key === 'Escape') { close(); return; }
-    }
+    });
+
+    el.addEventListener('focus', () => {
+      input = el;
+      position();
+      if (el.value.trim()) run(el.value.trim());
+    });
   });
 
-  input.addEventListener('focus', () => { if (input.value.trim()) run(input.value.trim()); });
   document.addEventListener('click', (e) => {
-    if (e.target !== input && !pop?.contains(e.target)) close();
+    if (!inputs.some((el) => el === e.target || el.contains(e.target)) && !pop?.contains(e.target)) close();
   });
   window.addEventListener('resize', position);
   window.addEventListener('scroll', () => { if (pop && !pop.classList.contains('hidden')) position(); }, true);

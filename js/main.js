@@ -2,7 +2,7 @@
 
 import { initHero } from './hero.js';
 import { initGamesGrid } from './games-grid.js';
-import { initSearch } from './search.js';
+import { initNav } from './nav.js';
 import { initStats } from './stats.js';
 import { initAccount, openAuthModal, getUser } from './account.js';
 import { initUpload } from './upload.js';
@@ -36,14 +36,8 @@ if (getUser()) showToast(`you're already signed in as ${getUser().username}`);
 else openAuthModal();
 });
 
-// global search — live player + game results dropdown (also filters the grid)
-initSearch();
-
-// mobile nav
-const burger = document.getElementById('nav-burger');
-const links = document.getElementById('nav-links');
-burger?.addEventListener('click', () => links.classList.toggle('open'));
-links?.addEventListener('click', (e) => { if (e.target.closest('a')) links.classList.remove('open'); });
+// global search + mobile nav drawer
+initNav({ filterGrid: true });
 }
 
 if (document.readyState === 'loading') {

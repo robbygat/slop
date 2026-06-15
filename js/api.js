@@ -52,7 +52,7 @@ export const api = {
     const user = session?.user;
     if (!user) return null;
     const { data } = await s.from('profiles')
-      .select('id, username, display_name, avatar_url, bio, link, is_moderator')
+      .select('id, username, display_name, avatar_url, bio, link, tagline, cover_theme, accent_color, is_moderator, created_at')
       .eq('id', user.id)
       .maybeSingle();
     // Signed in but profile row not materialised yet → still "logged in".
@@ -63,7 +63,7 @@ export const api = {
     const s = sb();
     if (!s || !username) return null;
     const { data } = await s.from('profiles')
-      .select('id, username, display_name, avatar_url, bio, link')
+      .select('id, username, display_name, avatar_url, bio, link, tagline, cover_theme, accent_color, created_at')
       .ilike('username', username)
       .maybeSingle();
     return data || null;
@@ -113,6 +113,9 @@ export const api = {
     if (patch.avatar_url !== undefined) fields.avatar_url = patch.avatar_url || null;
     if (patch.bio !== undefined) fields.bio = (patch.bio || '').slice(0, 300) || null;
     if (patch.link !== undefined) fields.link = sanitizeLink(patch.link);
+    if (patch.tagline !== undefined) fields.tagline = (patch.tagline || '').slice(0, 80) || null;
+    if (patch.cover_theme !== undefined) fields.cover_theme = patch.cover_theme || null;
+    if (patch.accent_color !== undefined) fields.accent_color = patch.accent_color || null;
     const { error } = await s.from('profiles').update(fields).eq('id', user.id);
     if (error) throw new Error(friendly(error.message));
     return true;

@@ -62,38 +62,60 @@
 
 /* homepage platform stats strip */
 .platform-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  margin: 22px 0 4px;
-}
-.pstat {
-  flex: 1 1 150px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin: 24px 0 8px;
   background: var(--wh);
   border: var(--bw) solid var(--ink);
-  border-radius: var(--r);
-  box-shadow: var(--sh);
-  padding: 16px 18px;
-  text-align: center;
+  border-radius: calc(var(--r) + 2px);
+  box-shadow: var(--shb);
+  overflow: hidden;
 }
-.pstat b {
+
+.pstat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px 12px;
+  text-align: center;
+  min-width: 0;
+}
+.pstat + .pstat {
+  border-left: var(--bw) solid var(--ink);
+}
+
+.pstat-num {
   display: block;
   font-family: 'Fredoka One', cursive;
-  font-size: clamp(28px, 5vw, 40px);
+  font-size: clamp(32px, 6vw, 44px);
   line-height: 1;
   color: var(--pk);
+  font-variant-numeric: tabular-nums;
 }
-.pstat span {
+
+.pstat-label {
   display: block;
-  margin-top: 6px;
   font-weight: 900;
-  font-size: 13px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: .06em;
+  letter-spacing: 0.08em;
   color: var(--soft);
+  white-space: nowrap;
+  line-height: 1.2;
 }
+
 @media (max-width: 560px) {
-  .platform-stats { gap: 10px; }
-  .pstat { flex: 1 1 100px; padding: 12px 8px; }
-  .pstat span { font-size: 10.5px; letter-spacing: .03em; }
+  .platform-stats {
+    grid-template-columns: 1fr;
+  }
+  .pstat + .pstat {
+    border-left: none;
+    border-top: var(--bw) solid var(--ink);
+  }
+  .pstat { padding: 16px 12px; }
+  .pstat-num { font-size: 36px; }
+  .pstat-label { font-size: 10px; letter-spacing: 0.06em; }
 }

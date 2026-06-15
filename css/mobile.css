@@ -20,15 +20,15 @@ gap: 10px;
 .brand { flex-shrink: 0; }
 
 .nav-burger {
-padding: 4px 6px;
-font-size: 18px;
-border-width: 2px;
-border-radius: 8px;
+  padding: 0;
+  font-size: inherit;
+  border-width: 2.5px;
+  border-radius: 12px;
 }
 
 .nav-links {
-top: 52px;
-padding: 6px 12px 12px;
+  top: 52px;
+  max-height: calc(100dvh - 52px);
 }
 
 .nav-links > a,
