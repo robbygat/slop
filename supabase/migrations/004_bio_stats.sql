@@ -7,6 +7,9 @@
 alter table public.profiles add column if not exists bio  text;
 alter table public.profiles add column if not exists link text;
 
+-- drop-then-add so re-running is safe (Postgres has no ADD CONSTRAINT IF NOT EXISTS)
+alter table public.profiles drop constraint if exists profiles_bio_len;
+alter table public.profiles drop constraint if exists profiles_link_len;
 alter table public.profiles add constraint profiles_bio_len  check (bio  is null or char_length(bio)  <= 300) not valid;
 alter table public.profiles add constraint profiles_link_len check (link is null or char_length(link) <= 200) not valid;
 
