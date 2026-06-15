@@ -1,10 +1,8 @@
 # slop.game
 
-**Prompt it. Play it. Share it. Mod it live.**
+**Prompt. Publish. Play.**
 
-An early-beta platform where anyone can create, publish, play, and live-remix
-browser games using AI. Vanilla HTML/CSS/JS frontend, zero-dependency Node
-backend, real xAI (Grok) integration for code and image generation.
+An AI-native platform where users can collaboratively create, publish, play, and live-remix browser games. It features a lightweight vanilla HTML/CSS/JS frontend, a zero-dependency Node backend, and seamless model api integration to power dynamic code and asset generation.
 
 ## Running it
 
