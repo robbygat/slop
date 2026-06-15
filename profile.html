@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="css/profile.css">
 </head>
 <body class="pf-root">
+<div class="pf-scene-grid" aria-hidden="true"></div>
 
 <div id="toast-container"></div>
 
@@ -56,20 +57,21 @@
 <div id="pf-shell" hidden>
   <div class="pf-stage">
     <div class="pf-cover-zone">
+      <div class="pf-banner-glow" aria-hidden="true">
+        <div class="pf-banner-glow-ring"></div>
+      </div>
       <div class="pf-banner" id="pf-banner">
         <img class="pf-banner-img" id="pf-banner-img" alt="" hidden>
         <div class="pf-banner-default" id="pf-banner-default" aria-hidden="true"></div>
       </div>
-      <div class="pf-cover-dots" aria-hidden="true"></div>
     </div>
 
     <div class="pf-card" id="pf-page">
       <div class="pf-identity">
         <div class="pf-avatar-slot">
+          <div class="pf-avatar-border" aria-hidden="true"></div>
           <div class="pf-avatar-ring" aria-hidden="true"></div>
-          <div class="pf-avatar-frame">
-            <div class="pf-avatar" id="pf-avatar">S</div>
-          </div>
+          <div class="pf-avatar" id="pf-avatar">S</div>
           <span class="pf-level-badge" id="pf-level-badge" hidden></span>
         </div>
 

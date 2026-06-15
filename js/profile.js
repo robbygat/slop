@@ -169,7 +169,7 @@ async function render() {
 
   $('pf-name').textContent = profile.display_name || profile.username;
   $('pf-handle').textContent = `@${profile.username}`;
-  $('pf-avatar').innerHTML = avatarMarkup(profile.avatar_url, profile.username, 'pf-avatar');
+  $('pf-avatar').innerHTML = avatarMarkup(profile.avatar_url, profile.username, 'pf-avatar-img');
   renderBioLink();
 
   const isOwner = viewer?.id === profile.id;
@@ -376,7 +376,7 @@ $('pf-edit-save').addEventListener('click', async () => {
 
     applyLook(profile);
     $('pf-name').textContent = profile.display_name || profile.username;
-    $('pf-avatar').innerHTML = avatarMarkup(profile.avatar_url, profile.username, 'pf-avatar');
+    $('pf-avatar').innerHTML = avatarMarkup(profile.avatar_url, profile.username, 'pf-avatar-img');
     renderBioLink();
     closeEdit();
     showToast('profile updated');
