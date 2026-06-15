@@ -329,7 +329,7 @@ function podiumCardHTML(item, rank) {
 const { g, kind } = item;
 const dest = podiumHref(g, kind);
 const cat = g.tags?.[0] || (kind === 'community' ? 'Community' : kind === 'cooked' ? 'AI-Gen' : 'Game');
-const media = thumbMedia(g, { video: rank === 1 && !!g.previewVideo });
+const media = thumbMedia(g, { video: !!g.previewVideo });
 // only launch cards self-report a play on click (their pages don't); cooked &
 // community plays are counted by play.html on boot.
 const idAttr = kind === 'launch' ? ` data-id="${escapeHTML(g.id)}"` : '';

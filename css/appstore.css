@@ -72,6 +72,13 @@ gap: 14px;
 flex-wrap: wrap;
 }
 
+.app-badges {
+display: flex;
+align-items: stretch;
+gap: 12px;
+flex-wrap: nowrap;
+}
+
 .app-play-full {
 font-family: 'Fredoka One', cursive;
 font-size: 16px;
@@ -94,15 +101,19 @@ background: var(--ink);
 color: #fff;
 border: var(--bw) solid var(--ink);
 border-radius: 16px;
-padding: 11px 20px;
+padding: 11px 18px;
 cursor: pointer;
 box-shadow: var(--shb);
 transition: transform .12s ease, box-shadow .12s ease;
+flex: 0 0 195px;
+width: 195px;
 }
 .app-badge:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 var(--ink); }
-.app-badge .ab-text { display: flex; flex-direction: column; line-height: 1.05; text-align: left; }
-.app-badge .ab-top { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 11px; opacity: .85; }
-.app-badge .ab-bot { font-family: 'Fredoka One', cursive; font-size: 20px; }
+.app-badge .ab-icon { flex: 0 0 26px; width: 26px; height: 26px; }
+.app-badge .ab-text { display: flex; flex-direction: column; line-height: 1.05; text-align: left; min-width: 0; }
+.app-badge .ab-top { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 11px; opacity: .85; white-space: nowrap; }
+.app-badge .ab-bot { font-family: 'Fredoka One', cursive; font-size: 20px; white-space: nowrap; }
+.app-badge-google .ab-bot { font-size: 17px; letter-spacing: -0.02em; }
 
 /* ---------------------------------------------------------------- the phone */
 .app-phone-wrap {
@@ -466,5 +477,7 @@ box-shadow: 0 2px 0 rgba(0, 0, 0, .4), 0 0 10px rgba(255, 78, 184, .35);
 .app-copy .sec-sub { text-align: center; margin-left: auto; margin-right: auto; }
 .app-points { max-width: 400px; margin-left: auto; margin-right: auto; text-align: left; }
 .app-cta-row { justify-content: center; }
+.app-badges { justify-content: center; flex-wrap: wrap; }
+.app-badge { flex: 1 1 195px; width: auto; max-width: 220px; }
 .app-phone-wrap { order: -1; }
 }

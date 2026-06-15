@@ -181,9 +181,11 @@ iframeReady = true;
 if (pendingStart) sendStart();
 });
 
-document.getElementById('app-notify')?.addEventListener('click', () => {
+document.querySelectorAll('.app-notify').forEach((btn) => {
+btn.addEventListener('click', () => {
 document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 setTimeout(() => document.getElementById('waitlist-email')?.focus(), 500);
 showToast("we'll email you the second the app drops ");
+});
 });
 }
