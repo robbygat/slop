@@ -37,19 +37,21 @@ width: 100%;
 display: flex;
 flex-direction: column;
 align-items: center;
+gap: 0;
 }
 
 .hero-brand {
-display: flex;
-flex-direction: column;
-align-items: center;
-margin-bottom: clamp(8px, 1.5vw, 14px);
+display: block;
+margin: 0;
+padding: 0;
+line-height: 0;
 }
 
 .hero-h1 {
 font-size: clamp(40px, 8.5vw, 84px);
 line-height: 0.96;
 letter-spacing: -0.03em;
+margin: -10px 0 0;
 }
 
 .hero-line {
@@ -68,7 +70,7 @@ animation: wig 2.5s ease-in-out infinite;
 
 .hero-sub {
 max-width: 32ch;
-margin: clamp(8px, 1.5vw, 12px) auto 0;
+margin: 6px auto 0;
 font-size: clamp(14px, 1.8vw, 16px);
 font-weight: 700;
 color: var(--soft);

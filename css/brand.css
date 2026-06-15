@@ -4,14 +4,24 @@ Matches the original neo-brutalist look (solid colors, 3px ink borders,
 hard offset shadows). Does NOT override any existing element styling.
 ========================================================================== */
 
-/* ---------------------------------------------------------------- hero pot mascot (centerpiece) */
-.hero-pot {
+/* ---------------------------------------------------------------- hero logo (centerpiece) */
+.hero-logo-crop {
+overflow: hidden;
+width: clamp(320px, 78vw, 640px);
+aspect-ratio: 5 / 2; /* show middle 40% — crop 30% top + bottom */
+margin: 0;
+padding: 0;
+line-height: 0;
+}
+
+.hero-logo {
 display: block;
-width: clamp(160px, 26vw, 220px);
+width: 100%;
 height: auto;
 margin: 0;
+padding: 0;
+transform: translateY(-30%);
 }
-@media (prefers-reduced-motion: reduce) { .hero-pot { animation: none; } }
 
 /* ---------------------------------------------------------------- how-it-works pot mascot */
 .how-pot {
