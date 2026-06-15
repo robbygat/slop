@@ -7,92 +7,106 @@
   background: var(--cr);
   color: var(--ink);
   min-height: 100vh;
+}
+
+#pf-shell {
   position: relative;
-  isolation: isolate;
-  overflow-x: hidden;
+  padding-bottom: 48px;
+  overflow: hidden;
 }
 
-/* hero-matched ambient watercolor (same as homepage .hero) */
-.pf-root::before,
-.pf-root::after {
-  content: '';
-  position: fixed;
-  inset: -35%;
-  z-index: 0;
-  pointer-events: none;
-  filter: blur(64px) saturate(1.25);
-  background:
-    radial-gradient(28% 34% at 18% 28%, rgba(255, 225, 53, 0.60), transparent 60%),
-    radial-gradient(26% 30% at 76% 22%, rgba(255, 78, 184, 0.52), transparent 60%),
-    radial-gradient(34% 40% at 62% 72%, rgba(78, 202, 255, 0.52), transparent 62%),
-    radial-gradient(26% 30% at 28% 76%, rgba(61, 255, 176, 0.46), transparent 60%),
-    radial-gradient(24% 28% at 86% 64%, rgba(185, 78, 255, 0.46), transparent 60%),
-    radial-gradient(22% 26% at 48% 12%, rgba(255, 122, 53, 0.42), transparent 60%);
-  opacity: 0.32;
-  animation: pf-hero-wc 26s ease-in-out infinite alternate;
-}
-
-.pf-root::after {
-  animation-duration: 34s;
-  animation-direction: alternate-reverse;
-  opacity: 0.22;
-}
-
-@keyframes pf-hero-wc {
-  0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-  50% { transform: translate(-5%, 3%) scale(1.18) rotate(7deg); }
-  100% { transform: translate(4%, -3%) scale(1.12) rotate(-6deg); }
-}
-
-/* hero grid overlay */
-.pf-scene-grid {
-  position: fixed;
+/* ambient scene — scoped below nav, never bleeds into sticky header */
+.pf-scene {
+  position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  overflow: hidden;
+}
+
+.pf-scene::before,
+.pf-scene::after {
+  content: '';
+  position: absolute;
+  inset: -25%;
+  filter: blur(56px) saturate(1.2);
+  background:
+    radial-gradient(28% 34% at 18% 28%, rgba(255, 225, 53, 0.55), transparent 60%),
+    radial-gradient(26% 30% at 76% 22%, rgba(255, 78, 184, 0.45), transparent 60%),
+    radial-gradient(34% 40% at 62% 72%, rgba(78, 202, 255, 0.45), transparent 62%),
+    radial-gradient(26% 30% at 28% 76%, rgba(61, 255, 176, 0.40), transparent 60%),
+    radial-gradient(24% 28% at 86% 64%, rgba(185, 78, 255, 0.40), transparent 60%),
+    radial-gradient(22% 26% at 48% 12%, rgba(255, 122, 53, 0.38), transparent 60%);
+  opacity: 0.28;
+  animation: pf-hero-wc 28s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.pf-scene::after {
+  animation-duration: 36s;
+  animation-direction: alternate-reverse;
+  opacity: 0.18;
+}
+
+@keyframes pf-hero-wc {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(3%, -2%) scale(1.08); }
+}
+
+.pf-scene-grid {
+  position: absolute;
+  inset: 0;
   background-image:
     linear-gradient(rgba(26, 26, 46, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(26, 26, 46, 0.03) 1px, transparent 1px);
   background-size: 28px 28px;
-  mask-image: radial-gradient(ellipse 85% 70% at 50% 22%, #000 20%, transparent 100%);
-}
-
-.site-nav,
-#pf-shell,
-.pf-status-wrap,
-#toast-container {
-  position: relative;
-  z-index: 1;
-}
-
-#pf-shell {
-  padding-bottom: 48px;
+  mask-image: radial-gradient(ellipse 90% 75% at 50% 18%, #000 15%, transparent 100%);
 }
 
 .pf-stage {
+  position: relative;
+  z-index: 1;
   max-width: 1120px;
   margin: 0 auto;
   padding: 0 16px;
 }
 
-/* ---- cover / banner + glow aura ---- */
+.pf-status-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- cover / banner + contained glow ---- */
 
 .pf-cover-zone {
   position: relative;
   margin-top: 12px;
+  padding: 10px;
+  overflow: hidden;
+  border-radius: 26px;
 }
 
 .pf-banner-glow {
   position: absolute;
-  inset: -10px -14px -14px;
+  inset: 4px;
   z-index: 0;
   pointer-events: none;
-  display: grid;
-  place-items: stretch;
+  overflow: hidden;
+  border-radius: 22px;
+  filter: blur(12px) saturate(1.25);
+}
+
+.pf-banner-glow-spin {
+  width: 100%;
+  height: 100%;
+  animation: pf-banner-glow 16s linear infinite;
+  will-change: transform;
 }
 
 .pf-banner-glow-ring {
-  border-radius: 26px;
+  width: 100%;
+  height: 100%;
+  border-radius: 22px;
   background: conic-gradient(
     from 0deg,
     var(--y) 0deg,
@@ -102,9 +116,7 @@
     var(--pu) 288deg,
     var(--y) 360deg
   );
-  animation: pf-banner-glow 14s linear infinite;
-  filter: blur(14px) saturate(1.35);
-  opacity: 0.82;
+  opacity: 0.75;
 }
 
 @keyframes pf-banner-glow {
@@ -152,13 +164,13 @@
 .pf-card {
   margin-top: -56px;
   position: relative;
-  z-index: 3;
+  z-index: 2;
   background: var(--pf-bg, var(--cr));
   border: var(--bw) solid var(--ink);
   border-radius: 24px;
   box-shadow: var(--shb);
   padding: 0 28px 36px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .pf-card::before {
@@ -171,6 +183,8 @@
   background: linear-gradient(90deg, var(--y), var(--bl), var(--mt), var(--or), var(--y));
   background-size: 200% 100%;
   animation: pf-shimmer 6s linear infinite;
+  border-radius: 24px 24px 0 0;
+  z-index: 0;
 }
 
 @keyframes pf-shimmer {
@@ -212,32 +226,30 @@
   padding-top: 4px;
 }
 
-/* arcade avatar — border below, spin ring mid, photo on top */
+/* avatar — grid stack guarantees photo paints above ring */
 .pf-avatar-slot {
-  position: relative;
-  width: 132px;
-  height: 132px;
+  display: grid;
+  place-items: center;
+  width: 128px;
+  height: 128px;
   flex-shrink: 0;
-  margin-top: -66px;
+  margin-top: -64px;
+  position: relative;
+  z-index: 5;
   isolation: isolate;
 }
 
-.pf-avatar-border {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  border-radius: 28px;
-  border: var(--bw) solid var(--ink);
-  box-shadow: var(--sh);
-  background: var(--pf-bg, var(--cr));
-  pointer-events: none;
+.pf-avatar-ring,
+.pf-avatar,
+#pf-avatar {
+  grid-area: 1 / 1;
 }
 
 .pf-avatar-ring {
-  position: absolute;
-  inset: 5px;
+  width: 100%;
+  height: 100%;
   z-index: 1;
-  border-radius: 24px;
+  border-radius: 28px;
   background: conic-gradient(
     from 0deg,
     var(--y) 0deg,
@@ -246,22 +258,22 @@
     var(--or) 270deg,
     var(--y) 360deg
   );
-  animation: pf-ring 10s linear infinite;
+  animation: pf-ring 12s linear infinite;
   pointer-events: none;
+  will-change: transform;
 }
 
 @keyframes pf-ring {
   to { transform: rotate(360deg); }
 }
 
-.pf-avatar {
-  position: absolute;
-  inset: 10px;
+.pf-avatar,
+#pf-avatar {
   z-index: 2;
-  width: auto;
-  height: auto;
-  border-radius: 20px;
-  border: 2.5px solid var(--ink);
+  width: calc(100% - 12px);
+  height: calc(100% - 12px);
+  border-radius: 22px;
+  border: var(--bw) solid var(--ink);
   background: var(--ink);
   object-fit: cover;
   display: grid;
@@ -270,7 +282,8 @@
   font-size: 44px;
   color: var(--y);
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(26, 26, 46, 0.15);
+  box-shadow: var(--sh);
+  position: relative;
 }
 
 .pf-avatar img,
@@ -279,14 +292,17 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  border-radius: 17px;
+  border-radius: 18px;
 }
 
 .pf-level-badge {
   position: absolute;
-  bottom: -6px;
-  right: -8px;
+  bottom: -4px;
+  right: -6px;
   z-index: 3;
+  grid-area: 1 / 1;
+  align-self: end;
+  justify-self: end;
   font-family: 'Fredoka One', cursive;
   font-size: 12px;
   color: var(--ink);
@@ -915,16 +931,15 @@
   }
 
   .pf-avatar-slot {
-    width: 112px;
-    height: 112px;
-    margin-top: -56px;
+    width: 108px;
+    height: 108px;
+    margin-top: -54px;
   }
-  .pf-avatar { inset: 9px; font-size: 36px; }
-  .pf-avatar-ring { inset: 4px; border-radius: 22px; }
-  .pf-avatar-border { border-radius: 24px; }
+  .pf-avatar,
+  #pf-avatar { font-size: 36px; width: calc(100% - 10px); height: calc(100% - 10px); }
 
-  .pf-banner-glow { inset: -8px -10px -12px; }
-  .pf-banner-glow-ring { filter: blur(10px) saturate(1.25); opacity: 0.75; }
+  .pf-cover-zone { padding: 8px; border-radius: 22px; }
+  .pf-banner-glow { inset: 3px; filter: blur(10px) saturate(1.15); }
 
   .pf-id { width: 100%; padding-top: 12px; }
   .pf-id-top {
@@ -958,8 +973,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .pf-avatar-ring,
-  .pf-banner-glow-ring,
+  .pf-banner-glow-spin,
   .pf-card::before,
-  .pf-root::before,
-  .pf-root::after { animation: none; }
+  .pf-scene::before,
+  .pf-scene::after { animation: none; }
 }
