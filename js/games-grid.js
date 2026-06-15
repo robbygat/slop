@@ -237,24 +237,24 @@ const thumb = g.thumb
 ? `<img src="${g.thumb}" alt="${escapeHTML(g.name)} gameplay screenshot" loading="lazy">`
 : `<span class="gthumb-fallback">${escapeHTML(g.name)}</span>`;
 return `
-<article class="gcard community gcard-v2" data-community-id="${g.id}">
+<article class="gcard community gcard-v2" data-community-id="${escapeHTML(g.slug)}">
 <div class="gthumb shot">
 ${thumb}
 <div class="gthumb-scrim"></div>
 <div class="gthumb-meta"><span class="gcat">Community</span><h3>${escapeHTML(g.name)}</h3></div>
 <span class="gbadge">community</span>
 <div class="gplay" aria-hidden="true"></div>
-<button class="greport" data-report="${g.id}" data-report-name="${escapeHTML(g.name)}" title="report this game"></button>
+<button class="greport" data-report="${escapeHTML(g.gameId || g.slug)}" data-report-name="${escapeHTML(g.name)}" title="report this game"></button>
 </div>
 <div class="gbody">
 <p class="gdesc">${escapeHTML(g.desc || 'cooked with grok')}</p>
 <div class="gmeta">
-<span class="gcreator">@${escapeHTML(g.username)}</span>
+<a class="gcreator" href="/${escapeHTML(g.username)}">@${escapeHTML(g.username)}</a>
 <span class="gplays">${fmtPlays(totalPlays(g))} plays</span>
 </div>
 <div class="gcta-row">
-<a class="gcta" href="play.html?cid=${encodeURIComponent(g.id)}">Play &amp; Remix</a>
-<a class="gcta remix" href="studio.html?remix=${encodeURIComponent(g.id)}">Remix in Studio</a>
+<a class="gcta" href="/play/${escapeHTML(g.slug)}">Play &amp; Remix</a>
+<a class="gcta remix" href="studio.html?remix=${encodeURIComponent(g.slug)}">Remix in Studio</a>
 </div>
 </div>
 </article>`;
@@ -373,6 +373,9 @@ reportGame(rep.dataset.report, rep.dataset.reportName || 'this game');
 return;
 }
 
+// creator handle → let the profile link navigate on its own
+if (e.target.closest('.gcreator')) return;
+
 // Count a play when opening a launch game (their standalone pages don't
 // self-report). Cooked & community games are counted by play.html on boot, so
 // we don't also count them here — that would double-count.
@@ -395,7 +398,7 @@ if (!card) return;
 if (card.dataset.cookedId) {
 window.location.href = `play.html?id=${encodeURIComponent(card.dataset.cookedId)}`;
 } else if (card.dataset.communityId) {
-window.location.href = `play.html?cid=${encodeURIComponent(card.dataset.communityId)}`;
+window.location.href = `/play/${encodeURIComponent(card.dataset.communityId)}`;
 } else if (card.dataset.href) {
 window.location.href = card.dataset.href;
 }

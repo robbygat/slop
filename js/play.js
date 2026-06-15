@@ -27,20 +27,27 @@ const frame = $('game-frame');
 
 const params = new URLSearchParams(location.search);
 const id = params.get('id');
-const cid = params.get('cid');
+// Resolve a published game from the pretty path /play/{slug}, ?slug=, or the
+// legacy ?cid= query. Local AI-cooked games still come in via ?id=.
+const pathSlug = (location.pathname.match(/^\/play\/([a-z0-9-]+)\/?$/i) || [])[1];
+const slug = pathSlug || params.get('slug') || params.get('cid');
 let game = id ? getCookedGame(id) : null;
 let isCommunity = false;
 
 async function boot() {
-if (cid) {
-const cg = await api.communityGame(cid);
+if (slug) {
+const cg = await api.communityGame(slug);
 if (cg) {
-game = { ...cg, id: cid };
+game = { ...cg, id: cg.slug };
 isCommunity = true;
+// normalise the address bar to the shareable pretty URL
+if (location.pathname !== `/play/${cg.slug}`) history.replaceState(null, '', `/play/${cg.slug}`);
 }
 }
 if (!game) {
-$('game-name').textContent = 'game not found — cook one on the homepage';
+$('game-name').textContent = slug
+? 'game not found — it may have been removed by a moderator'
+: 'game not found — cook one on the homepage';
 $('remix-toggle').style.display = 'none';
 $('publish-btn').style.display = 'none';
 return;
@@ -51,13 +58,13 @@ $('game-pill').textContent = isCommunity
 : (game.remixOf ? 'remix' : 'AI-cooked');
 document.title = `${game.name} — slop.game`;
 frame.srcdoc = game.html;
-recordPlay(isCommunity ? cid : id); // count this as a real play
+recordPlay(isCommunity ? game.slug : id); // count this as a real play
 
 // hand off to the full studio (cooked games open directly; community games fork)
 const studioBtn = $('studio-btn');
 studioBtn.style.display = '';
 studioBtn.href = isCommunity
-? `studio.html?remix=${encodeURIComponent(cid)}`
+? `studio.html?remix=${encodeURIComponent(game.slug)}`
 : `studio.html?id=${encodeURIComponent(game.id)}`;
 
 initPublish();
@@ -76,13 +83,14 @@ btn.textContent = 'Publishing…';
 try {
 const me = await api.me();
 if (me === null) throw new Error('sign in on the homepage first, then come back to publish');
+if (!me.username) throw new Error('pick a username on the homepage first, then come back to publish');
 const res = await api.publishGame({
 name: game.name, desc: game.desc, prompt: game.prompt, html: game.html, thumb: game.thumb,
 });
-if (!res) throw new Error('the backend is offline — run `node server.js`');
-game = updateCookedGame(game.id, { publishedAs: res.id }) || game;
+game = updateCookedGame(game.id, { publishedAs: res.slug }) || game;
+try { await navigator.clipboard.writeText(res.url); } catch { /* clipboard optional */ }
 btn.textContent = 'OK Published';
-$('status').textContent = 'published — it\'s in the community grid for everyone now';
+$('status').textContent = `published — link copied: ${res.url}`;
 } catch (err) {
 btn.disabled = false;
 btn.textContent = 'Publish';

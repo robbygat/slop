@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>profile — slop.game</title>
+<meta name="description" content="a slop.game creator's published games.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23FF4EB8%22/><text x=%2250%22 y=%2258%22 text-anchor=%22middle%22 font-family=%22system-ui,sans-serif%22 font-size=%2248%22 font-weight=%22700%22 fill=%22%23FFFFFF%22>S</text></svg>">
+
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/nav.css">
+<link rel="stylesheet" href="css/sections.css">
+<link rel="stylesheet" href="css/ai.css">
+<link rel="stylesheet" href="css/v2.css">
+<link rel="stylesheet" href="css/brand.css">
+<link rel="stylesheet" href="css/browse.css">
+<link rel="stylesheet" href="css/footer.css">
+<link rel="stylesheet" href="css/mobile.css">
+
+<style>
+.profile-head {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 40px 24px 8px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.profile-avatar {
+  width: 84px; height: 84px;
+  border-radius: 18px;
+  background: var(--pk, #FF4EB8);
+  border: 3px solid var(--ink, #14121f);
+  box-shadow: 4px 4px 0 var(--ink, #14121f);
+  display: grid; place-items: center;
+  font-family: 'Fredoka One', system-ui, sans-serif;
+  font-size: 38px; color: #fff;
+  object-fit: cover;
+  flex: none;
+}
+.profile-meta h1 { margin: 0; font-family: 'Fredoka One', system-ui, sans-serif; font-size: clamp(26px, 5vw, 40px); }
+.profile-meta .handle { color: var(--soft, #6b6780); font-weight: 800; }
+.profile-meta .stat { margin-top: 6px; font-weight: 700; color: var(--soft, #6b6780); }
+.profile-games { max-width: 1180px; margin: 8px auto 80px; padding: 0 24px; }
+.profile-section-title {
+  font-family: 'Fredoka One', system-ui, sans-serif;
+  font-size: 20px; margin: 18px 0 14px;
+}
+.profile-empty, .profile-missing {
+  text-align: center; padding: 60px 20px; color: var(--soft, #6b6780); font-weight: 800;
+}
+.profile-missing a, .profile-empty a { color: var(--pk, #FF4EB8); }
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- ============ NAV ============ -->
+<nav class="site-nav">
+  <a class="brand" href="/">
+    <span class="wordmark">slop<span class="dot-pk">.</span>game</span>
+  </a>
+  <div class="nav-links" id="nav-links">
+    <a href="/#games">Browse</a>
+    <a href="studio.html" class="nav-studio">Studio</a>
+    <a href="/#publish">Publish</a>
+  </div>
+  <div class="nav-right">
+    <span id="nav-auth"></span>
+    <button class="nav-burger" id="nav-burger" aria-label="menu">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </div>
+</nav>
+
+<main>
+  <header class="profile-head" id="profile-head" hidden>
+    <div class="profile-avatar" id="profile-avatar">S</div>
+    <div class="profile-meta">
+      <h1 id="profile-name">@user</h1>
+      <div class="handle" id="profile-handle"></div>
+      <div class="stat" id="profile-stat"></div>
+    </div>
+  </header>
+
+  <section class="profile-games">
+    <div id="profile-status"></div>
+    <div class="games-grid browse-grid" id="profile-grid"></div>
+  </section>
+</main>
+
+<script type="module" src="js/profile.js"></script>
+</body>
+</html>

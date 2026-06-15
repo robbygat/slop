@@ -308,11 +308,16 @@ async function publish() {
 if (!game.srcHtml) { toast('build something first'); return null; }
 const me = await api.me();
 if (me === null) { toast('sign in on the homepage first, then come back'); return null; }
-const res = await api.publishGame({ name: game.name, desc: game.desc || game.prompt.slice(0, 90), prompt: game.prompt, html: finalHTML(), thumb: game.thumb });
-if (!res) { toast('the backend is offline — run node server.js'); return null; }
-game.publishedAs = res.id; persist();
+if (!me.username) { toast('finish setup — pick a username on the homepage first'); return null; }
+let res;
+try {
+res = await api.publishGame({ name: game.name, desc: game.desc || game.prompt.slice(0, 90), prompt: game.prompt, html: finalHTML(), thumb: game.thumb });
+} catch (err) { toast(err.message || 'publish failed'); return null; }
+game.publishedAs = res.slug; persist();
 queueXP({ xp: 60, reason: 'published a game!', unlock: 'publisher' });
-return res.id;
+try { await navigator.clipboard.writeText(res.url); } catch { /* clipboard optional */ }
+toast(`published! link copied — ${res.url}`);
+return res.slug;
 }
 async function openInvite() {
 if (!game.srcHtml && !collab?.isHost) { toast('build something first — then invite a friend'); return; }
@@ -493,7 +498,7 @@ $('undo-btn').addEventListener('click', () => { if (!game.history.length) return
 $('restart-btn').addEventListener('click', () => { if (game.srcHtml) refreshFrame(); });
 $('download-btn').addEventListener('click', exportZip);
 $('open-play').addEventListener('click', () => { if (game.id) window.open(`play.html?id=${encodeURIComponent(game.id)}`, '_blank'); });
-$('publish-btn').addEventListener('click', async () => { $('publish-btn').disabled = true; $('publish-btn').textContent = 'Publishing…'; const cid = await publish(); $('publish-btn').disabled = false; $('publish-btn').textContent = cid ? 'OK Published' : 'Publish'; if (cid) toast('published — it\'s in the community grid'); });
+$('publish-btn').addEventListener('click', async () => { $('publish-btn').disabled = true; $('publish-btn').textContent = 'Publishing…'; const slug = await publish(); $('publish-btn').disabled = false; $('publish-btn').textContent = slug ? 'OK Published' : 'Publish'; });
 $('invite-btn').addEventListener('click', openInvite);
 $('invite-close').addEventListener('click', () => $('invite-modal').classList.add('hidden'));
 
