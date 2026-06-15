@@ -167,8 +167,9 @@ margin: 0 auto;
 .games-grid.dense.solo .gcard.featured {
 grid-column: span 1;
 }
-.games-grid.dense.solo .gthumb {
+.games-grid.dense.solo .gcard.featured .gthumb {
 aspect-ratio: 16 / 9;
+min-height: clamp(180px, 52vw, 380px);
 }
 .gcat { display: inline-block; font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; color: var(--pu); background: rgba(185,78,255,.1); border-radius: 100px; padding: 3px 9px; margin-bottom: 6px; }
 

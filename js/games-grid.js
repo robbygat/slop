@@ -127,9 +127,42 @@ return String(s ?? '').replace(/[&<>"']/g, (c) => (
 ));
 }
 
+function wirePreviewVideos(root = document) {
+const videos = root.querySelectorAll('video.gthumb-video');
+if (!videos.length) return;
+
+const play = (video) => {
+if (video.dataset.playing === '1') return;
+video.play().then(() => { video.dataset.playing = '1'; }).catch(() => {});
+};
+
+videos.forEach((video) => {
+video.addEventListener('loadeddata', () => play(video), { once: true });
+video.addEventListener('canplay', () => play(video), { once: true });
+});
+
+const io = wirePreviewVideos._io ??= new IntersectionObserver((entries) => {
+entries.forEach(({ isIntersecting, target }) => {
+if (isIntersecting) play(target);
+else {
+target.pause();
+target.dataset.playing = '';
+}
+});
+}, { threshold: 0.35 });
+
+videos.forEach((video) => {
+if (video.dataset.wired === '1') return;
+video.dataset.wired = '1';
+io.observe(video);
+if (video.getBoundingClientRect().height > 0) play(video);
+});
+}
+
 function thumbMedia(g, { video = false } = {}) {
 if (video && g.previewVideo) {
-return `<video class="gthumb-video" src="${escapeHTML(g.previewVideo)}" autoplay muted loop playsinline preload="auto" aria-label="${escapeHTML(g.name)} gameplay preview"></video>`;
+const poster = g.thumb ? ` poster="${escapeHTML(g.thumb)}"` : '';
+return `<div class="gthumb-video-wrap"><div class="gthumb-video-crop"><video class="gthumb-video" src="${escapeHTML(g.previewVideo)}"${poster} type="video/mp4" autoplay muted loop playsinline preload="auto" aria-label="${escapeHTML(g.name)} gameplay preview"></video></div></div>`;
 }
 if (g.thumb) {
 return `<img src="${g.thumb}" alt="${escapeHTML(g.name)} gameplay screenshot" loading="lazy">`;
@@ -285,7 +318,7 @@ grid.innerHTML = '';
 return;
 }
 grid.innerHTML = cardHTML({ ...run3, featured: true }, { video: true, hot: true, v2: false });
-grid.querySelector('video.gthumb-video')?.play().catch(() => {});
+wirePreviewVideos(grid);
 }
 
 export function rerenderGrid() {

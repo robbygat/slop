@@ -76,20 +76,35 @@ box-shadow: 3px 3px 0 var(--ink);
 .gthumb.shot { background: #0d0d16; overflow: hidden; }
 
 .gthumb.shot img,
-.gthumb.shot video.gthumb-video {
+.gthumb.shot .gthumb-video-wrap {
 position: absolute;
 inset: 0;
 width: 100%;
 height: 100%;
-object-fit: cover;
+}
+
+.gthumb-video-wrap {
+overflow: hidden;
+}
+
+/* crop lives on a wrapper — iOS Safari often paints a blank frame when transform is on <video> */
+.gthumb-video-crop {
+position: absolute;
+top: 0;
+left: 50%;
+width: 131.58%;
+height: 100%;
+transform: translateX(-50%);
 }
 
 .gthumb.shot video.gthumb-video {
+position: relative;
+display: block;
+width: 100%;
+height: 100%;
+object-fit: cover;
 background: #0d0d16;
 pointer-events: none;
-left: 50%;
-width: 131.58%;
-transform: translateX(-50%);
 }
 
 .gbadge.hot {
