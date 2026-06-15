@@ -17,7 +17,7 @@
 --line: rgba(26,26,46,.1);
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { height:100vh; display:flex; flex-direction:column; overflow:hidden;
+body { height:100vh; height:100dvh; display:flex; flex-direction:column; overflow:hidden;
 font-family:'Nunito',sans-serif; color:var(--ink);
 background:
 radial-gradient(40% 30% at 12% 4%, rgba(255,78,184,.10), transparent 60%),
@@ -43,6 +43,9 @@ transition:transform .12s; text-decoration:none; display:inline-flex; align-item
 .bar-btn:hover:not(:disabled) { transform:translate(-2px,-2px); }
 .bar-btn:disabled { opacity:.5; cursor:not-allowed; box-shadow:3px 3px 0 var(--ink); }
 .bar-btn.mt { background:var(--mt); } .bar-btn.pk { background:var(--pk); color:#fff; }
+.bar-menu { display:none; background:var(--ink); color:var(--y); }
+.topbar-publish { /* visible in topbar on all sizes */ }
+.topbar-actions { display:contents; }
 /* mp toggle */
 .mp-switch { display:flex; align-items:center; gap:8px; background:var(--wh); border:2.5px solid var(--ink); border-radius:100px; padding:5px 6px 5px 13px; box-shadow:3px 3px 0 var(--ink); cursor:pointer; user-select:none; font-weight:800; font-size:13px; }
 .mp-switch .track { width:38px; height:22px; border-radius:100px; background:rgba(26,26,46,.18); border:2px solid var(--ink); position:relative; transition:background .15s; }
@@ -156,10 +159,206 @@ background:var(--pk); border:var(--bw) solid var(--ink); border-radius:100px; pa
 #studio-toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(80px); z-index:120; font-weight:800; font-size:14px; color:#fff; background:var(--ink); border-radius:100px; padding:12px 24px; box-shadow:var(--shb); transition:transform .25s; max-width:90vw; }
 #studio-toast.on { transform:translateX(-50%) translateY(0); }
 
-@media (max-width:860px) {
-.main { flex-direction:column-reverse; }
-.agent { flex:0 0 48vh; max-width:none; border-right:none; border-top:var(--bw) solid var(--ink); }
-#game-title { order:10; flex-basis:100%; }
+/* mobile: build / preview switcher */
+.studio-mobile-switch {
+display:none;
+flex:0 0 auto;
+gap:6px;
+padding:8px 10px;
+background:var(--wh);
+border-bottom:var(--bw) solid var(--ink);
+}
+
+.studio-mtab {
+flex:1;
+font-family:'Fredoka One',cursive;
+font-size:13px;
+color:var(--soft);
+background:var(--cr);
+border:2px solid var(--ink);
+border-radius:100px;
+padding:8px 10px;
+cursor:pointer;
+-webkit-tap-highlight-color:transparent;
+touch-action:manipulation;
+}
+
+.studio-mtab.active {
+color:var(--ink);
+background:var(--y);
+box-shadow:2px 2px 0 var(--ink);
+}
+
+@media (max-width:860px){ .files-wrap{ flex-direction:column; } .file-tree{ flex:0 0 auto; max-height:140px; } }
+
+@media (max-width:720px) {
+.topbar {
+padding:8px 10px;
+gap:6px;
+flex-wrap:nowrap;
+align-items:center;
+}
+
+.back-link {
+font-size:11px;
+padding:5px 10px;
+border-width:2px;
+box-shadow:2px 2px 0 var(--ink);
+flex-shrink:0;
+}
+
+.brand { font-size:14px; flex-shrink:0; }
+
+#game-title {
+order:0;
+flex:1 1 auto;
+min-width:0;
+font-size:14px;
+padding:7px 12px;
+border-width:2px;
+}
+
+.bar-menu {
+display:inline-flex;
+flex-shrink:0;
+font-size:12px;
+padding:6px 12px;
+border-width:2px;
+box-shadow:2px 2px 0 var(--ink);
+}
+
+.topbar-publish {
+flex-shrink:0;
+font-size:11px;
+padding:6px 11px;
+border-width:2px;
+box-shadow:2px 2px 0 var(--ink);
+}
+
+.topbar-actions {
+display:none;
+position:fixed;
+top:calc(52px + env(safe-area-inset-top, 0px));
+left:0;
+right:0;
+z-index:90;
+background:var(--y);
+border-bottom:var(--bw) solid var(--ink);
+padding:10px 12px;
+flex-wrap:wrap;
+gap:6px;
+box-shadow:var(--sh);
+max-height:min(50vh, 320px);
+overflow-y:auto;
+-webkit-overflow-scrolling:touch;
+}
+
+.topbar-actions.open { display:flex; }
+
+.topbar-actions .bar-btn,
+.topbar-actions .mp-switch {
+font-size:11px;
+padding:6px 11px;
+border-width:2px;
+box-shadow:2px 2px 0 var(--ink);
+}
+
+.topbar-actions .mp-switch { padding:4px 8px 4px 10px; font-size:11px; }
+
+.topbar-actions #open-play {
+flex:1 1 calc(50% - 4px);
+justify-content:center;
+}
+
+.studio-mobile-switch { display:flex; }
+
+.main {
+flex-direction:column;
+min-height:0;
+}
+
+.main.view-build .work { display:none; }
+.main.view-preview .agent { display:none; }
+
+.agent {
+flex:1 1 auto;
+max-width:none;
+min-height:0;
+border-right:none;
+border-top:none;
+}
+
+.work {
+flex:1 1 auto;
+min-height:0;
+}
+
+#timeline { padding:12px; gap:8px; }
+
+.tl-user, .tl-agent { font-size:12.5px; padding:8px 11px; max-width:94%; }
+
+.prompt-zone { padding:10px 12px 12px; }
+
+.template { font-size:9.5px; padding:4px 8px; }
+.chip { font-size:9.5px; padding:4px 8px; }
+
+#prompt { font-size:14px; min-height:56px; padding:10px 12px; }
+
+.mic-btn { flex:0 0 44px; }
+
+#build-btn {
+font-size:14px;
+padding:11px;
+margin-top:8px;
+touch-action:manipulation;
+}
+
+.tabs {
+padding:8px 10px;
+gap:4px;
+overflow-x:auto;
+flex-wrap:nowrap;
+-webkit-overflow-scrolling:touch;
+scrollbar-width:none;
+}
+
+.tabs::-webkit-scrollbar { display:none; }
+
+.tab {
+font-size:10px;
+padding:6px 10px;
+border-width:2px;
+flex-shrink:0;
+}
+
+.tab-action { font-size:10px; padding:5px 10px; flex-shrink:0; }
+
+#panel-play { padding:8px; min-height:0; }
+
+#play-frame-wrap { min-height:0; }
+
+#play-frame { min-height:200px; border-width:2.5px; border-radius:12px; }
+
+#play-empty { padding:16px; }
+#play-empty .big { font-size:20px; }
+#play-empty .hint-mono { font-size:11px; }
+
+.modal { padding:12px; align-items:flex-end; }
+.modal-card { width:100%; max-height:88dvh; overflow-y:auto; border-radius:16px 16px 0 0; padding:18px; }
+
+#studio-toast { bottom:calc(12px + env(safe-area-inset-bottom, 0px)); font-size:12px; padding:10px 16px; }
+}
+
+@media (max-width:720px) and (max-height:520px) {
+.prompt-zone .template-row,
+.prompt-zone .chips { display:none; }
+}
+
+@media (min-width:721px) {
+.bar-menu,
+.studio-mobile-switch { display:none !important; }
+.main.view-build .work,
+.main.view-preview .agent { display:flex !important; }
 }
 </style>
 </head>
@@ -169,17 +368,25 @@ background:var(--pk); border:var(--bw) solid var(--ink); border-radius:100px; pa
 <a class="back-link" href="index.html">← slop.game</a>
 <span class="brand">SLOP<span class="pk">STUDIO</span></span>
 <input id="game-title" value="untitled slop" maxlength="48" spellcheck="false">
+<button type="button" class="bar-btn bar-menu" id="bar-menu" aria-expanded="false" aria-controls="topbar-actions">Menu</button>
+<button class="bar-btn mt topbar-publish" id="publish-btn">Publish</button>
+<div class="topbar-actions" id="topbar-actions">
 <div class="mp-switch" id="mp-toggle" title="generate the game with multiplayer baked in"><span>Multiplayer</span><span class="track"><i></i></span></div>
 <button class="bar-btn" id="undo-btn" title="restore the previous build" disabled>Undo</button>
 <button class="bar-btn" id="collab-toggle" title="start a live jam — invite friends to suggest prompts">Jam</button>
 <button class="bar-btn" id="download-btn" title="download the whole game folder as a .zip" disabled>Export</button>
 <button class="bar-btn" id="settings-btn" title="API key & model settings">Settings</button>
-<button class="bar-btn mt" id="publish-btn">Publish</button>
 <button class="bar-btn" id="invite-btn">Invite</button>
 <button class="bar-btn pk" id="open-play" disabled>Open</button>
 </div>
+</div>
 
-<div class="main">
+<div class="studio-mobile-switch" role="tablist" aria-label="Studio view">
+<button type="button" class="studio-mtab active" data-studio-view="build" role="tab" aria-selected="true">Build</button>
+<button type="button" class="studio-mtab" data-studio-view="preview" role="tab" aria-selected="false">Preview</button>
+</div>
+
+<div class="main view-build" id="studio-main">
 <aside class="agent">
 <div id="timeline"></div>
 <div class="prompt-zone">
@@ -224,7 +431,7 @@ background:var(--pk); border:var(--bw) solid var(--ink); border-radius:100px; pa
 <div id="play-empty">
 <div class="ic"></div>
 <div class="big">your game appears here</div>
-<p class="hint-mono">describe a game on the left and hit Build It. the agent writes the code, crash-tests it, and boots it right here — then keep prompting to change anything. flip on Multiplayer to bake in a shareable room.</p>
+<p class="hint-mono">describe a game below and hit Build It. the agent writes the code, crash-tests it, and boots it in Preview — then keep prompting to change anything.</p>
 </div>
 <iframe id="play-frame" sandbox="allow-scripts allow-pointer-lock" title="playtest" style="display:none"></iframe>
 </div>

@@ -195,6 +195,7 @@ $('play-frame').style.display = '';
 $('play-frame').srcdoc = finalHTML();
 $('code-view').textContent = game.srcHtml || '';
 $('restart-btn').disabled = !game.srcHtml;
+if (game.srcHtml && isMobileStudio()) setStudioView('preview');
 $('open-play').disabled = !game.id;
 $('undo-btn').disabled = !game.history.length;
 $('download-btn').disabled = !game.srcHtml;
@@ -360,7 +361,77 @@ document.querySelectorAll('.tab').forEach((tab) => tab.addEventListener('click',
 document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
 document.querySelectorAll('.panel').forEach((p) => p.classList.remove('active'));
 tab.classList.add('active'); $(`panel-${tab.dataset.panel}`).classList.add('active');
+if (isMobileStudio()) setStudioView('preview');
 }));
+}
+
+const MOBILE_STUDIO_MQ = window.matchMedia('(max-width: 720px)');
+function isMobileStudio() { return MOBILE_STUDIO_MQ.matches; }
+
+function setStudioView(view) {
+const main = $('studio-main');
+if (!main || !isMobileStudio()) return;
+main.classList.remove('view-build', 'view-preview');
+main.classList.add(view === 'preview' ? 'view-preview' : 'view-build');
+document.querySelectorAll('.studio-mtab').forEach((btn) => {
+const on = btn.dataset.studioView === view;
+btn.classList.toggle('active', on);
+btn.setAttribute('aria-selected', on ? 'true' : 'false');
+});
+}
+
+function initMobileStudio() {
+const drawer = $('topbar-actions');
+const menu = $('bar-menu');
+if (!drawer || !menu) return;
+
+const closeDrawer = () => {
+drawer.classList.remove('open');
+menu.setAttribute('aria-expanded', 'false');
+};
+
+menu.addEventListener('click', (e) => {
+e.stopPropagation();
+const open = drawer.classList.toggle('open');
+menu.setAttribute('aria-expanded', open ? 'true' : 'false');
+});
+
+drawer.addEventListener('click', (e) => {
+if (e.target.closest('.bar-btn, .mp-switch')) closeDrawer();
+});
+
+document.addEventListener('click', (e) => {
+if (!drawer.classList.contains('open')) return;
+if (e.target.closest('#topbar-actions, #bar-menu')) return;
+closeDrawer();
+});
+
+document.querySelectorAll('.studio-mtab').forEach((btn) => {
+btn.addEventListener('click', () => setStudioView(btn.dataset.studioView));
+});
+
+MOBILE_STUDIO_MQ.addEventListener('change', () => {
+if (!isMobileStudio()) {
+closeDrawer();
+$('studio-main')?.classList.remove('view-build', 'view-preview');
+return;
+}
+if (!$('studio-main')?.classList.contains('view-preview')) setStudioView('build');
+});
+
+if (isMobileStudio()) setStudioView('build');
+}
+
+async function warnIfStudioNeedsKey() {
+const hasKey = !!localStorage.getItem('slop-key');
+let proxy = false;
+try {
+const res = await fetch('/api/config');
+if (res.ok) proxy = !!(await res.json())?.ai;
+} catch { /* static hosting */ }
+if (!hasKey && !proxy) {
+tlAgent('on slop.game mobile you need your own xAI key — tap Menu → Settings, paste your key, save, then build.', 'bad');
+}
 }
 
 // ---------------------------------------------------------------- settings
@@ -386,8 +457,9 @@ toast('settings saved');
 
 // ---------------------------------------------------------------- boot
 async function boot() {
-initTabs(); initSettings(); renderSprites(); renderFiles();
+initTabs(); initSettings(); initMobileStudio(); renderSprites(); renderFiles();
 tlAgent('welcome to the studio. describe a game — any game — and I\'ll build it. then keep talking: "make it harder", "the hero is a dragon", "generate a sprite for the boss", "split this into files", "add multiplayer". every aspect is promptable.', '');
+warnIfStudioNeedsKey();
 
 const params = new URLSearchParams(location.search);
 const id = params.get('id');
