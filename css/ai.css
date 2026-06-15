@@ -306,6 +306,29 @@ font-size: 12px;
 
 #google-btn-slot { display: flex; justify-content: center; }
 
+/* Continue-with-Google button — clean white pill with the Google mark */
+.auth-google-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  width: 100%;
+  padding: 13px 18px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--wh);
+  border: var(--bw) solid var(--ink);
+  border-radius: 100px;
+  box-shadow: var(--sh);
+  cursor: pointer;
+  transition: transform .1s ease, box-shadow .1s ease, background .15s ease;
+}
+.auth-google-fallback:hover { transform: translate(-2px, -2px); box-shadow: var(--shb); background: #fafaff; }
+.auth-google-fallback:active { transform: translate(1px, 1px); box-shadow: 2px 2px 0 var(--ink); }
+.auth-google-fallback svg { width: 20px; height: 20px; flex: none; }
+
 .auth-note {
 margin-top: 10px;
 font-family: 'Space Mono', monospace;

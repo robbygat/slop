@@ -248,13 +248,30 @@ export async function initAccount() {
   if (!s) { showToast('offline — sign in needs a connection to slop.game'); return; }
 
   // React to OAuth redirects, token refreshes, and sign-out across tabs.
-  s.auth.onAuthStateChange(async (_event, session) => {
-    if (!session) { setUser(null); return; }
-    const me = await api.me();
-    await maybeClaimPending(me);
+  // IMPORTANT: never call another supabase method (getSession/from/…) directly
+  // inside this callback — it runs while auth-js holds its storage lock, so a
+  // nested getSession() deadlocks the whole client (nav stuck, pages hang).
+  // We defer with setTimeout(…, 0) and use the `session` handed to us.
+  s.auth.onAuthStateChange((_event, session) => {
+    setTimeout(() => { resolveSession(session).catch(() => {}); }, 0);
   });
 
-  const me = await api.me();
+  // Initial restore from the persisted session (this is OUTSIDE the callback,
+  // so getSession is safe here and keeps you signed in across refreshes).
+  const { data: { session } } = await s.auth.getSession();
+  await resolveSession(session).catch(() => {});
+}
+
+// Turn a raw session into our profile object + nav state, fetching the profile
+// row directly (no getSession here, so it's safe to call from anywhere).
+async function resolveSession(session) {
+  if (!session?.user) { setUser(null); return; }
+  const s = getSupabase();
+  const { data } = await s.from('profiles')
+    .select('id, username, display_name, avatar_url, is_moderator')
+    .eq('id', session.user.id)
+    .maybeSingle();
+  const me = { id: session.user.id, email: session.user.email, username: null, ...(data || {}) };
   await maybeClaimPending(me);
 }
 

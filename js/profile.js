@@ -207,4 +207,7 @@ $('pf-edit-save').addEventListener('click', async () => {
 
 // boot
 initAccount();
-render();
+render().catch((err) => {
+  console.error('[profile] render failed', err);
+  showMissing('something broke loading this profile — try refreshing');
+});
