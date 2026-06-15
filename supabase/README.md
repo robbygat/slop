@@ -13,7 +13,9 @@ Open **Supabase Dashboard → SQL Editor**, paste all of
 [`migrations/001_initial.sql`](migrations/001_initial.sql), and **Run**. It creates
 `profiles`, `games`, `reports`, all RLS policies, the new-user trigger, the
 `claim_username` / `increment_play_count` RPCs, and seeds `robbygat` as moderator.
-Re-running is safe (idempotent).
+Then do the same with [`migrations/002_social.sql`](migrations/002_social.sql) — it
+adds the `follows` table (for follower counts) and a public `avatars` storage
+bucket for profile pictures. Re-running either is safe (idempotent).
 
 ### 2. Auth → URL Configuration
 - **Site URL:** `https://slop.game`

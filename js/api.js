@@ -74,6 +74,76 @@ export const api = {
     return data;
   },
 
+  // Update the signed-in user's own profile (display name / avatar).
+  async updateProfile(patch) {
+    const s = sb();
+    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    const { data: { user } } = await s.auth.getUser();
+    if (!user) throw new Error('sign in first');
+    const fields = {};
+    if (patch.display_name !== undefined) fields.display_name = patch.display_name || null;
+    if (patch.avatar_url !== undefined) fields.avatar_url = patch.avatar_url || null;
+    const { error } = await s.from('profiles').update(fields).eq('id', user.id);
+    if (error) throw new Error(friendly(error.message));
+    return true;
+  },
+
+  // Upload a profile picture to the public `avatars` bucket → returns its URL.
+  async uploadAvatar(file) {
+    const s = sb();
+    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    const { data: { user } } = await s.auth.getUser();
+    if (!user) throw new Error('sign in first');
+    const ext = ((file.name || '').split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
+    const path = `${user.id}/avatar.${ext}`;
+    const { error } = await s.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600' });
+    if (error) throw new Error(error.message);
+    const { data } = s.storage.from('avatars').getPublicUrl(path);
+    return `${data.publicUrl}?v=${Date.now()}`; // cache-bust on re-upload
+  },
+
+  // -------------------------------------------------------------- follows
+  async followerCount(userId) {
+    const s = sb();
+    if (!s || !userId) return 0;
+    const { count } = await s.from('follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('following_id', userId);
+    return count || 0;
+  },
+
+  async isFollowing(targetId) {
+    const s = sb();
+    if (!s || !targetId) return false;
+    const { data: { user } } = await s.auth.getUser();
+    if (!user) return false;
+    const { data } = await s.from('follows')
+      .select('follower_id')
+      .eq('follower_id', user.id)
+      .eq('following_id', targetId)
+      .maybeSingle();
+    return !!data;
+  },
+
+  async follow(targetId) {
+    const s = sb();
+    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    const { data: { user } } = await s.auth.getUser();
+    if (!user) throw new Error('sign in to follow creators');
+    const { error } = await s.from('follows').insert({ follower_id: user.id, following_id: targetId });
+    if (error && error.code !== '23505') throw new Error(friendly(error.message));
+    return true;
+  },
+
+  async unfollow(targetId) {
+    const s = sb();
+    if (!s) return false;
+    const { data: { user } } = await s.auth.getUser();
+    if (!user) return false;
+    await s.from('follows').delete().eq('follower_id', user.id).eq('following_id', targetId);
+    return true;
+  },
+
   // -------------------------------------------------------------- games
   // Lightweight list for the browse grid (no html payloads).
   async communityGames() {

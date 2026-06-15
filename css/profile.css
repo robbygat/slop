@@ -1,0 +1,142 @@
+/* Profile page — "social for games". Neo-brutalist to match the rest of slop. */
+
+.pf-wrap { max-width: 1100px; margin: 0 auto; padding: 0 20px 90px; }
+
+/* cover banner */
+.pf-cover {
+  height: 200px;
+  margin: 18px 0 0;
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r);
+  box-shadow: var(--sh);
+  background:
+    radial-gradient(circle at 18% 30%, var(--pk) 0, transparent 42%),
+    radial-gradient(circle at 82% 24%, var(--bl) 0, transparent 46%),
+    radial-gradient(circle at 60% 90%, var(--mt) 0, transparent 50%),
+    var(--y);
+  position: relative;
+  overflow: hidden;
+}
+.pf-cover::after {
+  content: "";
+  position: absolute; inset: 0;
+  background-image: radial-gradient(var(--ink) 1.4px, transparent 1.4px);
+  background-size: 22px 22px;
+  opacity: .12;
+}
+
+/* header row */
+.pf-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 22px;
+  margin: -64px 0 0;
+  padding: 0 8px;
+  position: relative;
+  z-index: 2;
+  flex-wrap: wrap;
+}
+.pf-avatar {
+  width: 130px; height: 130px;
+  flex: none;
+  border-radius: 26px;
+  border: var(--bw) solid var(--ink);
+  box-shadow: var(--shb);
+  background: var(--pk);
+  display: grid; place-items: center;
+  font-family: 'Fredoka One', system-ui, sans-serif;
+  font-size: 58px; color: #fff;
+  object-fit: cover;
+  overflow: hidden;
+}
+.pf-id { flex: 1 1 260px; padding-bottom: 6px; min-width: 0; }
+.pf-name {
+  margin: 0;
+  font-family: 'Fredoka One', system-ui, sans-serif;
+  font-size: clamp(26px, 5vw, 40px);
+  line-height: 1.05;
+  color: var(--ink);
+  word-break: break-word;
+}
+.pf-handle { font-weight: 800; color: var(--soft); margin-top: 2px; }
+
+.pf-stats { display: flex; gap: 26px; margin-top: 12px; }
+.pf-stat { display: flex; align-items: baseline; gap: 6px; font-weight: 800; }
+.pf-stat b { font-family: 'Fredoka One', system-ui, sans-serif; font-size: 20px; color: var(--ink); }
+.pf-stat span { color: var(--soft); font-size: 14px; text-transform: lowercase; }
+
+/* action button (follow / edit) */
+.pf-actions { padding-bottom: 8px; }
+.pf-btn {
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 15px;
+  padding: 12px 26px;
+  border: var(--bw) solid var(--ink);
+  border-radius: 999px;
+  box-shadow: var(--sh);
+  cursor: pointer;
+  background: var(--pk);
+  color: #fff;
+  transition: transform .08s ease, box-shadow .08s ease, background .15s ease;
+}
+.pf-btn:hover { transform: translate(-1px,-1px); box-shadow: var(--shb); }
+.pf-btn:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--ink); }
+.pf-btn.following { background: var(--wh); color: var(--ink); }
+.pf-btn.following::before { content: "✓ "; }
+.pf-btn.ghost { background: var(--wh); color: var(--ink); }
+.pf-btn[disabled] { opacity: .55; cursor: default; transform: none; }
+
+/* games section */
+.pf-section-title {
+  font-family: 'Fredoka One', system-ui, sans-serif;
+  font-size: 22px; color: var(--ink);
+  margin: 40px 0 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.pf-section-title .count {
+  font-size: 13px; font-family: 'Nunito', sans-serif; font-weight: 900;
+  background: var(--ink); color: var(--y);
+  padding: 3px 10px; border-radius: 999px;
+}
+.pf-empty, .pf-missing {
+  text-align: center; padding: 64px 20px; color: var(--soft); font-weight: 800;
+  border: var(--bw) dashed var(--ink); border-radius: var(--r); background: var(--wh);
+}
+.pf-missing a, .pf-empty a { color: var(--pk); }
+
+/* edit-profile modal */
+.pf-modal { position: fixed; inset: 0; background: rgba(20,18,31,.6); display: grid; place-items: center; z-index: 9999; padding: 18px; }
+.pf-modal.hidden { display: none; }
+.pf-card {
+  width: min(440px, 100%);
+  background: var(--cr);
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r);
+  box-shadow: var(--shb);
+  padding: 24px;
+}
+.pf-card h3 { margin: 0 0 4px; font-family: 'Fredoka One', system-ui, sans-serif; font-size: 24px; }
+.pf-card p.sub { margin: 0 0 18px; color: var(--soft); font-weight: 700; font-size: 14px; }
+.pf-field { margin-bottom: 16px; }
+.pf-field label { display: block; font-weight: 900; font-size: 13px; margin-bottom: 6px; }
+.pf-card input[type=text] {
+  width: 100%; padding: 12px 14px; font: inherit; font-weight: 700;
+  border: var(--bw) solid var(--ink); border-radius: 12px; background: var(--wh);
+}
+.pf-avatar-edit { display: flex; align-items: center; gap: 14px; }
+.pf-avatar-prev {
+  width: 70px; height: 70px; border-radius: 18px; border: var(--bw) solid var(--ink);
+  object-fit: cover; background: var(--pk); display: grid; place-items: center;
+  font-family: 'Fredoka One', sans-serif; color: #fff; font-size: 30px; flex: none;
+}
+.pf-row { display: flex; gap: 10px; margin-top: 8px; }
+.pf-row .pf-btn { flex: 1; box-shadow: var(--sh); }
+.pf-error { color: var(--red); font-weight: 800; font-size: 13px; min-height: 18px; margin-top: 6px; }
+
+@media (max-width: 560px) {
+  .pf-head { gap: 14px; margin-top: -52px; }
+  .pf-avatar { width: 100px; height: 100px; font-size: 44px; border-radius: 22px; }
+  .pf-actions { width: 100%; }
+  .pf-actions .pf-btn { width: 100%; }
+}

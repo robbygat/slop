@@ -20,41 +20,7 @@
 <link rel="stylesheet" href="css/browse.css">
 <link rel="stylesheet" href="css/footer.css">
 <link rel="stylesheet" href="css/mobile.css">
-
-<style>
-.profile-head {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 40px 24px 8px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-.profile-avatar {
-  width: 84px; height: 84px;
-  border-radius: 18px;
-  background: var(--pk, #FF4EB8);
-  border: 3px solid var(--ink, #14121f);
-  box-shadow: 4px 4px 0 var(--ink, #14121f);
-  display: grid; place-items: center;
-  font-family: 'Fredoka One', system-ui, sans-serif;
-  font-size: 38px; color: #fff;
-  object-fit: cover;
-  flex: none;
-}
-.profile-meta h1 { margin: 0; font-family: 'Fredoka One', system-ui, sans-serif; font-size: clamp(26px, 5vw, 40px); }
-.profile-meta .handle { color: var(--soft, #6b6780); font-weight: 800; }
-.profile-meta .stat { margin-top: 6px; font-weight: 700; color: var(--soft, #6b6780); }
-.profile-games { max-width: 1180px; margin: 8px auto 80px; padding: 0 24px; }
-.profile-section-title {
-  font-family: 'Fredoka One', system-ui, sans-serif;
-  font-size: 20px; margin: 18px 0 14px;
-}
-.profile-empty, .profile-missing {
-  text-align: center; padding: 60px 20px; color: var(--soft, #6b6780); font-weight: 800;
-}
-.profile-missing a, .profile-empty a { color: var(--pk, #FF4EB8); }
-</style>
+<link rel="stylesheet" href="css/profile.css">
 </head>
 <body>
 
@@ -78,21 +44,54 @@
   </div>
 </nav>
 
-<main>
-  <header class="profile-head" id="profile-head" hidden>
-    <div class="profile-avatar" id="profile-avatar">S</div>
-    <div class="profile-meta">
-      <h1 id="profile-name">@user</h1>
-      <div class="handle" id="profile-handle"></div>
-      <div class="stat" id="profile-stat"></div>
-    </div>
-  </header>
+<main class="pf-wrap">
+  <div id="pf-body" hidden>
+    <div class="pf-cover"></div>
+    <header class="pf-head">
+      <div class="pf-avatar" id="pf-avatar">S</div>
+      <div class="pf-id">
+        <h1 class="pf-name" id="pf-name">@user</h1>
+        <div class="pf-handle" id="pf-handle"></div>
+        <div class="pf-stats">
+          <div class="pf-stat"><b id="pf-followers">0</b><span>followers</span></div>
+          <div class="pf-stat"><b id="pf-games-count">0</b><span>games</span></div>
+        </div>
+      </div>
+      <div class="pf-actions" id="pf-actions"></div>
+    </header>
 
-  <section class="profile-games">
-    <div id="profile-status"></div>
-    <div class="games-grid browse-grid" id="profile-grid"></div>
-  </section>
+    <h2 class="pf-section-title">Games <span class="count" id="pf-grid-count">0</span></h2>
+    <div class="games-grid browse-grid" id="pf-grid"></div>
+  </div>
+
+  <div id="pf-status"></div>
 </main>
+
+<!-- edit-profile modal -->
+<div class="pf-modal hidden" id="pf-edit">
+  <div class="pf-card">
+    <h3>Edit profile</h3>
+    <p class="sub">this is how you show up across slop.game.</p>
+    <div class="pf-field">
+      <label>Profile picture</label>
+      <div class="pf-avatar-edit">
+        <div class="pf-avatar-prev" id="pf-edit-prev">S</div>
+        <div>
+          <input type="file" id="pf-edit-file" accept="image/*">
+        </div>
+      </div>
+    </div>
+    <div class="pf-field">
+      <label for="pf-edit-name">Display name</label>
+      <input type="text" id="pf-edit-name" placeholder="your name" maxlength="40">
+    </div>
+    <div class="pf-error" id="pf-edit-error"></div>
+    <div class="pf-row">
+      <button class="pf-btn ghost" id="pf-edit-cancel" type="button">Cancel</button>
+      <button class="pf-btn" id="pf-edit-save" type="button">Save</button>
+    </div>
+  </div>
+</div>
 
 <script type="module" src="js/profile.js"></script>
 </body>

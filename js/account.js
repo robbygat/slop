@@ -222,8 +222,11 @@ function renderNavAuth() {
   const slot = document.getElementById('nav-auth');
   if (!slot) return;
   if (currentUser?.username) {
+    const av = currentUser.avatar_url
+      ? `<img class="nav-avatar" src="${escapeHTML(currentUser.avatar_url)}" alt="">`
+      : `<span class="nav-avatar nav-avatar-fallback">${escapeHTML((currentUser.username[0] || 'S').toUpperCase())}</span>`;
     slot.innerHTML = `
-      <a class="nav-user" href="/${escapeHTML(currentUser.username)}" title="your profile">@${escapeHTML(currentUser.username)}</a>
+      <a class="nav-user" href="/${escapeHTML(currentUser.username)}" title="your profile">${av}<span>@${escapeHTML(currentUser.username)}</span></a>
       <button class="nav-signout" id="nav-signout" title="sign out">sign out</button>`;
     slot.querySelector('#nav-signout').addEventListener('click', async () => {
       await getSupabase()?.auth.signOut();
