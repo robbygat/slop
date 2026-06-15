@@ -47,15 +47,16 @@
 <main class="pf-wrap">
   <div id="pf-body" hidden>
     <div class="pf-cover"></div>
-    <header class="pf-head">
+    <header class="pf-hero">
       <div class="pf-avatar" id="pf-avatar">S</div>
-      <div class="pf-id">
-        <h1 class="pf-name" id="pf-name">@user</h1>
-        <div class="pf-handle" id="pf-handle"></div>
-        <div class="pf-stats">
-          <div class="pf-stat"><b id="pf-followers">0</b><span>followers</span></div>
-          <div class="pf-stat"><b id="pf-games-count">0</b><span>games</span></div>
-        </div>
+      <h1 class="pf-name" id="pf-name">@user</h1>
+      <div class="pf-handle" id="pf-handle"></div>
+      <p class="pf-bio" id="pf-bio" hidden></p>
+      <a class="pf-link" id="pf-link" target="_blank" rel="noopener nofollow ugc" hidden></a>
+      <div class="pf-stats">
+        <div class="pf-stat"><b id="pf-plays">0</b><span>plays</span></div>
+        <div class="pf-stat"><b id="pf-followers">0</b><span>followers</span></div>
+        <div class="pf-stat"><b id="pf-games-count">0</b><span>games</span></div>
       </div>
       <div class="pf-actions" id="pf-actions"></div>
     </header>
@@ -84,6 +85,15 @@
     <div class="pf-field">
       <label for="pf-edit-name">Display name</label>
       <input type="text" id="pf-edit-name" placeholder="your name" maxlength="40">
+    </div>
+    <div class="pf-field">
+      <label for="pf-edit-bio">Bio</label>
+      <textarea id="pf-edit-bio" placeholder="tell people what you make…" maxlength="300" rows="3"></textarea>
+      <div class="pf-charcount"><span id="pf-bio-count">0</span>/300</div>
+    </div>
+    <div class="pf-field">
+      <label for="pf-edit-link">Link</label>
+      <input type="text" id="pf-edit-link" placeholder="yoursite.com or @yourhandle's link" maxlength="200">
     </div>
     <div class="pf-error" id="pf-edit-error"></div>
     <div class="pf-row">

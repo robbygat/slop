@@ -3,6 +3,7 @@
 import { initHero } from './hero.js';
 import { initGamesGrid } from './games-grid.js';
 import { initSearch } from './search.js';
+import { initStats } from './stats.js';
 import { initAccount, openAuthModal, getUser } from './account.js';
 import { initUpload } from './upload.js';
 import { initXP } from './xp.js';
@@ -21,6 +22,7 @@ initFeatureCarousel();
 initDailyDrop();
 initAppStore();
 initReveal();
+initStats();
 
 // remix CTA → SlopKart with the live remix dock open
 document.getElementById('remix-btn')?.addEventListener('click', () => {

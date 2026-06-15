@@ -59,3 +59,41 @@
 }
 
 .sp-empty { padding: 18px 14px; color: var(--soft); font-weight: 800; font-size: 14px; }
+
+/* homepage platform stats strip */
+.platform-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 22px 0 4px;
+}
+.pstat {
+  flex: 1 1 150px;
+  background: var(--wh);
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r);
+  box-shadow: var(--sh);
+  padding: 16px 18px;
+  text-align: center;
+}
+.pstat b {
+  display: block;
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(28px, 5vw, 40px);
+  line-height: 1;
+  color: var(--pk);
+}
+.pstat span {
+  display: block;
+  margin-top: 6px;
+  font-weight: 900;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--soft);
+}
+@media (max-width: 560px) {
+  .platform-stats { gap: 10px; }
+  .pstat { flex: 1 1 100px; padding: 12px 8px; }
+  .pstat span { font-size: 10.5px; letter-spacing: .03em; }
+}

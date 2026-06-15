@@ -52,7 +52,7 @@ export const api = {
     const user = session?.user;
     if (!user) return null;
     const { data } = await s.from('profiles')
-      .select('id, username, display_name, avatar_url, is_moderator')
+      .select('id, username, display_name, avatar_url, bio, link, is_moderator')
       .eq('id', user.id)
       .maybeSingle();
     // Signed in but profile row not materialised yet → still "logged in".
@@ -63,7 +63,7 @@ export const api = {
     const s = sb();
     if (!s || !username) return null;
     const { data } = await s.from('profiles')
-      .select('id, username, display_name, avatar_url')
+      .select('id, username, display_name, avatar_url, bio, link')
       .ilike('username', username)
       .maybeSingle();
     return data || null;
@@ -111,6 +111,8 @@ export const api = {
     const fields = {};
     if (patch.display_name !== undefined) fields.display_name = patch.display_name || null;
     if (patch.avatar_url !== undefined) fields.avatar_url = patch.avatar_url || null;
+    if (patch.bio !== undefined) fields.bio = (patch.bio || '').slice(0, 300) || null;
+    if (patch.link !== undefined) fields.link = sanitizeLink(patch.link);
     const { error } = await s.from('profiles').update(fields).eq('id', user.id);
     if (error) throw new Error(friendly(error.message));
     return true;
@@ -250,22 +252,30 @@ export const api = {
   },
 
   // -------------------------------------------------------------- plays
-  async recordPlay(slug) {
+  async recordPlay(id) {
     const s = sb();
-    if (!s || !slug) return null;
-    const { data, error } = await s.rpc('increment_play_count', { p_slug: slug });
+    if (!s || !id) return null;
+    // bump_play covers every game kind (launch ids + community slugs) and keeps
+    // games.play_count in sync; this makes launch-game plays globally counted.
+    const { data, error } = await s.rpc('bump_play', { p_id: id });
     return error ? null : data;
   },
 
-  // Map of slug → play_count for every published game (the grid merges this in).
+  // Map of id → play count for every game tracked globally (launch + community).
   async allPlays() {
     const s = sb();
     if (!s) return null;
-    const { data, error } = await s.from('games')
-      .select('slug, play_count')
-      .eq('status', 'published');
+    const { data, error } = await s.from('play_totals').select('id, count');
     if (error) return null;
-    return Object.fromEntries((data || []).map((g) => [g.slug, g.play_count || 0]));
+    return Object.fromEntries((data || []).map((g) => [g.id, g.count || 0]));
+  },
+
+  // Platform-wide stats for the homepage: total accounts + total plays + games.
+  async platformStats() {
+    const s = sb();
+    if (!s) return null;
+    const { data, error } = await s.rpc('platform_stats');
+    return error ? null : data;
   },
 
   // -------------------------------------------------------------- scores / leaderboards
@@ -359,6 +369,19 @@ export const api = {
 
 function looksLikeUuid(v) {
   return typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+}
+
+// Normalise a profile link: trim, require http(s), default to https://, cap len.
+// Returns null for empty/invalid so the column stays clean.
+function sanitizeLink(raw) {
+  let v = String(raw || '').trim();
+  if (!v) return null;
+  if (!/^https?:\/\//i.test(v)) v = `https://${v}`;
+  try {
+    const u = new URL(v);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    return u.href.slice(0, 200);
+  } catch { return null; }
 }
 
 // Turn raw Postgres/Supabase errors into something a player can read.

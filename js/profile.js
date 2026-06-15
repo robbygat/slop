@@ -25,6 +25,19 @@ function avatarMarkup(url, name, cls) {
     : initial(name);
 }
 
+// Show bio + link from the current `profile` object.
+function renderBioLink() {
+  const bioEl = $('pf-bio');
+  const linkEl = $('pf-link');
+  if (profile.bio) { bioEl.textContent = profile.bio; bioEl.hidden = false; }
+  else { bioEl.hidden = true; }
+  if (profile.link) {
+    linkEl.href = profile.link;
+    linkEl.textContent = profile.link.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    linkEl.hidden = false;
+  } else { linkEl.hidden = true; }
+}
+
 function gameCard(g, canModerate) {
   const thumb = g.thumb
     ? `<img src="${escapeHTML(g.thumb)}" alt="${escapeHTML(g.name)} screenshot" loading="lazy">`
@@ -70,6 +83,7 @@ async function render() {
   $('pf-name').textContent = profile.display_name || `@${profile.username}`;
   $('pf-handle').textContent = `@${profile.username}`;
   $('pf-avatar').innerHTML = avatarMarkup(profile.avatar_url, profile.username, 'pf-avatar');
+  renderBioLink();
 
   // stats + games + follow state in parallel
   const isOwner = viewer?.id === profile.id;
@@ -80,6 +94,8 @@ async function render() {
   ]);
   following = isFollowing;
 
+  const totalPlays = games.reduce((sum, g) => sum + (g.play_count || 0), 0);
+  $('pf-plays').textContent = fmtPlays(totalPlays);
   $('pf-followers').textContent = fmtPlays(followers);
   $('pf-games-count').textContent = games.length;
   $('pf-grid-count').textContent = games.length;
@@ -157,11 +173,18 @@ async function onGridClick(e) {
 // ---------------------------------------------------------------- edit profile
 function openEdit() {
   $('pf-edit-name').value = profile.display_name || '';
+  $('pf-edit-bio').value = profile.bio || '';
+  $('pf-edit-link').value = profile.link || '';
+  $('pf-bio-count').textContent = ($('pf-edit-bio').value || '').length;
   $('pf-edit-prev').innerHTML = avatarMarkup(profile.avatar_url, profile.username, 'pf-avatar-prev');
   $('pf-edit-error').textContent = '';
   pendingAvatarUrl = undefined;
   $('pf-edit').classList.remove('hidden');
 }
+
+document.getElementById('pf-edit-bio')?.addEventListener('input', (e) => {
+  $('pf-bio-count').textContent = e.target.value.length;
+});
 function closeEdit() { $('pf-edit').classList.add('hidden'); }
 
 let pendingAvatarUrl; // set after a successful upload, before save
@@ -190,12 +213,19 @@ $('pf-edit-save').addEventListener('click', async () => {
   const err = $('pf-edit-error');
   btn.disabled = true;
   try {
-    const patch = { display_name: $('pf-edit-name').value.trim() };
+    const patch = {
+      display_name: $('pf-edit-name').value.trim(),
+      bio: $('pf-edit-bio').value.trim(),
+      link: $('pf-edit-link').value.trim(),
+    };
     if (pendingAvatarUrl !== undefined) patch.avatar_url = pendingAvatarUrl;
     await api.updateProfile(patch);
-    profile = { ...profile, ...patch };
+    // re-read so the displayed link reflects server-side normalisation
+    const fresh = await api.profileByUsername(profile.username).catch(() => null);
+    profile = fresh || { ...profile, ...patch };
     $('pf-name').textContent = profile.display_name || `@${profile.username}`;
     $('pf-avatar').innerHTML = avatarMarkup(profile.avatar_url, profile.username, 'pf-avatar');
+    renderBioLink();
     closeEdit();
     showToast('profile updated');
   } catch (e2) {
