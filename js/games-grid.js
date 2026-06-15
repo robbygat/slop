@@ -308,22 +308,72 @@ const html = items.map((it) => it.render(it.g)).join('');
 grid.innerHTML = html || `<p style="grid-column:1/-1;text-align:center;color:var(--soft);font-weight:700;padding:40px">no games match “${escapeHTML(query)}” — try a different search, or <a href="#pwin" style="color:var(--pk)">cook one</a>.</p>`;
 }
 
-// Most Popular — Run 3 only, live gameplay video.
-function renderPopular() {
+// The 3 most-played games across every source (launch + cooked + community),
+// each tagged with its kind so we can build the right link + click behaviour.
+function topPlayedItems(n = 3) {
+const all = [
+...games.map((g) => ({ g, kind: 'launch' })),
+...getCookedGames().map((g) => ({ g, kind: 'cooked' })),
+...communityGames.map((g) => ({ g, kind: 'community' })),
+];
+return all.sort((a, b) => totalPlays(b.g) - totalPlays(a.g)).slice(0, n);
+}
+
+function podiumHref(g, kind) {
+if (kind === 'cooked') return `play.html?id=${encodeURIComponent(g.id)}`;
+if (kind === 'community') return `/play/${encodeURIComponent(g.slug)}`;
+return g.href;
+}
+
+function podiumCardHTML(item, rank) {
+const { g, kind } = item;
+const dest = podiumHref(g, kind);
+const cat = g.tags?.[0] || (kind === 'community' ? 'Community' : kind === 'cooked' ? 'AI-Gen' : 'Game');
+const media = thumbMedia(g, { video: rank === 1 && !!g.previewVideo });
+// only launch cards self-report a play on click (their pages don't); cooked &
+// community plays are counted by play.html on boot.
+const idAttr = kind === 'launch' ? ` data-id="${escapeHTML(g.id)}"` : '';
+return `
+<a class="pod-card rank-${rank}" href="${escapeHTML(dest)}"${idAttr}>
+<span class="pod-rank">#${rank}</span>
+<div class="pod-thumb">
+${media}
+${g.multi ? '<span class="pod-multi">MP</span>' : ''}
+<div class="pod-play" aria-hidden="true"></div>
+</div>
+<div class="pod-info">
+<span class="pod-cat">${escapeHTML(cat)}</span>
+<h4>${escapeHTML(g.name)}</h4>
+<span class="pod-plays">${fmtPlays(totalPlays(g))} plays</span>
+</div>
+</a>`;
+}
+
+// Most played — a 3-up podium: #1 in the center (large), #2 left, #3 right.
+function renderPodium() {
 const grid = document.getElementById('popular-grid');
 if (!grid) return;
-const run3 = games.find((g) => g.id === 'run3');
-if (!run3) {
-grid.innerHTML = '';
-return;
-}
-grid.innerHTML = cardHTML({ ...run3, featured: true }, { video: true, hot: true, v2: false });
+const top = topPlayedItems(3);
+if (!top.length) { grid.innerHTML = ''; return; }
+const slotName = ['first', 'second', 'third'];
+// visual left→right order is #2, #1, #3 so the winner sits in the middle
+const layout = top.length >= 3 ? [1, 0, 2] : top.map((_, i) => i);
+grid.innerHTML = layout
+.map((idx) => `<div class="pod-slot ${slotName[idx]}">${podiumCardHTML(top[idx], idx + 1)}</div>`)
+.join('');
 wirePreviewVideos(grid);
+}
+
+// Click a podium card: launch games self-report a play, then the anchor
+// navigates on its own (cooked/community pages count their own plays on boot).
+function onPodiumClick(e) {
+const card = e.target.closest('.pod-card');
+if (card?.dataset.id) recordPlay(card.dataset.id);
 }
 
 export function rerenderGrid() {
 renderGames();
-renderPopular();
+renderPodium();
 // hide the static "most popular" row while searching so the results grid is
 // the only thing on screen — otherwise search looks like it did nothing.
 const searching = !!query.trim();
@@ -427,5 +477,5 @@ btn.addEventListener('click', () => setSort(btn.dataset.sort));
 });
 
 document.getElementById('games-grid').addEventListener('click', onGridClick);
-document.getElementById('popular-grid')?.addEventListener('click', onGridClick);
+document.getElementById('popular-grid')?.addEventListener('click', onPodiumClick);
 }

@@ -137,6 +137,22 @@ export const api = {
     return `${data.publicUrl}?v=${Date.now()}`; // cache-bust on re-upload
   },
 
+  // Upload a custom game thumbnail to the public `avatars` bucket (the bucket's
+  // RLS only lets a user write under their own id/ folder, so the path is
+  // namespaced by uid) → returns its URL. Used when publishing a game.
+  async uploadThumb(file) {
+    const s = sb();
+    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    const { data: { user } } = await s.auth.getUser();
+    if (!user) throw new Error('sign in first');
+    const ext = ((file.name || '').split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+    const path = `${user.id}/thumb-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await s.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600' });
+    if (error) throw new Error(error.message);
+    const { data } = s.storage.from('avatars').getPublicUrl(path);
+    return data.publicUrl;
+  },
+
   // Upload a profile banner to the public `avatars` bucket → returns its URL.
   async uploadBanner(file) {
     const s = sb();

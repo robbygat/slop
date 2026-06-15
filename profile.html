@@ -83,7 +83,10 @@
             <div class="pf-names">
               <span class="pf-creator-tag">creator</span>
               <h1 class="pf-name" id="pf-name">@user</h1>
-              <p class="pf-handle" id="pf-handle"></p>
+              <div class="pf-meta-row">
+                <p class="pf-handle" id="pf-handle"></p>
+                <span class="pf-member" id="pf-member" hidden></span>
+              </div>
             </div>
             <div class="pf-actions" id="pf-actions"></div>
           </div>
@@ -96,23 +99,18 @@
             <div class="pf-stat"><b id="pf-followers">0</b><span>followers</span></div>
             <div class="pf-stat"><b id="pf-games-count">0</b><span>games</span></div>
           </div>
+
+          <div class="pf-xp-card" id="pf-xp" hidden></div>
         </div>
       </div>
 
-      <div class="pf-body">
-        <aside class="pf-side">
-          <div class="pf-xp-card" id="pf-xp" hidden></div>
-          <p class="pf-member" id="pf-member" hidden></p>
-        </aside>
-
-        <section class="pf-games">
-          <div class="pf-games-head">
-            <h2><span class="pf-tab-dot"></span> Published games</h2>
-            <span class="pf-games-count" id="pf-grid-count">0</span>
-          </div>
-          <div class="pf-game-grid" id="pf-grid"></div>
-        </section>
-      </div>
+      <section class="pf-games">
+        <div class="pf-games-head">
+          <h2><span class="pf-tab-dot"></span> Published games</h2>
+          <span class="pf-games-count" id="pf-grid-count">0</span>
+        </div>
+        <div class="pf-game-grid" id="pf-grid"></div>
+      </section>
     </div>
   </div>
 </div>

@@ -11,7 +11,11 @@
 
 #pf-shell {
   position: relative;
-  padding-bottom: 48px;
+  /* explicit stacking context (not z-index:auto) so the animated avatar ring,
+     banner glow, and shimmer never escape their compositor layer and paint over
+     the sticky nav / its dropdown menu */
+  z-index: 0;
+  padding-bottom: 40px;
   overflow: hidden;
 }
 
@@ -80,10 +84,10 @@
 
 .pf-cover-zone {
   position: relative;
-  margin-top: 12px;
-  padding: 10px;
+  margin-top: 10px;
+  padding: 9px;
   overflow: hidden;
-  border-radius: 26px;
+  border-radius: 24px;
 }
 
 .pf-banner-glow {
@@ -124,8 +128,8 @@
 }
 
 .pf-banner {
-  height: clamp(160px, 22vw, 280px);
-  border-radius: 20px;
+  height: clamp(132px, 17vw, 208px);
+  border-radius: 18px;
   border: var(--bw) solid var(--ink);
   box-shadow: var(--shb);
   overflow: hidden;
@@ -162,14 +166,14 @@
 /* ---- main card ---- */
 
 .pf-card {
-  margin-top: -56px;
+  margin-top: -52px;
   position: relative;
   z-index: 2;
   background: var(--pf-bg, var(--cr));
   border: var(--bw) solid var(--ink);
-  border-radius: 24px;
+  border-radius: 22px;
   box-shadow: var(--shb);
-  padding: 0 28px 36px;
+  padding: 0 26px 26px;
   overflow: visible;
 }
 
@@ -221,9 +225,9 @@
 
 .pf-identity {
   display: flex;
-  gap: 28px;
+  gap: 24px;
   align-items: flex-start;
-  padding-top: 4px;
+  padding-top: 2px;
 }
 
 /* avatar — grid stack guarantees photo paints above ring */
@@ -317,7 +321,7 @@
 .pf-id {
   flex: 1;
   min-width: 0;
-  padding-top: 16px;
+  padding-top: 12px;
 }
 
 .pf-id-top {
@@ -353,12 +357,39 @@
   word-break: break-word;
 }
 
+.pf-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 6px;
+}
+
 .pf-handle {
-  margin: 4px 0 0;
+  margin: 0;
   font-family: 'Space Mono', monospace;
   font-size: 14px;
   font-weight: 700;
   color: var(--soft);
+}
+
+.pf-member {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--soft);
+}
+.pf-member::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
 }
 
 .pf-tagline {
@@ -404,7 +435,7 @@
   display: flex;
   gap: 8px;
   flex-shrink: 0;
-  padding-top: 28px;
+  padding-top: 20px;
 }
 
 .pf-btn {
@@ -435,6 +466,23 @@
   border-color: rgba(26, 26, 46, 0.2);
 }
 .pf-btn[disabled] { opacity: 0.5; cursor: default; transform: none; }
+
+/* compact icon-only button (share) */
+.pf-btn.icon {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  background: var(--wh);
+  color: var(--ink);
+}
+.pf-btn.icon svg { width: 19px; height: 19px; }
+.pf-card.pf-dark .pf-btn.icon {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
 
 /* stats */
 .pf-stats {
@@ -472,41 +520,28 @@
   color: var(--soft);
 }
 
-/* ---- body: sidebar + games ---- */
+/* ---- games (full width, no sidebar) ---- */
 
-.pf-body {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 28px;
-  margin-top: 32px;
-  padding-top: 28px;
+.pf-games {
+  margin-top: 28px;
+  padding-top: 24px;
   border-top: 2px dashed rgba(26, 26, 46, 0.12);
 }
 
-.pf-side { display: flex; flex-direction: column; gap: 12px; }
-
-.pf-member {
-  margin: 0;
-  font-family: 'Space Mono', monospace;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--soft);
-  text-align: center;
-}
-
-/* XP card */
+/* XP card — slim, owner-only, sits under the stats inside the identity block */
 .pf-xp-card {
-  padding: 16px;
+  margin-top: 14px;
+  padding: 14px 16px;
   background: var(--wh);
   border: var(--bw) solid var(--ink);
-  border-radius: 18px;
+  border-radius: 16px;
   box-shadow: var(--sh);
 }
 
 .pf-xp-inner {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .pf-xp-level {
@@ -901,20 +936,6 @@
 
 /* ---- responsive ---- */
 
-@media (max-width: 860px) {
-  .pf-body {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  .pf-side {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: stretch;
-  }
-  .pf-xp-card { flex: 1 1 240px; }
-  .pf-member { flex: 1 1 100%; }
-}
-
 @media (max-width: 640px) {
   .pf-stage { padding: 0 10px; }
   .pf-card {
@@ -947,6 +968,7 @@
     align-items: center;
     gap: 12px;
   }
+  .pf-meta-row { justify-content: center; }
   .pf-actions { padding-top: 0; width: 100%; justify-content: center; }
   .pf-stats { width: 100%; }
   .pf-stat { flex: 1; }

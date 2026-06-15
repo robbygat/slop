@@ -198,20 +198,43 @@ async function render() {
   };
 }
 
+const SHARE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>`;
+
 function renderActions(isOwner) {
   const slot = $('pf-actions');
+  const shareBtn = `<button class="pf-btn icon pf-share" id="pf-share" type="button" aria-label="share this profile" title="share profile">${SHARE_SVG}</button>`;
+  let main;
   if (isOwner) {
-    slot.innerHTML = `<button class="pf-btn ghost" id="pf-edit-btn" type="button">Edit page</button>`;
-    $('pf-edit-btn').onclick = openEdit;
+    main = `<button class="pf-btn ghost" id="pf-edit-btn" type="button">Edit page</button>`;
+  } else if (!viewer) {
+    main = `<button class="pf-btn primary" id="pf-follow" type="button">Follow</button>`;
+  } else {
+    main = `<button class="pf-btn ${following ? 'following' : 'primary'}" id="pf-follow" type="button">${following ? 'Following' : 'Follow'}</button>`;
+  }
+  slot.innerHTML = main + shareBtn;
+
+  if (isOwner) $('pf-edit-btn').onclick = openEdit;
+  else if (!viewer) $('pf-follow').onclick = () => showToast('sign in to follow creators');
+  else $('pf-follow').onclick = toggleFollow;
+  $('pf-share').onclick = shareProfile;
+}
+
+// One-click share: native share sheet where supported, else copy the link.
+async function shareProfile() {
+  const url = `${location.origin}/${profile.username}`;
+  const title = `${profile.display_name || profile.username} on slop.game`;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text: `check out @${profile.username}'s games on slop.game`, url });
+    } catch { /* user cancelled the share sheet — do nothing */ }
     return;
   }
-  if (!viewer) {
-    slot.innerHTML = `<button class="pf-btn primary" id="pf-follow" type="button">Follow</button>`;
-    $('pf-follow').onclick = () => showToast('sign in to follow creators');
-    return;
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast('profile link copied!');
+  } catch {
+    showToast(url);
   }
-  slot.innerHTML = `<button class="pf-btn ${following ? 'following' : 'primary'}" id="pf-follow" type="button">${following ? 'Following' : 'Follow'}</button>`;
-  $('pf-follow').onclick = toggleFollow;
 }
 
 async function toggleFollow() {

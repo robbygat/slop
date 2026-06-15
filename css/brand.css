@@ -26,29 +26,33 @@ animation: howPotBob 3.2s ease-in-out infinite;
 
 /* ---------------------------------------------------------------- nav search */
 .nav-search {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 14px;
   background: var(--wh);
-  border: var(--bw) solid var(--ink);
-  border-radius: 100px;
-  padding: 8px 16px;
-  box-shadow: 3px 3px 0 var(--ink);
+  border: 2.5px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 2px 2px 0 var(--ink);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 .nav-search:focus-within {
   transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
 }
 .nav-search svg { width: 16px; height: 16px; color: var(--soft); flex-shrink: 0; }
 .nav-search input {
   border: none;
   outline: none;
   background: none;
+  min-width: 0;
+  width: clamp(130px, 14vw, 190px);
   font-family: 'Nunito', sans-serif;
   font-weight: 700;
   font-size: 13.5px;
-  width: clamp(120px, 16vw, 180px);
+  line-height: 1;
   color: var(--ink);
 }
 .nav-search input::placeholder { color: var(--soft); opacity: 0.65; }

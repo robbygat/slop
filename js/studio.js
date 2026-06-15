@@ -497,6 +497,24 @@ $('game-title').addEventListener('change', () => { game.name = $('game-title').v
 $('undo-btn').addEventListener('click', () => { if (!game.history.length) return; const prev = game.history.pop(); game.srcHtml = prev.srcHtml; game.files = prev.files || {}; refreshFrame(); persist(); renderFiles(); tlAgent('rolled back to the previous build', 'good'); });
 $('restart-btn').addEventListener('click', () => { if (game.srcHtml) refreshFrame(); });
 $('download-btn').addEventListener('click', exportZip);
+$('thumb-btn').addEventListener('click', () => $('thumb-file').click());
+$('thumb-file').addEventListener('change', async (e) => {
+const file = e.target.files?.[0];
+e.target.value = '';
+if (!file) return;
+if (file.size > 3 * 1024 * 1024) { toast('thumbnail too big — max 3 MB'); return; }
+const btn = $('thumb-btn');
+btn.disabled = true; btn.textContent = 'Uploading…';
+try {
+game.thumb = await api.uploadThumb(file);
+if (game.srcHtml) persist();
+toast('custom thumbnail set — it shows when you publish');
+} catch (err) {
+toast(err.message || 'thumbnail upload failed');
+} finally {
+btn.disabled = false; btn.textContent = 'Thumbnail';
+}
+});
 $('open-play').addEventListener('click', () => { if (game.id) window.open(`play.html?id=${encodeURIComponent(game.id)}`, '_blank'); });
 $('publish-btn').addEventListener('click', async () => { $('publish-btn').disabled = true; $('publish-btn').textContent = 'Publishing…'; const slug = await publish(); $('publish-btn').disabled = false; $('publish-btn').textContent = slug ? 'OK Published' : 'Publish'; });
 $('invite-btn').addEventListener('click', openInvite);
@@ -518,7 +536,7 @@ $('collab-toggle').addEventListener('click', () => { if (collab.mode) collab.ope
 function enterClientMode() {
 $('build-btn').textContent = 'Post to board';
 $('prompt').placeholder = 'suggest an idea — it goes to the host\'s prompt board…';
-['publish-btn', 'invite-btn', 'undo-btn', 'mp-toggle', 'sprite-gen', 'download-btn', 'sprite-upload-btn'].forEach((id) => { const e = $(id); if (e) { e.disabled = true; e.style.opacity = .5; e.style.pointerEvents = 'none'; } });
+['publish-btn', 'invite-btn', 'undo-btn', 'mp-toggle', 'sprite-gen', 'download-btn', 'sprite-upload-btn', 'thumb-btn'].forEach((id) => { const e = $(id); if (e) { e.disabled = true; e.style.opacity = .5; e.style.pointerEvents = 'none'; } });
 }
 
 boot();
