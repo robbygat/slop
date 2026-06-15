@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>slop.game — prompt it. play it. share it.</title>
+<meta name="description" content="describe any game in plain english. we build it, give it its own page, and let you remix it. coming soon — join the waitlist.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23FF4EB8%22/><text x=%2250%22 y=%2258%22 text-anchor=%22middle%22 font-family=%22system-ui,sans-serif%22 font-size=%2248%22 font-weight=%22700%22 fill=%22%23FFFFFF%22>S</text></svg>">
+
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/nav.css">
+<link rel="stylesheet" href="css/hero.css">
+<link rel="stylesheet" href="css/sections.css">
+<link rel="stylesheet" href="css/publish.css">
+<link rel="stylesheet" href="css/multiplayer.css">
+<link rel="stylesheet" href="css/footer.css">
+<link rel="stylesheet" href="css/ai.css">
+<link rel="stylesheet" href="css/v2.css">
+<link rel="stylesheet" href="css/brand.css">
+<link rel="stylesheet" href="css/browse.css">
+<link rel="stylesheet" href="css/appstore.css">
+<link rel="stylesheet" href="css/carousel.css">
+
+<!-- ads paused during playtesting — re-enable when ready:
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6363419721600866" crossorigin="anonymous"></script>
+<script src="https://quge5.com/88/tag.min.js" data-zone="248732" async data-cfasync="false"></script>
+-->
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+<div id="toast-container"></div>
+
+<!-- ============ NAV ============ -->
+<nav class="site-nav">
+<a class="brand" href="#">
+<span class="wordmark">slop<span class="dot-pk">.</span>game</span>
+</a>
+
+<div class="nav-links" id="nav-links">
+<a href="#games">Browse</a>
+<a href="studio.html" class="nav-studio">Studio</a>
+<a href="#multiplayer">Multiplayer</a>
+<a href="#publish">Publish</a>
+<button class="cook-btn" id="nav-cook">Cook a Game</button>
+</div>
+
+<div class="nav-right">
+<label class="nav-search" for="nav-search-input">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+<input id="nav-search-input" placeholder="search games…" autocomplete="off">
+</label>
+<span id="nav-xp"></span>
+<span id="nav-auth"></span>
+<button class="nav-burger" id="nav-burger" aria-label="menu">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+</button>
+</div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+<div class="hero-bg" aria-hidden="true"></div>
+
+<div class="hero-inner">
+<header class="hero-head">
+<div class="hero-brand">
+<svg class="pot hero-pot" viewBox="0 0 64 64" aria-hidden="true">
+<circle class="steam s1" cx="23" cy="13" r="4" fill="#C9C9D4"/>
+<circle class="steam s2" cx="33" cy="9" r="5" fill="#C9C9D4"/>
+<circle class="steam s3" cx="43" cy="13" r="3.5" fill="#C9C9D4"/>
+<rect x="2" y="31" width="11" height="8" rx="4" fill="#FF7A35" stroke="#1A1A2E" stroke-width="3"/>
+<rect x="51" y="31" width="11" height="8" rx="4" fill="#FF7A35" stroke="#1A1A2E" stroke-width="3"/>
+<path d="M10 30 h44 v9 a15 15 0 0 1 -15 15 h-14 a15 15 0 0 1 -15 -15 z" fill="#FF4EB8" stroke="#1A1A2E" stroke-width="3" stroke-linejoin="round"/>
+<ellipse cx="32" cy="28" rx="24" ry="7" fill="#FFE135" stroke="#1A1A2E" stroke-width="3"/>
+<circle cx="32" cy="19" r="4.5" fill="#FFE135" stroke="#1A1A2E" stroke-width="3"/>
+<circle cx="25" cy="41" r="4.5" fill="#FFFFFF"/>
+<circle cx="25.5" cy="41.5" r="2" fill="#1A1A2E"/>
+<circle cx="39" cy="41" r="4.5" fill="#FFFFFF"/>
+<circle cx="39.5" cy="41.5" r="2" fill="#1A1A2E"/>
+<ellipse cx="18" cy="46" rx="3.2" ry="2" fill="#FF9DC9" opacity="0.6"/>
+<ellipse cx="46" cy="46" rx="3.2" ry="2" fill="#FF9DC9" opacity="0.6"/>
+<path d="M28.5 47 q3.5 3.5 7 0" fill="none" stroke="#1A1A2E" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
+</div>
+
+<h1 class="hero-h1">
+<span class="hero-line">prompt,</span>
+<span class="hero-line">publish,</span>
+<span class="hero-line hero-accent"><span class="play-word">play.</span></span>
+</h1>
+
+<p class="hero-sub">plain english in → playable game out.</p>
+</header>
+
+<div class="hero-console">
+<div class="pwin" id="pwin">
+<div class="pwin-head">
+<div class="pwin-traffic">
+<span class="wdot r"></span>
+<span class="wdot y"></span>
+<span class="wdot g"></span>
+</div>
+<span class="pwin-label">describe your game</span>
+<div class="model-switch">
+<select id="hero-model" class="model-pick" aria-label="choose the AI model"></select>
+</div>
+</div>
+<textarea id="prompt-input" placeholder="a four-player racing game with drifting mechanics and retro PS1 graphics..." rows="6"></textarea>
+<div class="pwin-foot">
+<div class="hint-scroll">
+<button class="hint-chip" data-prompt="a four-player racing game with drifting mechanics, nitro boosts, and retro PS1 graphics">racing</button>
+<button class="hint-chip" data-prompt="a cozy pixel platformer where a tiny robot collects batteries across 12 increasingly cursed levels">platformer</button>
+<button class="hint-chip" data-prompt="a top-down zombie survival game with crafting, a day/night cycle, and 4-player co-op">survival</button>
+<button class="hint-chip" data-prompt="chess, but every piece has a health bar and pawns can throw tomatoes">chess remix</button>
+</div>
+<button class="gen-btn" id="generate-btn">Generate →</button>
+</div>
+</div>
+
+<p class="hero-studio-cta">
+<a href="studio.html"><b>Slop Studio</b> — full workbench</a>
+</p>
+</div>
+</div>
+</section>
+
+<!-- ============ MARQUEE ============ -->
+<div class="mq-wrap">
+<div class="mq">
+<span>PLATFORMER</span><span class="diamond">·</span>
+<span>RACING</span><span class="diamond">·</span>
+<span>ROGUELIKE</span><span class="diamond">·</span>
+<span>TOWER DEFENSE</span><span class="diamond">·</span>
+<span>MULTIPLAYER</span><span class="diamond">·</span>
+<span>PUZZLE</span><span class="diamond">·</span>
+<span>STRATEGY</span><span class="diamond">·</span>
+<span>CO-OP</span><span class="diamond">·</span>
+<span>RPG</span><span class="diamond">·</span>
+<span>HORROR</span><span class="diamond">·</span>
+<span>IDLE</span><span class="diamond">·</span>
+<span>SURVIVAL</span><span class="diamond">·</span>
+<span>UNITY WEBGL</span><span class="diamond">·</span>
+<span>GODOT</span><span class="diamond">·</span>
+<span>PLATFORMER</span><span class="diamond">·</span>
+<span>RACING</span><span class="diamond">·</span>
+<span>ROGUELIKE</span><span class="diamond">·</span>
+<span>TOWER DEFENSE</span><span class="diamond">·</span>
+<span>MULTIPLAYER</span><span class="diamond">·</span>
+<span>PUZZLE</span><span class="diamond">·</span>
+<span>STRATEGY</span><span class="diamond">·</span>
+<span>CO-OP</span><span class="diamond">·</span>
+<span>RPG</span><span class="diamond">·</span>
+<span>HORROR</span><span class="diamond">·</span>
+<span>IDLE</span><span class="diamond">·</span>
+<span>SURVIVAL</span><span class="diamond">·</span>
+<span>UNITY WEBGL</span><span class="diamond">·</span>
+<span>GODOT</span><span class="diamond">·</span>
+</div>
+</div>
+
+<!-- ============ SLOP GAMES (right after the hero) ============ -->
+<section class="games-sec" id="games">
+<div class="wrap browse-intro">
+<div class="sec-head">
+<h2 class="sec-title">try out what's live.</h2>
+<p class="sec-sub">our launch games, community creations, and everything you cook yourself on slop.game — every one playable &amp; remixable.</p>
+</div>
+
+<!-- July prize ribbon -->
+<div class="prize-ribbon" id="prize-ribbon">
+<span class="pr-badge">JULY</span>
+<span class="pr-text"><b>$100 every Friday in July</b> to the highest-played creator on slop.game. publish games, rack up plays, get paid.</span>
+<a class="pr-cta" href="studio.html">Start creating →</a>
+</div>
+
+<!-- most popular row -->
+<div class="pop-head">
+<h3>Most Popular</h3>
+<span class="pop-sub">#1 on slop.game — watch it run live</span>
+</div>
+<div class="games-grid dense solo" id="popular-grid"></div>
+</div>
+
+<div class="browse-stage">
+<div class="browse-inner">
+
+<!-- browse all -->
+<div class="browse-toolbar">
+<div class="browse-head">
+<h3>Browse all</h3>
+</div>
+<div class="sort-row" id="sort-row">
+<button class="sbtn active" data-sort="popular">Popular</button>
+<button class="sbtn" data-sort="newest">Newest</button>
+</div>
+<div class="filter-row" id="filter-row">
+<button class="fbtn active" data-tag="All">All</button>
+<button class="fbtn" data-tag="Multiplayer">Multiplayer</button>
+<button class="fbtn" data-tag="Racing">Racing</button>
+<button class="fbtn" data-tag="Action">Action</button>
+<button class="fbtn" data-tag="RPG">RPG</button>
+<button class="fbtn" data-tag="Sandbox">Sandbox</button>
+<button class="fbtn" data-tag="AI-Gen">AI-Gen</button>
+</div>
+</div>
+<div class="games-grid browse-grid" id="games-grid"></div>
+
+</div>
+</div>
+</section>
+
+<!-- ============ BANNER ============ -->
+<div class="meme-banner">
+an experiment in prompt-to-game. <span class="pk">no code needed.</span> just vibes.
+</div>
+
+<!-- ============ FEATURE CAROUSEL ============ -->
+<section class="feature-carousel" id="feature-carousel" aria-roledescription="carousel">
+<div class="fc-head wrap">
+<div class="fc-tabs" role="tablist" aria-label="Feature slides">
+<button type="button" class="fc-tab active" role="tab" id="fc-tab-how" data-index="0" aria-selected="true">#how-it-works</button>
+<button type="button" class="fc-tab" role="tab" id="fc-tab-studio" data-index="1" aria-selected="false">#slop-studio</button>
+<button type="button" class="fc-tab" role="tab" id="fc-tab-publish" data-index="2" aria-selected="false">#ship-it</button>
+<button type="button" class="fc-tab" role="tab" id="fc-tab-mp" data-index="3" aria-selected="false">#play-together</button>
+<button type="button" class="fc-tab" role="tab" id="fc-tab-remix" data-index="4" aria-selected="false">#remix-engine</button>
+</div>
+<div class="fc-controls">
+<button type="button" class="fc-arrow" id="fc-prev" aria-label="Previous slide">←</button>
+<button type="button" class="fc-arrow" id="fc-next" aria-label="Next slide">→</button>
+</div>
+</div>
+<div class="fc-progress" aria-hidden="true"><div class="fc-progress-bar"></div></div>
+<div class="fc-viewport">
+<div class="fc-track" id="fc-track">
+
+<article class="fc-slide" id="how-it-works" data-theme="how" role="tabpanel" aria-labelledby="fc-tab-how">
+<section class="how-sec">
+<div class="wrap fc-panel">
+<header class="sec-head fc-panel-head">
+<span class="sec-tag fc-tag">#how-it-works</span>
+<h2 class="sec-title fc-title">from sentence to game night.</h2>
+<p class="sec-sub fc-lead">you bring the idea. we bring the engine, the art, the netcode, and the mod tools.</p>
+</header>
+<div class="fc-panel-body">
+<div class="how-grid five">
+<div class="how-card">
+<span class="how-step">01</span>
+<h3>Describe It</h3>
+<p>type your game idea in plain english — here, or in Slop Studio for the full workbench. weird ideas welcome.</p>
+<span class="how-tag">#prompt-to-game</span>
+</div>
+<div class="how-card">
+<span class="how-step">02</span>
+<h3>The Agent Builds It</h3>
+<p>grok writes a complete playable game — code, art, sounds — and it's crash-tested in a hidden sandbox before you ever see it.</p>
+<span class="how-tag">#watch-it-cook</span>
+</div>
+<div class="how-card">
+<span class="how-step">03</span>
+<h3>Playtest &amp; Iterate</h3>
+<p>the build boots instantly in the studio. keep prompting: rules, difficulty, levels, AI-generated sprites — every aspect stays editable.</p>
+<span class="how-tag">#slop-studio</span>
+</div>
+<div class="how-card">
+<span class="how-step">04</span>
+<h3>Mod It Live</h3>
+<p>playing any game on the site? open the remix dock, describe a mod, and it patches the <em>running</em> game — no reload. in co-op, the whole room gets the mod.</p>
+<span class="how-tag">#remix-live</span>
+</div>
+<div class="how-card">
+<span class="how-step">05</span>
+<h3>Share With Everyone</h3>
+<p>publish to the community grid under your username, send friends a studio invite, or host a co-op room with a link.</p>
+<span class="how-tag">#community-cooked</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</article>
+
+<article class="fc-slide" id="studio" data-theme="studio" role="tabpanel" aria-labelledby="fc-tab-studio">
+<section class="studio-sec">
+<div class="wrap fc-panel">
+<div class="studio-banner">
+<div class="studio-copy">
+<header class="fc-panel-head fc-panel-head--inline">
+<span class="studio-kicker fc-tag">#slop-studio</span>
+<h2 class="fc-title">a game studio you talk to.</h2>
+<p class="fc-lead">one prompt builds the game. the next one changes the gravity. the one after that paints a new hero sprite with AI image gen. playtest instantly, undo anything, publish when it slaps — and invite a friend to remix your build in their own studio.</p>
+</header>
+<ul class="studio-points">
+<li>instant playtest pane — the build boots as soon as it passes crash-testing</li>
+<li>AI sprite generation — the agent paints art and wires it into the code</li>
+<li>versions &amp; undo — every build is kept, nothing is ever lost</li>
+<li>friend invites — tag-team game dev, no git required</li>
+</ul>
+<a class="studio-cta" href="studio.html">Open Slop Studio →</a>
+</div>
+<div class="studio-shot" aria-hidden="true">
+<div class="ss-bar"><span></span><span></span><span></span>slop studio</div>
+<div class="ss-body">
+<div class="ss-chat">
+<div class="ss-u">a tower defense where the towers are angry cats</div>
+<div class="ss-a">OK Angry Cat Defense — crash-tested · 14.2 KB</div>
+<div class="ss-u">generate a sprite for the boss: a giant roomba</div>
+<div class="ss-a">sprite "boss_roomba" painted — wiring it in…</div>
+<div class="ss-u">make wave 5 absurd</div>
+<div class="ss-a working">writing… 9.1 KB</div>
+</div>
+<div class="ss-game">Play</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</article>
+
+<article class="fc-slide" id="publish" data-theme="ship" role="tabpanel" aria-labelledby="fc-tab-publish">
+<section class="publish-sec">
+<div class="wrap fc-panel">
+<header class="sec-head fc-panel-head">
+<span class="sec-tag fc-tag">#ship-it</span>
+<h2 class="sec-title fc-title">publish anything playable</h2>
+<p class="sec-sub fc-lead">cook with AI today. bring-your-own-build is on the roadmap.</p>
+</header>
+<div class="fc-panel-body">
+<div class="pub-grid">
+<div class="pub-card">
+<h3>AI Generate — live now</h3>
+<p>type what you want in the box up top. the AI writes the whole game and it appears in the grid, playable and remixable.</p>
+<div class="pub-promptbox">&gt; a cozy farming sim where the crops scream when you harvest them_</div>
+<span class="pub-chip">streams the code as it cooks</span>
+</div>
+<div class="pub-card">
+<h3>Upload from Repo — live now</h3>
+<p>already built something? drop your files here. a single .html works instantly; index.html + local .js/.css gets bundled in your browser. every upload is crash-tested before it ships.</p>
+<div class="upload-zone" id="upload-zone">
+<input type="file" id="upload-input" multiple accept=".html,.htm,.js,.css,.json,.txt" hidden>
+<span class="uz-icon">Upload</span>
+<span class="uz-text">drop your game files here<br><em>or click to pick them</em></span>
+</div>
+<div class="upload-status" id="upload-status"></div>
+<div class="stack-chips">
+<span class="html5">HTML5</span>
+<span class="js">JavaScript</span>
+<span class="ts">TypeScript (compiled)</span>
+<span class="webgl">WebGL</span>
+<span class="unity">Unity WebGL*</span>
+<span class="godot">Godot HTML*</span>
+</div>
+<p class="pub-fineprint">*engine exports: drop the built single-file html bundle</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</article>
+
+<article class="fc-slide" id="multiplayer" data-theme="play" role="tabpanel" aria-labelledby="fc-tab-mp">
+<section class="multiplayer-sec">
+<div class="wrap fc-panel">
+<header class="sec-head fc-panel-head">
+<span class="sec-tag fc-tag">#play-together</span>
+<h2 class="sec-title fc-title">prompt a game. play it together.</h2>
+<p class="sec-sub fc-lead">every slop game ships with netcode. ask Studio for "co-op" or "4-player" and it wires the multiplayer harness automatically. host a room, share a link — and live remixes sync to the whole lobby, mid-match.</p>
+</header>
+<div class="fc-panel-body">
+<div class="mp-grid">
+<div class="mp-features">
+<div class="mp-card">
+<span class="mp-num">1</span>
+<div>
+<h3>One-prompt multiplayer</h3>
+<p>say "co-op" or "4-player" in a prompt and slop adds the netcore harness for you — no networking code, ever.</p>
+</div>
+</div>
+<div class="mp-card">
+<span class="mp-num">2</span>
+<div>
+<h3>Drop-in rooms</h3>
+<p>one click gives you a room code and a shareable link. anyone who opens it joins the lobby instantly, peer-to-peer.</p>
+</div>
+</div>
+<div class="mp-card">
+<span class="mp-num">3</span>
+<div>
+<h3>Live remix in the lobby</h3>
+<p>the host describes a mod mid-match — it patches every player's running game at once. no reloads, no restarts.</p>
+</div>
+</div>
+<div class="mp-cta-row">
+<a class="mp-cta" href="games/slopkart/index.html">Host SlopKart →</a>
+<a class="mp-cta alt" href="games/sloppy-zombies/index.html">Host Sloppy Zombies →</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+</article>
+
+<article class="fc-slide" id="remix" data-theme="remix" role="tabpanel" aria-labelledby="fc-tab-remix">
+<section class="remix-sec">
+<div class="wrap fc-panel">
+<header class="remix-banner fc-panel-head fc-panel-head--inline">
+<span class="remix-kicker fc-tag">#remix-engine</span>
+<h2 class="fc-title">Take any game. Make it weirder.</h2>
+<p class="remix-sub fc-lead">every single game on slop.game is remixable — launch games, community games, your games. the remix dock sits <em>beside</em> the game (never covering it), reads the real source, and patches the running game live. type it or say it out loud. in multiplayer, the host's mods hit everyone's screen.</p>
+</header>
+<div class="fc-panel-body">
+
+<div class="remix-demo-grid">
+<div class="remix-demo">
+<div class="remix-demo-head">
+<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="21"/></svg>
+spoken into dungeon panic
+</div>
+<p class="remix-quote">"make my tears huge and rainbow colored"</p>
+<div class="remix-result"><span class="rr-dot"></span>patched the running game — no reload</div>
+</div>
+<div class="remix-demo">
+<div class="remix-demo-head">
+<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+typed into a cooked game
+</div>
+<p class="remix-quote">"add a boss every 500 points and double the screen shake"</p>
+<div class="remix-result"><span class="rr-dot"></span>rewrote the source, crash-tested, hot-swapped</div>
+</div>
+<div class="remix-demo">
+<div class="remix-demo-head">
+<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+forked from the community
+</div>
+<p class="remix-quote">"same game but everything is lava and the floor is the enemy"</p>
+<div class="remix-result"><span class="rr-dot"></span>saved as a new game under your username</div>
+</div>
+</div>
+
+<div class="remix-cta-row">
+<button class="remix-cta primary" id="remix-btn">Remix SlopKart Live →</button>
+<a class="remix-cta ghost" href="games/sloppy-zombies/index.html?remix=1">Remix Sloppy Zombies</a>
+<a class="remix-cta ghost" href="#games">Browse remixable games</a>
+</div>
+
+<div class="remix-guarantee">
+every remix is crash-tested in a hidden sandbox before it ships — broken builds get rejected, your game stays untouched.
+</div>
+</div>
+</div>
+</section>
+</article>
+
+</div>
+</div>
+<div class="fc-dots wrap" role="tablist" aria-label="Choose slide">
+<button type="button" class="fc-dot active" data-index="0" aria-label="#how-it-works" aria-selected="true"></button>
+<button type="button" class="fc-dot" data-index="1" aria-label="#slop-studio" aria-selected="false"></button>
+<button type="button" class="fc-dot" data-index="2" aria-label="#ship-it" aria-selected="false"></button>
+<button type="button" class="fc-dot" data-index="3" aria-label="#play-together" aria-selected="false"></button>
+<button type="button" class="fc-dot" data-index="4" aria-label="#remix-engine" aria-selected="false"></button>
+</div>
+</section>
+
+<!-- ============ APP STORE (live demo) ============ -->
+<section class="appstore-sec" id="app">
+<div class="wrap">
+<div class="app-grid">
+<div class="app-copy">
+<span class="app-live-tag">live demo</span>
+<h2 class="sec-title">run 3,<br>in your pocket.</h2>
+<p class="sec-sub">the real game runs inside the mockup — grab the on-screen controls and play. the iOS app ships the same library with native touch, sync, and co-op rooms.</p>
+<ul class="app-points">
+<li><strong>START</strong> to begin your run</li>
+<li><strong>stick</strong> to rotate · <strong>A</strong> jump · <strong>B</strong> restart</li>
+</ul>
+<div class="app-cta-row">
+<a class="app-play-full" href="games/run3/index.html">Play full screen →</a>
+<button class="app-badge" id="app-notify" type="button">
+<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M16.36 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.83-.81-3-.79-1.54.02-2.96.9-3.75 2.28-1.6 2.78-.41 6.89 1.15 9.15.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.39 0 1.78.74 3 .72 1.24-.02 2.02-1.12 2.78-2.23.87-1.28 1.23-2.52 1.25-2.59-.03-.01-2.4-.92-2.42-3.65zM14.13 5.7c.64-.78 1.07-1.85.95-2.93-.92.04-2.04.61-2.7 1.38-.59.69-1.11 1.79-.97 2.85 1.03.08 2.08-.52 2.72-1.3z"/></svg>
+<span class="ab-text"><span class="ab-top">Coming soon to the</span><span class="ab-bot">App Store</span></span>
+</button>
+</div>
+</div>
+
+<div class="app-phone-wrap">
+<div class="iphone" id="app-phone">
+<div class="ip-island"></div>
+<div class="ip-screen">
+<div class="delta">
+<div class="delta-screen" id="delta-screen">
+<iframe id="delta-game" class="ds-game" src="games/run3/index.html?embed=1" title="Run 3 — playable demo" loading="lazy" tabindex="-1"></iframe>
+<div class="ds-idle" id="ds-idle">
+<span class="ds-idle-title">RUN 3</span>
+<button type="button" class="ds-idle-cta" id="ds-start-btn">press START</button>
+</div>
+<div class="ds-live">RUN 3</div>
+</div>
+<div class="delta-shoulders">
+<span class="sh l">L</span>
+<span class="delta-word">SLOP</span>
+<span class="sh r">R</span>
+</div>
+<div class="delta-body" id="delta-body">
+<div class="analog-stick" id="analog-stick" aria-label="move stick">
+<div class="stick-base" id="stick-base">
+<div class="stick-knob" id="stick-knob"></div>
+</div>
+</div>
+<div class="face">
+<button type="button" class="fbtn-ab a" data-input="jump" aria-label="jump">A</button>
+<button type="button" class="fbtn-ab b" data-input="restart" aria-label="restart">B</button>
+</div>
+<div class="delta-sys">
+<button type="button" class="sysbtn sysbtn-start" data-input="start"><i></i>START</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="app-phone-glow" aria-hidden="true"></div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+<div class="footer-grid">
+<div class="fbrand">
+<div class="brand-row">
+<svg viewBox="0 0 64 64" width="34" height="34" aria-hidden="true">
+<rect x="2" y="31" width="11" height="8" rx="4" fill="#FF7A35" stroke="#1A1A2E" stroke-width="3"/>
+<rect x="51" y="31" width="11" height="8" rx="4" fill="#FF7A35" stroke="#1A1A2E" stroke-width="3"/>
+<path d="M10 30 h44 v9 a15 15 0 0 1 -15 15 h-14 a15 15 0 0 1 -15 -15 z" fill="#FF4EB8" stroke="#1A1A2E" stroke-width="3" stroke-linejoin="round"/>
+<ellipse cx="32" cy="28" rx="24" ry="7" fill="#FFE135" stroke="#1A1A2E" stroke-width="3"/>
+<circle cx="32" cy="19" r="4.5" fill="#FFE135" stroke="#1A1A2E" stroke-width="3"/>
+<circle cx="25" cy="41" r="4.5" fill="#FFFFFF"/>
+<circle cx="25.5" cy="41.5" r="2" fill="#1A1A2E"/>
+<circle cx="39" cy="41" r="4.5" fill="#FFFFFF"/>
+<circle cx="39.5" cy="41.5" r="2" fill="#1A1A2E"/>
+<path d="M28.5 47 q3.5 3.5 7 0" fill="none" stroke="#1A1A2E" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
+<span class="wordmark">slop<span class="dot-pk">.</span>game</span>
+</div>
+<p class="tagline">a brand-new launchpad for experimental and AI-generated games. currently in early beta.</p>
+<span class="version-chip">v0.7.0 · aurora</span>
+</div>
+<div class="fcol">
+<h4>Discover</h4>
+<ul>
+<li><a href="#games">Browse Games</a></li>
+<li><a href="games/slopkart/index.html">SlopKart</a></li>
+<li><a href="games/sloppy-zombies/index.html">Sloppy Zombies</a></li>
+<li><a href="games/dungeon-panic/index.html">Dungeon Panic</a></li>
+<li><a href="#multiplayer">Multiplayer</a></li>
+</ul>
+</div>
+<div class="fcol">
+<h4>Create</h4>
+<ul>
+<li><a href="studio.html">Slop Studio</a></li>
+<li><a href="#pwin">Cook a Game</a></li>
+<li><a href="#publish">Upload from Repo</a></li>
+<li><a href="games/sloppy-zombies/index.html?remix=1">Remix Live</a></li>
+</ul>
+</div>
+<div class="fcol">
+<h4>Company</h4>
+<ul>
+<li><a href="mailto:support@slop.game">Support</a></li>
+<li><a href="#waitlist">Mailing List</a></li>
+<li><a href="#" id="footer-signup">Create an Account</a></li>
+</ul>
+</div>
+</div>
+<section class="footer-waitlist waitlist" id="waitlist" aria-label="Launch news">
+<div class="footer-waitlist-inner">
+<p class="waitlist-label">launch news</p>
+<form class="waitlist-form" id="waitlist-form">
+<input type="email" id="waitlist-email" placeholder="you@example.com" required>
+<button type="submit" id="waitlist-btn">Join mailing list</button>
+</form>
+<p class="waitlist-note" id="waitlist-note">no spam. just launch news.</p>
+</div>
+</section>
+<div class="footer-bottom">
+<span> 2026 slop.game — early beta, cooked with love &amp; questionable prompts</span>
+<span class="status-chip"><span class="green-dot"></span> all systems cookin'</span>
+</div>
+</footer>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
+
+

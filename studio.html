@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slop Studio — build a game by talking to it</title>
+<meta name="description" content="the prompt-based game studio: describe your game, watch the agent build it, playtest instantly, generate sprites, flip on multiplayer, and remix live.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23FF4EB8%22/><text x=%2250%22 y=%2258%22 text-anchor=%22middle%22 font-family=%22system-ui,sans-serif%22 font-size=%2248%22 font-weight=%22700%22 fill=%22%23FFFFFF%22>S</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<!-- ads paused during playtesting -->
+<style>
+:root {
+--y:#FFE135; --pk:#FF4EB8; --bl:#4ECAFF; --mt:#3DFFB0; --or:#FF7A35; --pu:#B94EFF;
+--cr:#FFFBF0; --wh:#FFFFFF; --ink:#1A1A2E; --soft:#3A3A5C; --red:#FF3B3B;
+--bw:3px; --sh:5px 5px 0 var(--ink); --shb:7px 7px 0 var(--ink);
+--line: rgba(26,26,46,.1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { height:100vh; display:flex; flex-direction:column; overflow:hidden;
+font-family:'Nunito',sans-serif; color:var(--ink);
+background:
+radial-gradient(40% 30% at 12% 4%, rgba(255,78,184,.10), transparent 60%),
+radial-gradient(38% 28% at 90% 6%, rgba(78,202,255,.12), transparent 60%),
+var(--cr); }
+.fred { font-family:'Fredoka One',cursive; font-weight:400; }
+.mono { font-family:'Space Mono',monospace; }
+
+/* topbar */
+.topbar { flex:0 0 auto; display:flex; align-items:center; gap:12px; padding:11px 16px;
+background:var(--y); border-bottom:var(--bw) solid var(--ink); flex-wrap:wrap; }
+.back-link { font-family:'Space Mono',monospace; font-weight:700; font-size:12.5px; color:var(--ink); text-decoration:none;
+background:var(--wh); border:2.5px solid var(--ink); border-radius:100px; padding:7px 14px; box-shadow:3px 3px 0 var(--ink); white-space:nowrap; transition:transform .12s; }
+.back-link:hover { transform:translate(-2px,-2px); }
+.brand { font-family:'Fredoka One',cursive; font-size:18px; white-space:nowrap; }
+.brand .pk { color:var(--pk); }
+#game-title { flex:1; min-width:120px; font-family:'Fredoka One',cursive; font-size:16px; color:var(--ink);
+background:rgba(255,255,255,.7); border:2.5px solid var(--ink); border-radius:100px; padding:8px 16px; outline:none; }
+#game-title:focus { box-shadow:3px 3px 0 var(--ink); }
+.bar-btn { font-family:'Fredoka One',cursive; font-size:13.5px; border:2.5px solid var(--ink); border-radius:100px;
+padding:8px 16px; cursor:pointer; box-shadow:3px 3px 0 var(--ink); white-space:nowrap; background:var(--wh); color:var(--ink);
+transition:transform .12s; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+.bar-btn:hover:not(:disabled) { transform:translate(-2px,-2px); }
+.bar-btn:disabled { opacity:.5; cursor:not-allowed; box-shadow:3px 3px 0 var(--ink); }
+.bar-btn.mt { background:var(--mt); } .bar-btn.pk { background:var(--pk); color:#fff; }
+/* mp toggle */
+.mp-switch { display:flex; align-items:center; gap:8px; background:var(--wh); border:2.5px solid var(--ink); border-radius:100px; padding:5px 6px 5px 13px; box-shadow:3px 3px 0 var(--ink); cursor:pointer; user-select:none; font-weight:800; font-size:13px; }
+.mp-switch .track { width:38px; height:22px; border-radius:100px; background:rgba(26,26,46,.18); border:2px solid var(--ink); position:relative; transition:background .15s; }
+.mp-switch .track i { position:absolute; top:1px; left:1px; width:16px; height:16px; border-radius:50%; background:var(--ink); transition:transform .15s; }
+.mp-switch.on .track { background:var(--mt); }
+.mp-switch.on .track i { transform:translateX(16px); }
+
+/* main */
+.main { flex:1; display:flex; min-height:0; }
+.agent { flex:0 0 410px; max-width:46vw; display:flex; flex-direction:column; min-height:0;
+background:var(--wh); border-right:var(--bw) solid var(--ink); }
+#timeline { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
+.tl-user { align-self:flex-end; max-width:88%; background:var(--pk); color:#fff; border:2.5px solid var(--ink);
+border-radius:14px 14px 4px 14px; padding:10px 14px; font-weight:800; font-size:13.5px; box-shadow:3px 3px 0 var(--ink); }
+.tl-agent { align-self:flex-start; max-width:92%; background:var(--cr); border:2.5px solid var(--ink);
+border-radius:14px 14px 14px 4px; padding:10px 14px; font-size:13px; font-weight:700; color:var(--soft); line-height:1.55; }
+.tl-agent.working { border-color:var(--bl); }
+.tl-agent.good { border-color:var(--mt); color:#0A7A4A; }
+.tl-agent.bad { border-color:var(--red); color:#C0392B; }
+.tl-sprite-row { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.tl-sprite-row img { width:46px; height:46px; border-radius:10px; border:2.5px solid var(--ink); object-fit:cover; background:var(--cr); }
+
+.prompt-zone { flex:0 0 auto; padding:14px 16px 16px; border-top:var(--bw) solid var(--ink); background:var(--cr); }
+.template-row { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:9px; }
+.template { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; color:var(--ink);
+background:var(--y); border:2px solid var(--ink); border-radius:100px; padding:5px 11px; cursor:pointer; transition:transform .12s; }
+.template:hover { transform:translate(-1px,-1px); }
+.chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:9px; }
+.chip { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; color:var(--soft);
+background:var(--wh); border:2px solid var(--ink); border-radius:100px; padding:5px 11px; cursor:pointer; transition:transform .12s,color .12s; }
+.chip:hover { transform:translate(-1px,-1px); color:var(--pk); }
+/* prompt console — echoes the homepage hero's macOS window */
+.pconsole { background:var(--wh); border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:var(--sh); overflow:hidden; transition:box-shadow .15s; }
+.pconsole:focus-within { box-shadow:var(--shb); }
+.pconsole-head { display:flex; align-items:center; gap:7px; padding:9px 13px; background:linear-gradient(180deg, rgba(78,202,255,.9), rgba(78,202,255,.65)); border-bottom:2.5px solid var(--ink); }
+.pconsole-head .d { width:11px; height:11px; border-radius:50%; border:2px solid var(--ink); }
+.pconsole-head .d.r{background:#FF6B6B} .pconsole-head .d.y{background:var(--y)} .pconsole-head .d.g{background:var(--mt)}
+.pconsole-head .pconsole-label { margin-left:6px; font-family:'Space Mono',monospace; font-weight:700; font-size:12px; color:var(--ink); }
+.prompt-row { display:flex; gap:0; align-items:stretch; }
+#prompt { flex:1; min-height:66px; max-height:160px; resize:vertical; font-family:'Nunito',sans-serif; font-weight:700; font-size:14.5px; color:var(--ink);
+background:var(--wh); border:none; padding:13px 14px; outline:none; }
+.mic-btn { flex:0 0 50px; display:grid; place-items:center; color:var(--soft); background:var(--cr);
+border:none; border-left:2.5px solid var(--ink); cursor:pointer; }
+.mic-btn:hover { color:var(--pk); }
+.mic-btn.listening { color:var(--red); animation:micp 1s ease-in-out infinite; }
+@keyframes micp { 0%,100%{box-shadow:3px 3px 0 var(--ink)} 50%{box-shadow:3px 3px 0 var(--ink),0 0 0 6px rgba(255,59,59,.25)} }
+#build-btn { width:100%; margin-top:10px; font-family:'Fredoka One',cursive; font-size:16px; color:#fff;
+background:var(--pk); border:var(--bw) solid var(--ink); border-radius:100px; padding:13px; cursor:pointer; box-shadow:var(--sh); transition:transform .12s,box-shadow .12s; }
+#build-btn:hover:not(:disabled) { transform:translate(-2px,-2px); box-shadow:var(--shb); }
+#build-btn:disabled { opacity:.6; cursor:wait; }
+
+/* work area */
+.work { flex:1; min-width:0; display:flex; flex-direction:column; }
+.tabs { flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:11px 16px; border-bottom:var(--bw) solid var(--ink); background:var(--wh); }
+.tab { font-family:'Space Mono',monospace; font-size:12px; font-weight:700; color:var(--soft); background:none; border:2.5px solid transparent; border-radius:100px; padding:7px 15px; cursor:pointer; }
+.tab.active { color:var(--ink); background:var(--cr); border-color:var(--ink); }
+.tabs .spacer { flex:1; }
+.tab-action { font-family:'Space Mono',monospace; font-size:11.5px; font-weight:700; color:var(--soft); background:var(--cr); border:2.5px solid var(--ink); border-radius:100px; padding:6px 13px; cursor:pointer; }
+.tab-action:hover:not(:disabled) { color:var(--pk); }
+.tab-action:disabled { opacity:.4; cursor:not-allowed; }
+
+.panel { flex:1; min-height:0; display:none; }
+.panel.active { display:flex; }
+#panel-play { padding:16px; }
+#play-frame-wrap { flex:1; display:flex; min-width:0; }
+#play-frame { flex:1; width:100%; border:var(--bw) solid var(--ink); border-radius:14px; background:var(--wh); box-shadow:var(--shb); }
+#play-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:30px; }
+#play-empty .big { font-family:'Fredoka One',cursive; font-size:26px; }
+#play-empty .hint-mono { font-family:'Space Mono',monospace; font-size:12px; color:var(--soft); line-height:1.8; max-width:430px; }
+#play-empty .ic { font-size:50px; }
+
+#panel-sprites { flex-direction:column; overflow-y:auto; padding:18px; gap:14px; }
+.sprite-intro { font-family:'Space Mono',monospace; font-size:12px; color:var(--soft); line-height:1.7; }
+.sprite-form { display:flex; gap:8px; flex-wrap:wrap; }
+.sprite-form input { font-family:'Nunito',sans-serif; font-weight:700; font-size:13px; color:var(--ink); background:var(--wh); border:2.5px solid var(--ink); border-radius:100px; padding:9px 16px; outline:none; }
+#sprite-name { flex:0 0 150px; } #sprite-prompt { flex:1; min-width:200px; }
+#sprite-gen { font-family:'Fredoka One',cursive; font-size:13px; color:var(--ink); background:var(--mt); border:2.5px solid var(--ink); border-radius:100px; padding:9px 18px; cursor:pointer; box-shadow:3px 3px 0 var(--ink); }
+#sprite-gen:disabled { opacity:.6; }
+.sprite-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; }
+.sprite-card { background:var(--wh); border:2.5px solid var(--ink); border-radius:14px; padding:10px; display:flex; flex-direction:column; gap:8px; box-shadow:3px 3px 0 var(--ink); }
+.sprite-card img { width:100%; aspect-ratio:1; object-fit:contain; background:var(--cr); border-radius:10px; }
+.sprite-card .sname { font-family:'Space Mono',monospace; font-size:11.5px; font-weight:700; color:var(--pk); }
+.sprite-card .srow { display:flex; gap:6px; }
+.sprite-card button { flex:1; font-family:'Space Mono',monospace; font-size:10px; font-weight:700; color:var(--soft); background:var(--cr); border:2px solid var(--ink); border-radius:100px; padding:4px; cursor:pointer; }
+.sprite-card button:hover { color:var(--pk); }
+
+#panel-code { flex-direction:column; }
+#code-view { flex:1; overflow:auto; margin:16px; background:var(--ink); color:var(--mt); border:var(--bw) solid var(--ink); border-radius:14px; padding:14px; font-family:'Space Mono',monospace; font-size:10.5px; line-height:1.55; white-space:pre-wrap; word-break:break-word; }
+
+#panel-files { flex-direction:column; }
+.files-wrap { flex:1; display:flex; min-height:0; margin:16px; gap:12px; }
+.file-tree { flex:0 0 220px; overflow-y:auto; background:var(--wh); border:var(--bw) solid var(--ink); border-radius:14px; padding:10px; }
+.ft-item { display:flex; align-items:center; gap:7px; font-family:'Space Mono',monospace; font-size:12px; font-weight:700; padding:7px 9px; border-radius:9px; cursor:pointer; color:var(--ink); }
+.ft-item:hover { background:var(--cr); }
+.ft-item.active { background:var(--pk); color:#fff; }
+.ft-item.folder { color:var(--soft); cursor:default; font-size:11px; letter-spacing:.04em; text-transform:uppercase; padding-bottom:3px; }
+.ft-item.indent { margin-left:16px; }
+.file-content { flex:1; overflow:auto; background:var(--ink); color:var(--mt); border:var(--bw) solid var(--ink); border-radius:14px; padding:14px; font-family:'Space Mono',monospace; font-size:10.5px; line-height:1.55; white-space:pre-wrap; word-break:break-word; margin:0; }
+@media (max-width:860px){ .files-wrap{ flex-direction:column; } .file-tree{ flex:0 0 auto; max-height:140px; } }
+
+.modal { position:fixed; inset:0; z-index:100; display:grid; place-items:center; background:rgba(26,26,46,.4); backdrop-filter:blur(6px); padding:20px; }
+.modal.hidden { display:none; }
+.modal-card { width:min(440px,92vw); background:var(--wh); border:var(--bw) solid var(--ink); border-radius:20px; box-shadow:var(--shb); padding:24px; display:flex; flex-direction:column; gap:12px; }
+.modal-card h3 { font-family:'Fredoka One',cursive; color:var(--pk); font-size:19px; }
+.modal-card p, .modal-note { font-size:13px; font-weight:700; color:var(--soft); line-height:1.6; }
+.friend-row { display:flex; align-items:center; gap:10px; background:var(--cr); border:2.5px solid var(--ink); border-radius:12px; padding:9px 12px; }
+.friend-row span { flex:1; font-family:'Space Mono',monospace; font-size:13px; font-weight:700; }
+.friend-row button { font-family:'Fredoka One',cursive; font-size:12px; color:var(--ink); background:var(--y); border:2.5px solid var(--ink); border-radius:100px; padding:6px 14px; cursor:pointer; }
+.modal-close { align-self:flex-end; background:none; border:none; color:var(--soft); font-size:18px; cursor:pointer; }
+
+#studio-toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(80px); z-index:120; font-weight:800; font-size:14px; color:#fff; background:var(--ink); border-radius:100px; padding:12px 24px; box-shadow:var(--shb); transition:transform .25s; max-width:90vw; }
+#studio-toast.on { transform:translateX(-50%) translateY(0); }
+
+@media (max-width:860px) {
+.main { flex-direction:column-reverse; }
+.agent { flex:0 0 48vh; max-width:none; border-right:none; border-top:var(--bw) solid var(--ink); }
+#game-title { order:10; flex-basis:100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+<a class="back-link" href="index.html">← slop.game</a>
+<span class="brand">SLOP<span class="pk">STUDIO</span></span>
+<input id="game-title" value="untitled slop" maxlength="48" spellcheck="false">
+<div class="mp-switch" id="mp-toggle" title="generate the game with multiplayer baked in"><span>Multiplayer</span><span class="track"><i></i></span></div>
+<button class="bar-btn" id="undo-btn" title="restore the previous build" disabled>Undo</button>
+<button class="bar-btn" id="collab-toggle" title="start a live jam — invite friends to suggest prompts">Jam</button>
+<button class="bar-btn" id="download-btn" title="download the whole game folder as a .zip" disabled>Export</button>
+<button class="bar-btn" id="settings-btn" title="API key & model settings">Settings</button>
+<button class="bar-btn mt" id="publish-btn">Publish</button>
+<button class="bar-btn" id="invite-btn">Invite</button>
+<button class="bar-btn pk" id="open-play" disabled>Open</button>
+</div>
+
+<div class="main">
+<aside class="agent">
+<div id="timeline"></div>
+<div class="prompt-zone">
+<div class="template-row">
+<button class="template" data-prompt="a fully 3D-feeling kart racer on a neon track with drift boosts, item boxes, and 3 AI racers">kart racer</button>
+<button class="template" data-prompt="a co-op wave survival shooter, top-down, with upgrades between rounds">co-op shooter</button>
+<button class="template" data-prompt="a cozy match-3 puzzle with juicy combos and a relaxing palette">match-3</button>
+<button class="template" data-prompt="an 8-player .io arena where blobs eat each other to grow, last blob wins">.io arena</button>
+<button class="template" data-prompt="a tower defense where the towers are angry cats and the creeps are roombas">tower defense</button>
+</div>
+<div class="chips">
+<button class="chip">make it harder and faster</button>
+<button class="chip">add a boss every 5 waves</button>
+<button class="chip">generate a sprite for the player</button>
+<button class="chip">add chiptune music</button>
+</div>
+<div class="pconsole">
+<div class="pconsole-head"><span class="d r"></span><span class="d y"></span><span class="d g"></span><span class="pconsole-label">describe your game</span></div>
+<div class="prompt-row">
+<textarea id="prompt" placeholder="a four-player kart racer with drift boosts and a neon track… (every aspect is promptable: rules, art, sprites, sound, difficulty, multiplayer)"></textarea>
+<button class="mic-btn" id="mic-btn" title="speak it">
+<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="21"/></svg>
+</button>
+</div>
+</div>
+<button id="build-btn">Build It</button>
+</div>
+</aside>
+
+<section class="work">
+<div class="tabs">
+<button class="tab active" data-panel="play">playtest</button>
+<button class="tab" data-panel="sprites">sprites</button>
+<button class="tab" data-panel="code">code</button>
+<button class="tab" data-panel="files">files</button>
+<span class="spacer"></span>
+<button class="tab-action" id="restart-btn" disabled>restart</button>
+</div>
+
+<div class="panel active" id="panel-play">
+<div id="play-frame-wrap">
+<div id="play-empty">
+<div class="ic"></div>
+<div class="big">your game appears here</div>
+<p class="hint-mono">describe a game on the left and hit Build It. the agent writes the code, crash-tests it, and boots it right here — then keep prompting to change anything. flip on Multiplayer to bake in a shareable room.</p>
+</div>
+<iframe id="play-frame" sandbox="allow-scripts allow-pointer-lock" title="playtest" style="display:none"></iframe>
+</div>
+</div>
+
+<div class="panel" id="panel-sprites">
+<p class="sprite-intro">sprites are AI-generated images your game can draw. generate one here (or ask for one in the prompt) — the agent wires them into the game as <b>window.SPRITES["name"]</b>. regenerate anytime; the running game updates instantly.</p>
+<div class="sprite-form">
+<input id="sprite-name" placeholder="name (e.g. player)" maxlength="24" spellcheck="false">
+<input id="sprite-prompt" placeholder="describe it — e.g. tiny pixel-art knight with a red plume" maxlength="300">
+<button id="sprite-gen">Generate</button>
+<button id="sprite-upload-btn" style="font-family:'Fredoka One',cursive;font-size:13px;color:var(--ink);background:var(--bl);border:2.5px solid var(--ink);border-radius:100px;padding:9px 16px;cursor:pointer;box-shadow:3px 3px 0 var(--ink)">Upload</button>
+<input type="file" id="sprite-file" accept="image/*" multiple hidden>
+</div>
+<div class="sprite-select-row" id="sprite-select-row" style="display:none;align-items:center;gap:8px;flex-wrap:wrap">
+<span style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--soft)">use a sprite:</span>
+<select id="sprite-select" style="font-family:'Space Mono',monospace;font-weight:700;font-size:12px;border:2.5px solid var(--ink);border-radius:100px;padding:7px 12px;background:var(--wh);outline:none"></select>
+<button id="sprite-use" style="font-family:'Fredoka One',cursive;font-size:12px;color:#fff;background:var(--pk);border:2.5px solid var(--ink);border-radius:100px;padding:7px 14px;cursor:pointer">→ add to prompt</button>
+</div>
+<div class="sprite-grid" id="sprite-grid"></div>
+</div>
+
+<div class="panel" id="panel-code">
+<pre id="code-view">// the full source of your game lives here once it's built</pre>
+</div>
+
+<div class="panel" id="panel-files">
+<div class="files-wrap">
+<div class="file-tree" id="file-tree"></div>
+<pre class="file-content" id="file-content">// select a file — ask the agent to "split this into multiple files" or "put the logic in js/game.js" to organize a bigger project into folders.</pre>
+</div>
+</div>
+</section>
+</div>
+
+<div class="modal hidden" id="settings-modal">
+<div class="modal-card">
+<button class="modal-close" id="settings-close">X</button>
+<h3>studio settings</h3>
+<p>by default builds run on slop's shared Grok access. drop in your own xAI key to use your own credits and unlock every model — it's stored only in this browser and sent straight to xAI.</p>
+<label style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--soft)">your xAI API key (optional)</label>
+<input id="api-key" type="password" placeholder="xai-..." style="font-family:'Space Mono',monospace;font-size:13px;border:2.5px solid var(--ink);border-radius:12px;padding:11px 14px;outline:none">
+<label style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--soft)">build model</label>
+<select id="model-select" style="font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;border:2.5px solid var(--ink);border-radius:12px;padding:11px 14px;background:var(--wh);outline:none"></select>
+<button class="bar-btn pk" id="settings-save" style="width:100%;justify-content:center;font-size:15px;padding:12px">Save settings</button>
+<p class="modal-note" id="settings-note"></p>
+</div>
+</div>
+
+<div class="modal hidden" id="invite-modal">
+<div class="modal-card">
+<button class="modal-close" id="invite-close">X</button>
+<h3>build it with a friend</h3>
+<p>this publishes the current build and sends your friend an invite — they open it in their own studio, remix it, and publish back. tag-team game dev.</p>
+<div id="friend-list"></div>
+<p class="modal-note" id="invite-note"></p>
+</div>
+</div>
+
+<div id="studio-toast"></div>
+
+<script type="module" src="js/studio.js"></script>
+</body>
+</html>

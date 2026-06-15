@@ -1,0 +1,8 @@
+slop.db
+slop.db-wal
+slop.db-shm
+node_modules/
+.DS_Store
+.claude/
+
+slop.config.json

@@ -1,0 +1,118 @@
+/* ============ footer ============ */
+.site-footer {
+background: var(--ink);
+color: #C9C9E0;
+border-top: var(--bw) solid var(--ink);
+}
+
+.footer-grid {
+display: grid;
+grid-template-columns: 1.5fr 1fr 1fr 1fr;
+gap: 40px;
+max-width: 1180px;
+margin: 0 auto;
+padding: 64px 32px 40px;
+}
+
+.fbrand .brand-row {
+display: flex;
+align-items: center;
+gap: 10px;
+margin-bottom: 16px;
+}
+
+.fbrand .wordmark { color: var(--wh); font-size: 23px; }
+
+.fbrand .tagline {
+font-size: 14px;
+font-weight: 600;
+line-height: 1.6;
+max-width: 280px;
+margin-bottom: 16px;
+}
+
+.version-chip {
+display: inline-block;
+font-family: 'Space Mono', monospace;
+font-weight: 700;
+font-size: 11px;
+background: #26263F;
+border: 2px solid #000;
+border-radius: 100px;
+padding: 5px 13px;
+color: var(--mt);
+}
+
+.fcol h4 {
+color: var(--wh);
+font-size: 16px;
+margin-bottom: 16px;
+}
+
+.fcol ul { list-style: none; }
+
+.fcol li { margin-bottom: 10px; }
+
+.fcol a {
+font-size: 14px;
+font-weight: 600;
+transition: color .15s ease;
+}
+.fcol a:hover { color: var(--y); }
+
+.footer-waitlist {
+border-top: 1px solid rgba(255, 255, 255, 0.12);
+padding: clamp(36px, 5vw, 48px) clamp(18px, 4vw, 32px);
+text-align: center;
+}
+
+.footer-waitlist-inner {
+max-width: 640px;
+margin: 0 auto;
+}
+
+.footer-waitlist .waitlist-label {
+color: var(--wh);
+font-family: 'Space Mono', monospace;
+font-size: 12px;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+margin-bottom: 16px;
+}
+
+.footer-waitlist .waitlist-note {
+color: #9A9AB8;
+}
+
+.footer-bottom {
+border-top: 1px solid rgba(255, 255, 255, 0.12);
+max-width: 1180px;
+margin: 0 auto;
+padding: 22px 32px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 14px;
+font-family: 'Space Mono', monospace;
+font-weight: 700;
+font-size: 12px;
+}
+
+.status-chip {
+display: flex;
+align-items: center;
+gap: 9px;
+}
+
+.green-dot {
+width: 9px;
+height: 9px;
+border-radius: 50%;
+background: var(--green);
+animation: pulse-green 2s ease-in-out infinite alternate;
+}
+
+@media (max-width: 900px) {
+.footer-grid { grid-template-columns: 1fr 1fr; padding: 48px 18px 32px; }
+.footer-bottom { flex-direction: column; text-align: center; }
+}

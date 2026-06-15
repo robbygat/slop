@@ -1,0 +1,13 @@
+{
+  "_comment": "Copy this file to slop.config.json and restart the server to switch on Google Sign-In.",
+  "_setup": [
+    "1. Go to https://console.cloud.google.com/apis/credentials",
+    "2. Create Credentials -> OAuth client ID -> Web application",
+    "3. Add your site origin to 'Authorized JavaScript origins' (e.g. http://localhost:3000 and your live domain)",
+    "4. Copy the Client ID (ends with .apps.googleusercontent.com) into googleClientId below",
+    "5. Rename this file to slop.config.json and run: node server.js",
+    "The server verifies every Google credential against Google's tokeninfo endpoint, so the secret never matters client-side."
+  ],
+  "googleClientId": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+  "xaiApiKey": "xai-..."
+}

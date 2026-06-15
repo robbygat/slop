@@ -1,0 +1,13 @@
+{
+  "name": "slop-game",
+  "private": true,
+  "version": "0.5.0",
+  "type": "module",
+  "description": "slop.game — prompt it. play it. share it.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22.5"
+  }
+}

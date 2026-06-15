@@ -1,0 +1,83 @@
+/* ============ sticky nav ============ */
+.site-nav {
+position: sticky;
+top: 0;
+z-index: 1000;
+height: 64px;
+padding: 0 32px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 18px;
+background: var(--y);
+border-bottom: var(--bw) solid var(--ink);
+}
+
+.brand {
+display: flex;
+align-items: center;
+gap: 8px;
+flex-shrink: 0;
+text-decoration: none;
+}
+
+.pot .steam { animation: steam-rise 2s ease-out infinite; }
+.pot .s1 { animation-delay: 0s; }
+.pot .s2 { animation-delay: .6s; }
+.pot .s3 { animation-delay: 1.2s; }
+
+.brand .wordmark {
+font-family: 'Fredoka One', cursive;
+font-size: 32px;
+color: var(--ink);
+letter-spacing: -0.5px;
+}
+.brand .wordmark .dot-pk { color: var(--pk); }
+
+.nav-links {
+display: flex;
+align-items: center;
+gap: 26px;
+}
+
+.nav-links > a {
+font-weight: 800;
+font-size: 15px;
+transition: transform .12s ease;
+}
+.nav-links > a:hover { transform: translateY(-2px); color: var(--pk); }
+
+.cook-btn {
+font-family: 'Fredoka One', cursive;
+font-size: 15px;
+background: var(--pk);
+color: var(--wh);
+border: var(--bw) solid var(--ink);
+border-radius: 100px;
+padding: 9px 20px;
+box-shadow: 3px 3px 0 var(--ink);
+transition: transform .12s ease, box-shadow .12s ease;
+}
+.cook-btn:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--ink); }
+
+.live-badge {
+display: flex;
+align-items: center;
+gap: 8px;
+background: var(--wh);
+border: var(--bw) solid var(--ink);
+border-radius: 100px;
+padding: 7px 16px;
+font-weight: 900;
+font-size: 14px;
+white-space: nowrap;
+flex-shrink: 0;
+}
+
+.live-dot {
+width: 10px;
+height: 10px;
+border-radius: 50%;
+background: var(--red);
+animation: pulse-red 1.2s ease-in-out infinite alternate;
+}

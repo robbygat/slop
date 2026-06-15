@@ -1,0 +1,21 @@
+:root {
+/* Brand colors */
+--y: #FFE135; /* sunshine yellow — nav, accents, chips */
+--pk: #FF4EB8; /* hot pink — primary CTA, badges, active */
+--bl: #4ECAFF; /* sky blue — input header, how-it-works bg */
+--mt: #3DFFB0; /* mint green — success, free badges */
+--or: #FF7A35; /* orange — hot badges, secondary accents */
+--pu: #B94EFF; /* purple — creator section bg, top-rated */
+--cr: #FFFBF0; /* warm cream — page bg, hero bg */
+--wh: #FFFFFF;
+--ink: #1A1A2E; /* near-black — borders, text, shadows */
+--soft:#3A3A5C; /* muted navy — secondary text */
+--red: #FF3B3B; /* live dot pulse */
+--green:#00C853; /* ready states */
+
+/* Border & shadow system */
+--bw: 3px;
+--r: 16px;
+--sh: 5px 5px 0 var(--ink);
+--shb: 7px 7px 0 var(--ink);
+}

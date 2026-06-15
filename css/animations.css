@@ -1,0 +1,75 @@
+/* ============ all keyframes live here ============ */
+
+/* nav logo pot */
+@keyframes pot-wobble {
+0% { transform: rotate(-3deg) scale(1); }
+50% { transform: rotate(3deg) scale(1.06); }
+100% { transform: rotate(-2deg) scale(1); }
+}
+
+/* steam puffs above the pot lid */
+@keyframes steam-rise {
+0% { transform: translateY(0); opacity: .85; }
+100% { transform: translateY(-9px); opacity: 0; }
+}
+
+/* hero floating emoji decorations */
+@keyframes fdeco {
+0%, 100% { transform: translateY(0) rotate(-5deg); }
+50% { transform: translateY(-14px) rotate(5deg); }
+}
+
+/* "play" word in hero h1 */
+@keyframes wig {
+0%, 100% { transform: rotate(-2deg); }
+50% { transform: rotate(2deg); }
+}
+
+/* subdomain preview icon */
+@keyframes bob {
+from { transform: translateY(0); }
+to { transform: translateY(-4px); }
+}
+
+/* marquee strip */
+@keyframes mq {
+from { transform: translateX(0); }
+to { transform: translateX(-50%); }
+}
+
+/* live dot in nav */
+@keyframes pulse-red {
+from { opacity: 1; }
+to { opacity: .3; }
+}
+
+/* status dot in footer */
+@keyframes pulse-green {
+from { opacity: 1; }
+to { opacity: .3; }
+}
+
+/* toasts */
+@keyframes toast-in {
+from { opacity: 0; transform: translateX(40px); }
+to { opacity: 1; transform: translateX(0); }
+}
+@keyframes toast-out {
+from { opacity: 1; transform: translateX(0); }
+to { opacity: 0; transform: translateX(40px); }
+}
+
+/* invalid prompt box */
+@keyframes shake {
+0%, 100% { transform: translateX(0); }
+20% { transform: translateX(-8px); }
+40% { transform: translateX(8px); }
+60% { transform: translateX(-5px); }
+80% { transform: translateX(5px); }
+}
+
+/* lobby start button when everyone is ready */
+@keyframes btn-pulse {
+0%, 100% { transform: scale(1); }
+50% { transform: scale(1.05); }
+}
