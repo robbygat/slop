@@ -53,7 +53,7 @@ const games = [
 id: 'run3',
 name: 'Run 3',
 thumb: LAUNCH_THUMBS.run3,
-previewVideo: 'run.mp4.mov',
+previewVideo: 'assets/run3-preview.mp4',
 desc: 'a gravity-bending space tunnel runner — flip gravity onto the walls, dodge the crumbling holes, and race a friend side by side over a shared seeded track. live-remixable mid-run.',
 creator: 'slop.game team',
 tags: ['Multiplayer', 'Action'],
@@ -285,6 +285,7 @@ grid.innerHTML = '';
 return;
 }
 grid.innerHTML = cardHTML({ ...run3, featured: true }, { video: true, hot: true, v2: false });
+grid.querySelector('video.gthumb-video')?.play().catch(() => {});
 }
 
 export function rerenderGrid() {
