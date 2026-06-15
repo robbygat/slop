@@ -105,6 +105,47 @@ mobile nav, and responsive polish across every screen size. */
     box-shadow: var(--sh);
     text-decoration: none;
   }
+
+  .nav-links > .nav-drawer-signout {
+    width: 100%;
+    margin-top: 6px;
+    padding: 14px 10px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    color: var(--soft);
+    background: none;
+    border-top: 2px dashed rgba(26, 26, 46, 0.18);
+    border-bottom: 2px dashed rgba(26, 26, 46, 0.12);
+    text-align: left;
+  }
+  .nav-links > .nav-drawer-signout:hover {
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.35);
+    transform: none;
+  }
+
+  /* mobile: search lives in the drawer only — frees the top bar */
+  .nav-right > .nav-search-bar { display: none; }
+
+  /* compact auth chip — avatar only in the top bar */
+  #nav-auth .nav-user span:not(.nav-avatar):not(.nav-avatar-fallback) { display: none; }
+  #nav-auth .nav-user {
+    padding: 3px;
+    border-radius: 50%;
+    background: var(--wh);
+    border: 2px solid var(--ink);
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  #nav-auth .nav-avatar { width: 28px; height: 28px; border-width: 0; }
+  #nav-auth .nav-signin {
+    font-size: 11px;
+    padding: 6px 10px;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  #nav-auth { gap: 6px; }
+
+  .nav-right { gap: 6px; flex: 0 0 auto; }
 }
 
 /* legacy burger block removed — styles live in nav.css + above */

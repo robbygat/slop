@@ -52,7 +52,7 @@ export const api = {
     const user = session?.user;
     if (!user) return null;
     const { data } = await s.from('profiles')
-      .select('id, username, display_name, avatar_url, bio, link, tagline, cover_theme, accent_color, is_moderator, created_at')
+      .select('id, username, display_name, avatar_url, bio, link, tagline, cover_theme, accent_color, banner_url, bg_color, is_moderator, created_at')
       .eq('id', user.id)
       .maybeSingle();
     // Signed in but profile row not materialised yet → still "logged in".
@@ -63,7 +63,7 @@ export const api = {
     const s = sb();
     if (!s || !username) return null;
     const { data } = await s.from('profiles')
-      .select('id, username, display_name, avatar_url, bio, link, tagline, cover_theme, accent_color, created_at')
+      .select('id, username, display_name, avatar_url, bio, link, tagline, cover_theme, accent_color, banner_url, bg_color, created_at')
       .ilike('username', username)
       .maybeSingle();
     return data || null;
@@ -116,6 +116,8 @@ export const api = {
     if (patch.tagline !== undefined) fields.tagline = (patch.tagline || '').slice(0, 80) || null;
     if (patch.cover_theme !== undefined) fields.cover_theme = patch.cover_theme || null;
     if (patch.accent_color !== undefined) fields.accent_color = patch.accent_color || null;
+    if (patch.banner_url !== undefined) fields.banner_url = patch.banner_url || null;
+    if (patch.bg_color !== undefined) fields.bg_color = sanitizeBgColor(patch.bg_color);
     const { error } = await s.from('profiles').update(fields).eq('id', user.id);
     if (error) throw new Error(friendly(error.message));
     return true;
@@ -133,6 +135,20 @@ export const api = {
     if (error) throw new Error(error.message);
     const { data } = s.storage.from('avatars').getPublicUrl(path);
     return `${data.publicUrl}?v=${Date.now()}`; // cache-bust on re-upload
+  },
+
+  // Upload a profile banner to the public `avatars` bucket → returns its URL.
+  async uploadBanner(file) {
+    const s = sb();
+    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    const { data: { user } } = await s.auth.getUser();
+    if (!user) throw new Error('sign in first');
+    const ext = ((file.name || '').split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+    const path = `${user.id}/banner.${ext}`;
+    const { error } = await s.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600' });
+    if (error) throw new Error(error.message);
+    const { data } = s.storage.from('avatars').getPublicUrl(path);
+    return `${data.publicUrl}?v=${Date.now()}`;
   },
 
   // -------------------------------------------------------------- follows
@@ -376,6 +392,17 @@ function looksLikeUuid(v) {
 
 // Normalise a profile link: trim, require http(s), default to https://, cap len.
 // Returns null for empty/invalid so the column stays clean.
+function sanitizeBgColor(raw) {
+  const v = String(raw || '').trim();
+  if (!v) return null;
+  if (/^#[0-9A-Fa-f]{3}$/.test(v)) {
+    const r = v[1]; const g = v[2]; const b = v[3];
+    return `#${r}${r}${g}${g}${b}${b}`.toUpperCase();
+  }
+  if (/^#[0-9A-Fa-f]{6}$/.test(v)) return v.toUpperCase();
+  return null;
+}
+
 function sanitizeLink(raw) {
   let v = String(raw || '').trim();
   if (!v) return null;

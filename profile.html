@@ -7,32 +7,24 @@
 <meta name="description" content="a slop.game creator's published games.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23FF4EB8%22/><text x=%2250%22 y=%2258%22 text-anchor=%22middle%22 font-family=%22system-ui,sans-serif%22 font-size=%2248%22 font-weight=%22700%22 fill=%22%23FFFFFF%22>S</text></svg>">
 
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
 <link rel="stylesheet" href="css/tokens.css">
-<link rel="stylesheet" href="css/animations.css">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/nav.css">
-<link rel="stylesheet" href="css/sections.css">
 <link rel="stylesheet" href="css/ai.css">
 <link rel="stylesheet" href="css/v2.css">
 <link rel="stylesheet" href="css/brand.css">
 <link rel="stylesheet" href="css/search.css">
-<link rel="stylesheet" href="css/browse.css">
-<link rel="stylesheet" href="css/footer.css">
 <link rel="stylesheet" href="css/mobile.css">
 <link rel="stylesheet" href="css/profile.css">
 </head>
-<body>
+<body class="pf-root">
 
 <div id="toast-container"></div>
 
-<!-- ============ NAV ============ -->
 <nav class="site-nav">
   <a class="brand" href="/">
     <span class="wordmark">slop<span class="dot-pk">.</span>game</span>
   </a>
-
   <div class="nav-links" id="nav-links">
     <div class="nav-drawer-search">
       <label class="nav-search nav-search-drawer" for="nav-drawer-search-input">
@@ -45,12 +37,12 @@
     <a href="/#multiplayer">Multiplayer</a>
     <a href="/#publish">Publish</a>
     <a class="nav-drawer-profile" href="studio.html">Cook a Game</a>
+    <button class="nav-drawer-signout" id="nav-drawer-signout" type="button" hidden>Sign out</button>
   </div>
-
   <div class="nav-right">
-    <label class="nav-search" for="nav-search-input">
+    <label class="nav-search nav-search-bar" for="nav-search-input">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input id="nav-search-input" placeholder="search players &amp; games…" autocomplete="off">
+      <input id="nav-search-input" placeholder="search…" autocomplete="off">
     </label>
     <span id="nav-auth"></span>
     <button class="nav-burger" id="nav-burger" type="button" aria-label="menu" aria-expanded="false" aria-controls="nav-links">
@@ -59,135 +51,96 @@
   </div>
 </nav>
 
-<main class="pf-wrap">
-  <div id="pf-body" hidden>
-    <div class="pf-banner">
-      <div class="pf-cover" id="pf-cover"></div>
-      <div class="pf-banner-deco" aria-hidden="true">
-        <span class="pf-deco pf-deco-1"></span>
-        <span class="pf-deco pf-deco-2"></span>
-        <span class="pf-deco pf-deco-3"></span>
+<div id="pf-shell" hidden>
+  <div class="pf-canvas" id="pf-page">
+    <header class="pf-cover-block">
+      <div class="pf-cover" id="pf-banner">
+        <img class="pf-cover-img" id="pf-banner-img" alt="" hidden>
       </div>
-    </div>
-
-    <div class="pf-panel" id="pf-panel">
-      <header class="pf-hero">
-        <div class="pf-avatar-wrap">
-          <div class="pf-avatar-ring"></div>
+      <div class="pf-cover-bar">
+        <div class="pf-avatar-ring">
           <div class="pf-avatar" id="pf-avatar">S</div>
         </div>
-        <div class="pf-identity">
-          <div class="pf-name-row">
-            <h1 class="pf-name" id="pf-name">@user</h1>
-            <span class="pf-badge" id="pf-member" hidden></span>
-          </div>
-          <div class="pf-handle" id="pf-handle"></div>
-          <p class="pf-tagline" id="pf-tagline" hidden></p>
-        </div>
-      </header>
+        <div class="pf-actions" id="pf-actions"></div>
+      </div>
+    </header>
 
+    <div class="pf-body">
+      <h1 class="pf-name" id="pf-name">Name</h1>
+      <p class="pf-handle" id="pf-handle">@user</p>
+      <p class="pf-tagline" id="pf-tagline" hidden></p>
       <p class="pf-bio" id="pf-bio" hidden></p>
       <a class="pf-link" id="pf-link" target="_blank" rel="noopener nofollow ugc" hidden></a>
+      <p class="pf-joined" id="pf-member" hidden></p>
 
-      <div class="pf-stats">
-        <div class="pf-stat">
-          <span class="pf-stat-icon" aria-hidden="true">▶</span>
-          <b id="pf-plays">0</b>
-          <span>plays</span>
-        </div>
-        <div class="pf-stat">
-          <span class="pf-stat-icon" aria-hidden="true">♥</span>
-          <b id="pf-followers">0</b>
-          <span>followers</span>
-        </div>
-        <div class="pf-stat">
-          <span class="pf-stat-icon" aria-hidden="true">🎮</span>
-          <b id="pf-games-count">0</b>
-          <span>games</span>
-        </div>
+      <div class="pf-counts">
+        <span><strong id="pf-followers">0</strong> <span>Followers</span></span>
+        <span><strong id="pf-plays">0</strong> <span>Plays</span></span>
+        <span><strong id="pf-games-count">0</strong> <span>Games</span></span>
       </div>
 
-      <div class="pf-actions" id="pf-actions"></div>
+      <div class="pf-xp-block" id="pf-xp" hidden></div>
+
+      <nav class="pf-tabs" aria-label="Profile sections">
+        <span class="pf-tab active">Games <em id="pf-grid-count">0</em></span>
+      </nav>
+
+      <div class="pf-feed" id="pf-grid"></div>
     </div>
-
-    <section class="pf-games-sec">
-      <div class="pf-games-head">
-        <h2 class="pf-section-title">Games</h2>
-        <span class="pf-section-count" id="pf-grid-count">0</span>
-      </div>
-      <div class="pf-games-grid" id="pf-grid"></div>
-    </section>
   </div>
+</div>
 
-  <div id="pf-status"></div>
-</main>
+<div class="pf-status-wrap" id="pf-status"></div>
 
-<!-- edit-profile modal -->
 <div class="pf-modal hidden" id="pf-edit">
-  <div class="pf-card">
-    <div class="pf-card-head">
-      <h3>Customize profile</h3>
-      <p class="sub">make your creator page yours — cover, colors, bio, all of it.</p>
-    </div>
-
-    <div class="pf-edit-grid">
-      <div class="pf-edit-col">
-        <div class="pf-field">
-          <label>Profile picture</label>
-          <div class="pf-avatar-edit">
-            <div class="pf-avatar-prev" id="pf-edit-prev">S</div>
-            <div class="pf-upload-wrap">
-              <input type="file" id="pf-edit-file" accept="image/*">
-              <span class="pf-upload-hint">jpg, png, gif · max 3 MB</span>
-            </div>
-          </div>
+  <div class="pf-dialog">
+    <header class="pf-dialog-head">
+      <button class="pf-dialog-close" id="pf-edit-cancel" type="button" aria-label="Close">×</button>
+      <h3>Edit profile</h3>
+      <button class="pf-dialog-save" id="pf-edit-save" type="button">Save</button>
+    </header>
+    <div class="pf-dialog-body">
+      <div class="pf-field">
+        <label>Banner</label>
+        <div class="pf-cover-edit" id="pf-edit-banner-preview">
+          <span class="pf-cover-placeholder">Add a header photo</span>
         </div>
-
-        <div class="pf-field">
-          <label>Cover theme</label>
-          <div class="pf-theme-grid" id="pf-edit-themes" role="radiogroup" aria-label="Cover theme"></div>
-        </div>
-
-        <div class="pf-field">
-          <label>Accent color</label>
-          <div class="pf-accent-grid" id="pf-edit-accents" role="radiogroup" aria-label="Accent color"></div>
+        <div class="pf-field-row">
+          <input type="file" id="pf-edit-banner-file" accept="image/*">
+          <button type="button" class="pf-link-btn" id="pf-edit-banner-clear">Remove</button>
         </div>
       </div>
-
-      <div class="pf-edit-col">
-        <div class="pf-field">
-          <label for="pf-edit-name">Display name</label>
-          <input type="text" id="pf-edit-name" placeholder="your name" maxlength="40">
-        </div>
-        <div class="pf-field">
-          <label for="pf-edit-tagline">Tagline</label>
-          <input type="text" id="pf-edit-tagline" placeholder="one-liner under your name…" maxlength="80">
-          <div class="pf-charcount"><span id="pf-tagline-count">0</span>/80</div>
-        </div>
-        <div class="pf-field">
-          <label for="pf-edit-bio">Bio</label>
-          <textarea id="pf-edit-bio" placeholder="tell people what you make…" maxlength="300" rows="4"></textarea>
-          <div class="pf-charcount"><span id="pf-bio-count">0</span>/300</div>
-        </div>
-        <div class="pf-field">
-          <label for="pf-edit-link">Link</label>
-          <input type="text" id="pf-edit-link" placeholder="yoursite.com" maxlength="200">
+      <div class="pf-field">
+        <label for="pf-edit-bg">Background color</label>
+        <div class="pf-bg-row">
+          <input type="color" id="pf-edit-bg" value="#FFFFFF">
+          <div class="pf-bg-presets" id="pf-edit-bg-presets"></div>
         </div>
       </div>
-    </div>
-
-    <div class="pf-preview" id="pf-edit-preview" aria-hidden="true">
-      <div class="pf-preview-cover" id="pf-preview-cover"></div>
-      <div class="pf-preview-body">
-        <div class="pf-preview-avatar" id="pf-preview-avatar">S</div>
-        <div class="pf-preview-name" id="pf-preview-name">your name</div>
+      <div class="pf-field">
+        <label>Profile photo</label>
+        <div class="pf-photo-row">
+          <div class="pf-avatar-prev" id="pf-edit-prev">S</div>
+          <input type="file" id="pf-edit-file" accept="image/*">
+        </div>
       </div>
-    </div>
-
-    <div class="pf-error" id="pf-edit-error"></div>
-    <div class="pf-row">
-      <button class="pf-btn ghost" id="pf-edit-cancel" type="button">Cancel</button>
-      <button class="pf-btn" id="pf-edit-save" type="button">Save changes</button>
+      <div class="pf-field">
+        <label for="pf-edit-name">Name</label>
+        <input type="text" id="pf-edit-name" maxlength="40">
+      </div>
+      <div class="pf-field">
+        <label for="pf-edit-tagline">Tagline</label>
+        <input type="text" id="pf-edit-tagline" maxlength="80">
+      </div>
+      <div class="pf-field">
+        <label for="pf-edit-bio">Bio</label>
+        <textarea id="pf-edit-bio" maxlength="300" rows="3"></textarea>
+      </div>
+      <div class="pf-field">
+        <label for="pf-edit-link">Website</label>
+        <input type="text" id="pf-edit-link" maxlength="200" placeholder="https://">
+      </div>
+      <p class="pf-error" id="pf-edit-error"></p>
     </div>
   </div>
 </div>

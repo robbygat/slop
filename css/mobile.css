@@ -10,20 +10,26 @@
 .site-nav {
 height: 52px;
 padding: 0 12px;
-gap: 10px;
+gap: 8px;
 }
 
-.brand .wordmark { font-size: 22px; }
+.brand .wordmark { font-size: 20px; }
 
-/* let the search box take the free space between brand and burger */
-.nav-right { flex: 1 1 auto; min-width: 0; gap: 8px; justify-content: flex-end; }
+.nav-right {
+  flex: 0 0 auto;
+  min-width: 0;
+  gap: 6px;
+  justify-content: flex-end;
+}
 .brand { flex-shrink: 0; }
 
 .nav-burger {
+  width: 36px;
+  height: 36px;
   padding: 0;
-  font-size: inherit;
   border-width: 2.5px;
-  border-radius: 12px;
+  border-radius: 10px;
+  box-shadow: 2px 2px 0 var(--ink);
 }
 
 .nav-links {
@@ -33,13 +39,13 @@ gap: 10px;
 
 .nav-links > a,
 .nav-links > button {
-padding: 10px 8px;
-font-size: 14px;
+padding: 12px 8px;
+font-size: 15px;
 }
 
 .nav-signin {
-font-size: 12px;
-padding: 6px 12px;
+font-size: 11px;
+padding: 6px 10px;
 box-shadow: 2px 2px 0 var(--ink);
 }
 
@@ -151,6 +157,8 @@ margin: 0;
 .browse-toolbar .sort-row {
 grid-area: sort;
 gap: 4px;
+display: flex;
+flex-shrink: 0;
 }
 
 .browse-toolbar .filter-row {
@@ -158,8 +166,14 @@ grid-area: filters;
 margin: 0;
 gap: 5px;
 padding-bottom: 2px;
+display: flex;
+flex-wrap: nowrap;
+overflow-x: auto;
 -webkit-overflow-scrolling: touch;
+scrollbar-width: none;
 }
+.browse-toolbar .filter-row::-webkit-scrollbar { display: none; }
+.browse-toolbar .fbtn { flex-shrink: 0; }
 
 .sbtn,
 .fbtn,
@@ -191,29 +205,35 @@ box-shadow: none;
 
 /* ---- feature carousel ---- */
 .fc-head {
-flex-direction: row;
-flex-wrap: wrap;
-align-items: center;
+flex-direction: column;
+align-items: stretch;
 padding-top: 12px;
 padding-bottom: 10px;
-gap: 8px;
+gap: 10px;
 }
 
 .fc-head.wrap { padding-left: 12px; padding-right: 12px; }
 
 .fc-tabs {
-flex: 1 1 calc(100% - 78px);
-min-width: 0;
-gap: 5px;
-padding-bottom: 2px;
+display: flex;
+flex-wrap: nowrap;
+overflow-x: auto;
 -webkit-overflow-scrolling: touch;
+scroll-snap-type: x proximity;
+scrollbar-width: none;
+gap: 6px;
+padding-bottom: 4px;
+width: 100%;
+flex: none;
 }
+.fc-tabs::-webkit-scrollbar { display: none; }
 
 .fc-tab {
-font-size: 10px;
-padding: 5px 8px;
+font-size: 11px;
+padding: 7px 12px;
 border-width: 2px;
 flex-shrink: 0;
+scroll-snap-align: start;
 }
 
 .fc-tab.active { box-shadow: 2px 2px 0 #000; }

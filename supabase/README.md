@@ -18,6 +18,7 @@ Then run, in order:
 - [`migrations/003_scores_comments.sql`](migrations/003_scores_comments.sql) — `scores` (leaderboards) + `comments`.
 - [`migrations/004_bio_stats.sql`](migrations/004_bio_stats.sql) — profile `bio`/`link`, the global `play_totals` counter + `bump_play` RPC (so launch-game plays count globally), and the `platform_stats` RPC behind the homepage stats strip.
 - [`migrations/005_profile_customization.sql`](migrations/005_profile_customization.sql) — profile `cover_theme`, `accent_color`, and `tagline` for the customizable creator page.
+- [`migrations/006_profile_banner_bg.sql`](migrations/006_profile_banner_bg.sql) — profile `banner_url` (custom banner image) and `bg_color` (page background).
 
 Re-running any of them is safe (idempotent).
 

@@ -1,12 +1,10 @@
-// Public profile page for /{username} — "social for games".
-// Shows the creator's avatar, display name, follower count (never "following"),
-// and their published games. Visitors can follow; the owner can edit their
-// profile; moderators can remove games.
+// Public profile page — polished creator layout.
 
 import { api, escapeHTML } from './api.js';
 import { initAccount } from './account.js';
 import { loadPlays, playCount, fmtPlays } from './plays.js';
 import { initNav } from './nav.js';
+import { initXP, renderProfileXP } from './xp.js';
 import { showToast } from './toast.js';
 
 const params = new URLSearchParams(location.search);
@@ -14,25 +12,11 @@ const username = params.get('u') || decodeURIComponent(location.pathname.replace
 
 const $ = (id) => document.getElementById(id);
 
-const COVER_THEMES = [
-  { id: 'sunset', label: 'Sunset' },
-  { id: 'ocean', label: 'Ocean' },
-  { id: 'neon', label: 'Neon' },
-  { id: 'mint', label: 'Mint' },
-  { id: 'purple', label: 'Purple' },
-  { id: 'fire', label: 'Fire' },
-  { id: 'candy', label: 'Candy' },
-  { id: 'mono', label: 'Mono' },
-];
+const DEFAULT_BG = '#FFFFFF';
 
-const ACCENT_COLORS = [
-  { id: 'pink', label: 'Pink' },
-  { id: 'blue', label: 'Blue' },
-  { id: 'mint', label: 'Mint' },
-  { id: 'orange', label: 'Orange' },
-  { id: 'purple', label: 'Purple' },
-  { id: 'yellow', label: 'Yellow' },
-  { id: 'ink', label: 'Ink' },
+const BG_PRESETS = [
+  '#FFFFFF', '#F7F9F9', '#EFF3F4', '#E7ECF0',
+  '#F0F4F8', '#E8EEF2', '#15202B', '#0F172A', '#111827',
 ];
 
 let profile = null;
@@ -40,30 +24,80 @@ let viewer = null;
 let following = false;
 let ownerGames = [];
 let pendingAvatarUrl;
+let pendingBannerUrl;
+let bannerCleared = false;
 
 function initial(name) { return (String(name || 'S')[0] || 'S').toUpperCase(); }
 
-function avatarMarkup(url, name, cls) {
-  return url
-    ? `<img class="${cls}" src="${escapeHTML(url)}" alt="${escapeHTML(name)}">`
-    : initial(name);
+/** Muted blue-gray fallback — never pink. */
+function avatarFallbackColor(name) {
+  let h = 0;
+  const s = String(name || 'user');
+  for (let i = 0; i < s.length; i++) h = s.charCodeAt(i) + ((h << 5) - h);
+  const hue = 195 + (Math.abs(h) % 50);
+  return `hsl(${hue}, 12%, 44%)`;
+}
+
+function renderAvatar(elId, url, name) {
+  const el = $(elId);
+  if (!el) return;
+  if (url) {
+    el.style.background = '';
+    el.innerHTML = `<img src="${escapeHTML(url)}" alt="${escapeHTML(name || '')}">`;
+  } else {
+    el.innerHTML = '';
+    el.style.background = avatarFallbackColor(name);
+    el.textContent = initial(name);
+  }
+}
+
+function renderAvatarPreview(elId, url, name) {
+  const el = $(elId);
+  if (!el) return;
+  if (url) {
+    el.style.background = '';
+    el.innerHTML = `<img src="${escapeHTML(url)}" alt="">`;
+  } else {
+    el.innerHTML = '';
+    el.style.background = avatarFallbackColor(name);
+    el.textContent = initial(name);
+  }
 }
 
 function fmtMemberSince(iso) {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return `since ${d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}`;
+  return `Joined ${d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}`;
 }
 
-function applyTheme(profileData) {
-  const cover = $('pf-cover');
-  const body = $('pf-body');
-  const theme = profileData.cover_theme || 'sunset';
-  const accent = profileData.accent_color || 'pink';
+function isDarkHex(hex) {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 < 128;
+}
 
-  cover.className = `pf-cover theme-${theme}`;
-  body.className = `accent-${accent}`;
+function applyLook(data) {
+  const bg = data.bg_color || DEFAULT_BG;
+  const page = $('pf-page');
+  const dark = isDarkHex(bg);
+  page.style.setProperty('--pf-bg-custom', bg);
+  page.style.setProperty('--pf-surface', bg);
+  page.style.background = bg;
+  page.classList.toggle('pf-dark', dark);
+
+  const bannerImg = $('pf-banner-img');
+  if (data.banner_url) {
+    bannerImg.src = data.banner_url;
+    bannerImg.alt = `${data.display_name || data.username}'s banner`;
+    bannerImg.hidden = false;
+  } else {
+    bannerImg.hidden = true;
+    bannerImg.removeAttribute('src');
+  }
 }
 
 function renderBioLink() {
@@ -72,19 +106,11 @@ function renderBioLink() {
   const tagEl = $('pf-tagline');
   const memberEl = $('pf-member');
 
-  if (profile.tagline) {
-    tagEl.textContent = profile.tagline;
-    tagEl.hidden = false;
-  } else {
-    tagEl.hidden = true;
-  }
+  tagEl.hidden = !profile.tagline;
+  if (profile.tagline) tagEl.textContent = profile.tagline;
 
-  if (profile.bio) {
-    bioEl.textContent = profile.bio;
-    bioEl.hidden = false;
-  } else {
-    bioEl.hidden = true;
-  }
+  bioEl.hidden = !profile.bio;
+  if (profile.bio) bioEl.textContent = profile.bio;
 
   if (profile.link) {
     linkEl.href = profile.link;
@@ -95,58 +121,54 @@ function renderBioLink() {
   }
 
   const since = fmtMemberSince(profile.created_at);
-  if (since) {
-    memberEl.textContent = since;
-    memberEl.hidden = false;
-  } else {
-    memberEl.hidden = true;
-  }
+  memberEl.hidden = !since;
+  if (since) memberEl.textContent = since;
 }
 
 function totalPlaysForGames(games) {
   return games.reduce((sum, g) => sum + (playCount(g.slug) || g.play_count || 0), 0);
 }
 
-function gameCard(g, canModerate) {
+function gameRow(g, canModerate) {
   const plays = playCount(g.slug) || g.play_count || 0;
   const thumb = g.thumb
-    ? `<img src="${escapeHTML(g.thumb)}" alt="${escapeHTML(g.name)} screenshot" loading="lazy">`
-    : `<span class="gthumb-fallback">${escapeHTML(g.name)}</span>`;
+    ? `<img src="${escapeHTML(g.thumb)}" alt="" loading="lazy">`
+    : `<span>${escapeHTML(g.name)}</span>`;
   return `
-    <article class="gcard community gcard-v2" data-game-id="${escapeHTML(g.gameId)}" data-slug="${escapeHTML(g.slug)}" data-name="${escapeHTML(g.name)}">
-      <div class="gthumb shot">
-        ${thumb}
-        <div class="gthumb-scrim"></div>
-        <div class="gthumb-meta"><span class="gcat">Community</span><h3>${escapeHTML(g.name)}</h3></div>
-        ${canModerate ? '<button class="gdel" title="remove this game (moderator)">X</button>' : ''}
-        <div class="gplay" aria-hidden="true"></div>
+    <div class="pf-game" data-game-id="${escapeHTML(g.gameId)}" data-slug="${escapeHTML(g.slug)}" data-name="${escapeHTML(g.name)}" data-href="/play/${escapeHTML(g.slug)}" role="link" tabindex="0">
+      <div class="pf-game-thumb">${thumb}</div>
+      <div class="pf-game-body">
+        <h3>${escapeHTML(g.name)}</h3>
+        <p>${escapeHTML(g.desc || 'cooked with grok')}</p>
+        <div class="pf-game-meta">${fmtPlays(plays)} plays</div>
       </div>
-      <div class="gbody">
-        <p class="gdesc">${escapeHTML(g.desc || 'cooked with grok')}</p>
-        <div class="gmeta">
-          <span class="gplays">${fmtPlays(plays)} plays</span>
-        </div>
-        <div class="gcta-row">
-          <a class="gcta" href="/play/${escapeHTML(g.slug)}">Play &amp; Remix</a>
-          <a class="gcta remix" href="studio.html?remix=${encodeURIComponent(g.slug)}">Remix in Studio</a>
-        </div>
-      </div>
-    </article>`;
+      ${canModerate ? '<button class="gdel" type="button" title="remove (moderator)">×</button>' : ''}
+    </div>`;
 }
 
 function renderGamesGrid(games, canModerate) {
   const grid = $('pf-grid');
   if (!games.length) {
-    grid.innerHTML = `<p class="pf-empty">@${escapeHTML(profile.username)} hasn't published a game yet — <a href="studio.html">open the studio</a> and cook one.</p>`;
+    grid.innerHTML = `<p class="pf-empty">No published games yet — <a href="studio.html">cook one in the studio</a>.</p>`;
     return;
   }
-  grid.innerHTML = games.map((g) => gameCard(g, canModerate)).join('');
+  grid.innerHTML = games.map((g) => gameRow(g, canModerate)).join('');
 }
 
 function updateStats(games) {
   $('pf-plays').textContent = fmtPlays(totalPlaysForGames(games));
   $('pf-games-count').textContent = games.length;
-  $('pf-grid-count').textContent = games.length;
+  $('pf-grid-count').textContent = String(games.length);
+}
+
+function showXP(isOwner) {
+  const xpEl = $('pf-xp');
+  if (!isOwner) {
+    xpEl.hidden = true;
+    return;
+  }
+  xpEl.hidden = false;
+  renderProfileXP();
 }
 
 async function render() {
@@ -161,14 +183,14 @@ async function render() {
   ]);
   if (!profile) { showMissing(); return; }
 
-  $('pf-body').hidden = false;
+  $('pf-shell').hidden = false;
   $('pf-status').innerHTML = '';
 
-  applyTheme(profile);
+  applyLook(profile);
 
-  $('pf-name').textContent = profile.display_name || `@${profile.username}`;
+  $('pf-name').textContent = profile.display_name || profile.username;
   $('pf-handle').textContent = `@${profile.username}`;
-  $('pf-avatar').innerHTML = avatarMarkup(profile.avatar_url, profile.username, 'pf-avatar');
+  renderAvatar('pf-avatar', profile.avatar_url, profile.username);
   renderBioLink();
 
   const isOwner = viewer?.id === profile.id;
@@ -185,23 +207,31 @@ async function render() {
   $('pf-followers').textContent = fmtPlays(followers);
   updateStats(games);
   renderActions(isOwner);
+  showXP(isOwner);
   renderGamesGrid(games, !!viewer?.is_moderator);
   $('pf-grid').onclick = onGridClick;
+  $('pf-grid').onkeydown = (e) => {
+    const row = e.target.closest('.pf-game');
+    if (row && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      if (!e.target.closest('.gdel')) window.location.href = row.dataset.href;
+    }
+  };
 }
 
 function renderActions(isOwner) {
   const slot = $('pf-actions');
   if (isOwner) {
-    slot.innerHTML = `<button class="pf-btn ghost" id="pf-edit-btn">Customize profile</button>`;
+    slot.innerHTML = `<button class="pf-btn" id="pf-edit-btn" type="button">Edit profile</button>`;
     $('pf-edit-btn').onclick = openEdit;
     return;
   }
   if (!viewer) {
-    slot.innerHTML = `<button class="pf-btn" id="pf-follow">Follow</button>`;
-    $('pf-follow').onclick = () => showToast('sign in on the homepage to follow creators');
+    slot.innerHTML = `<button class="pf-btn primary" id="pf-follow" type="button">Follow</button>`;
+    $('pf-follow').onclick = () => showToast('sign in to follow creators');
     return;
   }
-  slot.innerHTML = `<button class="pf-btn ${following ? 'following' : ''}" id="pf-follow">${following ? 'Following' : 'Follow'}</button>`;
+  slot.innerHTML = `<button class="pf-btn ${following ? 'following' : 'primary'}" id="pf-follow" type="button">${following ? 'Following' : 'Follow'}</button>`;
   $('pf-follow').onclick = toggleFollow;
 }
 
@@ -214,6 +244,7 @@ async function toggleFollow() {
     following = next;
     $('pf-followers').textContent = fmtPlays(await api.followerCount(profile.id));
     btn.classList.toggle('following', following);
+    btn.classList.toggle('primary', !following);
     btn.textContent = following ? 'Following' : 'Follow';
   } catch (err) {
     showToast(err.message || 'could not update follow');
@@ -223,20 +254,21 @@ async function toggleFollow() {
 }
 
 function showMissing(msg) {
-  $('pf-body').hidden = true;
-  $('pf-status').innerHTML = `<p class="pf-missing">${escapeHTML(msg || `no creator named “${username}” on slop.game`)} — <a href="/">back to the homepage</a>.</p>`;
+  $('pf-shell').hidden = true;
+  $('pf-status').innerHTML = `<p class="pf-missing">${escapeHTML(msg || `No creator named “${username}”`)} — <a href="/">back home</a></p>`;
 }
 
 async function onGridClick(e) {
   const del = e.target.closest('.gdel');
   if (del) {
     e.preventDefault();
-    const card = del.closest('.gcard');
-    if (!window.confirm(`Remove “${card.dataset.name}” from slop.game?`)) return;
-    const ok = await api.removeGame(card.dataset.gameId);
+    e.stopPropagation();
+    const row = del.closest('.pf-game');
+    if (!window.confirm(`Remove “${row.dataset.name}” from slop.game?`)) return;
+    const ok = await api.removeGame(row.dataset.gameId);
     if (ok) {
-      card.remove();
-      ownerGames = ownerGames.filter((g) => g.gameId !== card.dataset.gameId);
+      row.remove();
+      ownerGames = ownerGames.filter((g) => g.gameId !== row.dataset.gameId);
       updateStats(ownerGames);
       if (!ownerGames.length) renderGamesGrid([], false);
       showToast('game removed');
@@ -245,122 +277,97 @@ async function onGridClick(e) {
     }
     return;
   }
-  if (e.target.closest('.gcta')) return;
-  const card = e.target.closest('.gcard');
-  if (card) {
-    const link = card.querySelector('.gcta');
-    if (link) window.location.href = link.getAttribute('href');
-  }
+  const row = e.target.closest('.pf-game');
+  if (row?.dataset.href) window.location.href = row.dataset.href;
 }
 
-// ---------------------------------------------------------------- customization pickers
+// ---------------------------------------------------------------- edit
 
-let editCoverTheme = 'sunset';
-let editAccentColor = 'pink';
-
-function buildPickers() {
-  const themesEl = $('pf-edit-themes');
-  const accentsEl = $('pf-edit-accents');
-  if (!themesEl || themesEl.childElementCount) return;
-
-  themesEl.innerHTML = COVER_THEMES.map((t) =>
-    `<button type="button" class="pf-swatch theme-${t.id}" role="radio" aria-checked="false" aria-label="${t.label}" data-theme="${t.id}"></button>`
+function buildBgPresets() {
+  const el = $('pf-edit-bg-presets');
+  if (!el || el.childElementCount) return;
+  el.innerHTML = BG_PRESETS.map((hex) =>
+    `<button type="button" class="pf-bg-swatch" role="radio" aria-checked="false" data-bg="${hex}" style="background:${hex}"></button>`
   ).join('');
-
-  accentsEl.innerHTML = ACCENT_COLORS.map((a) =>
-    `<button type="button" class="pf-swatch accent-${a.id}" role="radio" aria-checked="false" aria-label="${a.label}" data-accent="${a.id}"></button>`
-  ).join('');
-
-  themesEl.onclick = (e) => {
-    const btn = e.target.closest('[data-theme]');
+  el.onclick = (e) => {
+    const btn = e.target.closest('[data-bg]');
     if (!btn) return;
-    editCoverTheme = btn.dataset.theme;
-    themesEl.querySelectorAll('[data-theme]').forEach((el) => {
-      el.setAttribute('aria-checked', el === btn ? 'true' : 'false');
+    $('pf-edit-bg').value = btn.dataset.bg;
+    el.querySelectorAll('[data-bg]').forEach((s) => {
+      s.setAttribute('aria-checked', s === btn ? 'true' : 'false');
     });
-    $('pf-preview-cover').className = `pf-preview-cover theme-${editCoverTheme}`;
-  };
-
-  accentsEl.onclick = (e) => {
-    const btn = e.target.closest('[data-accent]');
-    if (!btn) return;
-    editAccentColor = btn.dataset.accent;
-    accentsEl.querySelectorAll('[data-accent]').forEach((el) => {
-      el.setAttribute('aria-checked', el === btn ? 'true' : 'false');
-    });
-    $('pf-preview-avatar').style.background = getAccentHex(editAccentColor);
   };
 }
 
-function getAccentHex(id) {
-  return {
-    pink: '#FF4EB8', blue: '#4ECAFF', mint: '#3DFFB0',
-    orange: '#FF7A35', purple: '#B94EFF', yellow: '#FFE135', ink: '#1A1A2E',
-  }[id] || '#FF4EB8';
-}
-
-function setPickerState(theme, accent) {
-  editCoverTheme = theme || 'sunset';
-  editAccentColor = accent || 'pink';
-  $('pf-edit-themes')?.querySelectorAll('[data-theme]').forEach((el) => {
-    el.setAttribute('aria-checked', el.dataset.theme === editCoverTheme ? 'true' : 'false');
+function setBgPicker(hex) {
+  const color = hex || DEFAULT_BG;
+  $('pf-edit-bg').value = color;
+  $('pf-edit-bg-presets')?.querySelectorAll('[data-bg]').forEach((s) => {
+    s.setAttribute('aria-checked', s.dataset.bg.toUpperCase() === color.toUpperCase() ? 'true' : 'false');
   });
-  $('pf-edit-accents')?.querySelectorAll('[data-accent]').forEach((el) => {
-    el.setAttribute('aria-checked', el.dataset.accent === editAccentColor ? 'true' : 'false');
-  });
-  $('pf-preview-cover').className = `pf-preview-cover theme-${editCoverTheme}`;
-  $('pf-preview-avatar').style.background = getAccentHex(editAccentColor);
 }
 
-function updateEditPreview() {
-  const name = $('pf-edit-name').value.trim() || profile.display_name || `@${profile.username}`;
-  $('pf-preview-name').textContent = name;
-  const prevUrl = pendingAvatarUrl ?? profile.avatar_url;
-  $('pf-preview-avatar').innerHTML = avatarMarkup(prevUrl, profile.username, 'pf-preview-avatar');
-  $('pf-preview-avatar').style.background = getAccentHex(editAccentColor);
+function renderBannerPreview(url) {
+  const box = $('pf-edit-banner-preview');
+  box.innerHTML = url
+    ? `<img src="${escapeHTML(url)}" alt="banner preview">`
+    : `<span class="pf-cover-placeholder">Add a header photo</span>`;
 }
-
-// ---------------------------------------------------------------- edit profile
 
 function openEdit() {
-  buildPickers();
+  buildBgPresets();
   $('pf-edit-name').value = profile.display_name || '';
   $('pf-edit-tagline').value = profile.tagline || '';
   $('pf-edit-bio').value = profile.bio || '';
   $('pf-edit-link').value = profile.link || '';
-  $('pf-bio-count').textContent = ($('pf-edit-bio').value || '').length;
-  $('pf-tagline-count').textContent = ($('pf-edit-tagline').value || '').length;
-  $('pf-edit-prev').innerHTML = avatarMarkup(profile.avatar_url, profile.username, 'pf-avatar-prev');
+  renderAvatarPreview('pf-edit-prev', profile.avatar_url, profile.username);
   $('pf-edit-error').textContent = '';
   pendingAvatarUrl = undefined;
-  setPickerState(profile.cover_theme, profile.accent_color);
-  updateEditPreview();
+  pendingBannerUrl = undefined;
+  bannerCleared = false;
+  setBgPicker(profile.bg_color || DEFAULT_BG);
+  renderBannerPreview(profile.banner_url);
   $('pf-edit').classList.remove('hidden');
 }
-
-document.getElementById('pf-edit-bio')?.addEventListener('input', (e) => {
-  $('pf-bio-count').textContent = e.target.value.length;
-});
-document.getElementById('pf-edit-tagline')?.addEventListener('input', (e) => {
-  $('pf-tagline-count').textContent = e.target.value.length;
-});
-document.getElementById('pf-edit-name')?.addEventListener('input', updateEditPreview);
 
 function closeEdit() { $('pf-edit').classList.add('hidden'); }
 
 $('pf-edit-cancel').onclick = closeEdit;
 $('pf-edit').addEventListener('click', (e) => { if (e.target.id === 'pf-edit') closeEdit(); });
+$('pf-edit-bg').addEventListener('input', (e) => setBgPicker(e.target.value));
+$('pf-edit-banner-clear').addEventListener('click', () => {
+  pendingBannerUrl = undefined;
+  bannerCleared = true;
+  renderBannerPreview(null);
+  $('pf-edit-banner-file').value = '';
+});
+
+$('pf-edit-banner-file').addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const err = $('pf-edit-error');
+  if (file.size > 5 * 1024 * 1024) { err.textContent = 'banner too big — max 5 MB'; return; }
+  err.textContent = 'uploading…';
+  try {
+    pendingBannerUrl = await api.uploadBanner(file);
+    bannerCleared = false;
+    renderBannerPreview(pendingBannerUrl);
+    err.textContent = '';
+  } catch (e2) {
+    err.textContent = e2.message || 'upload failed';
+    pendingBannerUrl = undefined;
+  }
+});
 
 $('pf-edit-file').addEventListener('change', async (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
   const err = $('pf-edit-error');
-  if (file.size > 3 * 1024 * 1024) { err.textContent = 'image too big — keep it under 3 MB'; return; }
+  if (file.size > 3 * 1024 * 1024) { err.textContent = 'image too big — max 3 MB'; return; }
   err.textContent = 'uploading…';
   try {
     pendingAvatarUrl = await api.uploadAvatar(file);
-    $('pf-edit-prev').innerHTML = `<img class="pf-avatar-prev" src="${escapeHTML(pendingAvatarUrl)}" alt="preview">`;
-    updateEditPreview();
+    renderAvatarPreview('pf-edit-prev', pendingAvatarUrl, profile.username);
     err.textContent = '';
   } catch (e2) {
     err.textContent = e2.message || 'upload failed';
@@ -378,16 +385,19 @@ $('pf-edit-save').addEventListener('click', async () => {
       tagline: $('pf-edit-tagline').value.trim(),
       bio: $('pf-edit-bio').value.trim(),
       link: $('pf-edit-link').value.trim(),
-      cover_theme: editCoverTheme,
-      accent_color: editAccentColor,
+      bg_color: $('pf-edit-bg').value,
     };
     if (pendingAvatarUrl !== undefined) patch.avatar_url = pendingAvatarUrl;
+    if (bannerCleared) patch.banner_url = null;
+    else if (pendingBannerUrl !== undefined) patch.banner_url = pendingBannerUrl;
+
     await api.updateProfile(patch);
     const fresh = await api.profileByUsername(profile.username).catch(() => null);
     profile = fresh || { ...profile, ...patch };
-    applyTheme(profile);
-    $('pf-name').textContent = profile.display_name || `@${profile.username}`;
-    $('pf-avatar').innerHTML = avatarMarkup(profile.avatar_url, profile.username, 'pf-avatar');
+
+    applyLook(profile);
+    $('pf-name').textContent = profile.display_name || profile.username;
+    renderAvatar('pf-avatar', profile.avatar_url, profile.username);
     renderBioLink();
     closeEdit();
     showToast('profile updated');
@@ -398,10 +408,10 @@ $('pf-edit-save').addEventListener('click', async () => {
   }
 });
 
-// boot
 initAccount();
 initNav({ filterGrid: false });
+initXP();
 render().catch((err) => {
   console.error('[profile] render failed', err);
-  showMissing('something broke loading this profile — try refreshing');
+  showMissing('something broke — try refreshing');
 });

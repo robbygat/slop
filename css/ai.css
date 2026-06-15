@@ -172,17 +172,20 @@ flex: none;
 }
 .nav-avatar-fallback { font-family: 'Fredoka One', cursive; }
 
-.nav-signout {
-font-family: 'Space Mono', monospace;
-font-weight: 700;
-font-size: 11px;
-color: var(--soft);
-background: none;
-border: none;
-cursor: pointer;
-text-decoration: underline;
+.nav-drawer-signout {
+  display: none;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--soft);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 2px;
+  text-align: left;
 }
-.nav-signout:hover { color: var(--ink); }
+.nav-drawer-signout:not([hidden]) { display: block; }
+.nav-drawer-signout:hover { color: var(--ink); }
 
 #nav-auth { display: flex; align-items: center; gap: 8px; }
 

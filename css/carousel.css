@@ -60,6 +60,44 @@ flex-wrap: wrap;
 flex: 1 1 320px;
 }
 
+@media (max-width: 720px) {
+.fc-head {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding-top: 14px;
+  padding-bottom: 12px;
+}
+
+.fc-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  gap: 6px;
+  flex: none;
+  width: 100%;
+  padding-bottom: 4px;
+  margin: 0;
+}
+.fc-tabs::-webkit-scrollbar { display: none; }
+
+.fc-tab {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+  font-size: 11px;
+  padding: 7px 12px;
+}
+
+.fc-controls {
+  align-self: flex-end;
+  margin-left: 0;
+}
+}
+
 .fc-tab {
 font-family: 'Space Mono', monospace;
 font-weight: 700;
