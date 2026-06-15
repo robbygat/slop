@@ -94,7 +94,13 @@ box-shadow: var(--shb);
 .drop-art { min-height: 220px; border-right: none; border-bottom: var(--bw) solid var(--ink); }
 }
 @media (max-width: 720px) {
-.nav-search { display: none; }
+/* keep search on mobile, just compact it */
+.nav-search { padding: 6px 10px; box-shadow: 2px 2px 0 var(--ink); flex: 1 1 auto; min-width: 0; }
+.nav-search input { width: 100%; font-size: 13px; }
+}
+@media (max-width: 400px) {
+.nav-search { padding: 5px 9px; }
+.nav-search input::placeholder { color: var(--soft); opacity: .6; }
 }
 
 /* ============================================================================

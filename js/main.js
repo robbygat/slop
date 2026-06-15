@@ -1,7 +1,8 @@
 // slop.game — homepage entry point. boots every module on DOM ready.
 
 import { initHero } from './hero.js';
-import { initGamesGrid, setSearchQuery } from './games-grid.js';
+import { initGamesGrid } from './games-grid.js';
+import { initSearch } from './search.js';
 import { initAccount, openAuthModal, getUser } from './account.js';
 import { initUpload } from './upload.js';
 import { initXP } from './xp.js';
@@ -33,19 +34,8 @@ if (getUser()) showToast(`you're already signed in as ${getUser().username}`);
 else openAuthModal();
 });
 
-// global search (nav)
-const search = document.getElementById('nav-search-input');
-let debounce = null;
-search?.addEventListener('input', () => {
-clearTimeout(debounce);
-debounce = setTimeout(() => setSearchQuery(search.value), 140);
-});
-search?.addEventListener('focus', () => {
-if (window.scrollY < 200) document.getElementById('games')?.scrollIntoView({ behavior: 'smooth' });
-});
-search?.addEventListener('keydown', (e) => {
-if (e.key === 'Enter') { e.preventDefault(); document.getElementById('games')?.scrollIntoView({ behavior: 'smooth' }); }
-});
+// global search — live player + game results dropdown (also filters the grid)
+initSearch();
 
 // mobile nav
 const burger = document.getElementById('nav-burger');

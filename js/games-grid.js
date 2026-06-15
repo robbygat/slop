@@ -51,7 +51,7 @@ rerenderGrid();
 const games = [
 {
 id: 'run3',
-name: 'Run 3',
+name: 'Run Infinite',
 thumb: LAUNCH_THUMBS.run3,
 previewVideo: 'assets/run3-preview.mp4',
 desc: 'a gravity-bending space tunnel runner — flip gravity onto the walls, dodge the crumbling holes, and race a friend side by side over a shared seeded track. live-remixable mid-run.',

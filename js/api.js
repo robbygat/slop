@@ -45,7 +45,11 @@ export const api = {
   async me() {
     const s = sb();
     if (!s) return null;
-    const { data: { user } } = await s.auth.getUser();
+    // getSession reads the persisted session from localStorage instantly, so a
+    // page refresh keeps you signed in without waiting on (or depending on) a
+    // network round-trip. RLS still protects all data server-side.
+    const { data: { session } } = await s.auth.getSession();
+    const user = session?.user;
     if (!user) return null;
     const { data } = await s.from('profiles')
       .select('id, username, display_name, avatar_url, is_moderator')
@@ -63,6 +67,30 @@ export const api = {
       .ilike('username', username)
       .maybeSingle();
     return data || null;
+  },
+
+  // ---------------------------------------------------------------- search
+  async searchProfiles(q, limit = 6) {
+    const s = sb();
+    if (!s || !q) return [];
+    const { data } = await s.from('profiles')
+      .select('username, display_name, avatar_url')
+      .not('username', 'is', null)
+      .ilike('username', `%${q}%`)
+      .limit(limit);
+    return data || [];
+  },
+
+  async searchGames(q, limit = 8) {
+    const s = sb();
+    if (!s || !q) return [];
+    const { data } = await s.from('games')
+      .select('slug, name, thumb, play_count, owner_id, profiles ( username )')
+      .eq('status', 'published')
+      .ilike('name', `%${q}%`)
+      .order('play_count', { ascending: false })
+      .limit(limit);
+    return (data || []).map(mapGame);
   },
 
   // Validate + claim a unique username for the signed-in user (RPC).
@@ -238,6 +266,65 @@ export const api = {
       .eq('status', 'published');
     if (error) return null;
     return Object.fromEntries((data || []).map((g) => [g.slug, g.play_count || 0]));
+  },
+
+  // -------------------------------------------------------------- scores / leaderboards
+  // Submit a verified score (must be signed in; RLS ties it to the account).
+  async submitScore(game, score, meta) {
+    const s = sb();
+    if (!s) return null;
+    const { data: { user } } = await s.auth.getUser();
+    if (!user) return null;
+    const n = Math.max(0, Math.floor(Number(score) || 0));
+    const { error } = await s.from('scores').insert({ game, user_id: user.id, score: n, meta: meta || null });
+    return error ? null : true;
+  },
+
+  // Top scores for a game (each player's best), joined to their profile.
+  async topScores(game, limit = 25) {
+    const s = sb();
+    if (!s || !game) return [];
+    const { data, error } = await s.rpc('top_scores', { p_game: game, p_limit: limit });
+    return error ? [] : (data || []);
+  },
+
+  // -------------------------------------------------------------- comments
+  async gameComments(gameId, limit = 100) {
+    const s = sb();
+    if (!s || !gameId) return [];
+    const { data, error } = await s.from('comments')
+      .select('id, body, created_at, user_id, profiles ( username, avatar_url )')
+      .eq('game_id', gameId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) return [];
+    return (data || []).map((c) => ({
+      id: c.id,
+      body: c.body,
+      created_at: c.created_at ? new Date(c.created_at).getTime() : Date.now(),
+      user_id: c.user_id,
+      username: c.profiles?.username || 'anon',
+      avatar_url: c.profiles?.avatar_url || null,
+    }));
+  },
+
+  async addComment(gameId, body) {
+    const s = sb();
+    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    const { data: { user } } = await s.auth.getUser();
+    if (!user) throw new Error('sign in to comment');
+    const text = String(body || '').trim().slice(0, 500);
+    if (!text) throw new Error('write something first');
+    const { error } = await s.from('comments').insert({ game_id: gameId, user_id: user.id, body: text });
+    if (error) throw new Error(friendly(error.message));
+    return true;
+  },
+
+  async deleteComment(commentId) {
+    const s = sb();
+    if (!s) return false;
+    const { error } = await s.from('comments').delete().eq('id', commentId);
+    return !error;
   },
 
   // -------------------------------------------------------------- reports

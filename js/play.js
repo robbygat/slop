@@ -8,7 +8,7 @@ import { getCookedGame, updateCookedGame, addCookedGame } from './games-grid.js'
 import { recordPlay } from './plays.js';
 import { testGameHTML } from './sandbox.js';
 import { createSpeech } from './speech.js';
-import { api } from './api.js';
+import { api, escapeHTML, timeAgo } from './api.js';
 
 const REMIX_SYSTEM = `You are the live remix engine for slop.game. You receive the COMPLETE source of an existing self-contained browser game plus a player's edit request. Apply the edit and return the COMPLETE UPDATED document.
 
@@ -68,7 +68,81 @@ studioBtn.href = isCommunity
 : `studio.html?id=${encodeURIComponent(game.id)}`;
 
 initPublish();
+if (isCommunity && game.gameId) initComments(game.gameId);
 if (params.get('remix') === '1') openDrawer(true);
+}
+
+// ---------------------------------------------------------------- comments
+function commentHTML(c, viewer) {
+  const canDel = viewer && (viewer.id === c.user_id || viewer.is_moderator);
+  const av = c.avatar_url
+    ? `<img class="comment-av" src="${escapeHTML(c.avatar_url)}" alt="">`
+    : `<span class="comment-av comment-av-fb">${escapeHTML((c.username[0] || 'S').toUpperCase())}</span>`;
+  return `<div class="comment" data-id="${escapeHTML(c.id)}">
+    ${av}
+    <div class="comment-body">
+      <div class="comment-head">
+        <a class="comment-user" href="/${escapeHTML(c.username)}">@${escapeHTML(c.username)}</a>
+        <span class="comment-time">${timeAgo(c.created_at)}</span>
+        ${canDel ? '<button class="comment-del" title="delete">delete</button>' : ''}
+      </div>
+      <div class="comment-text">${escapeHTML(c.body)}</div>
+    </div>
+  </div>`;
+}
+
+async function initComments(gameId) {
+  const sec = document.getElementById('comments-sec');
+  if (!sec) return;
+  sec.hidden = false;
+  const list = document.getElementById('comments-list');
+  const input = document.getElementById('comment-input');
+  const sendBtn = document.getElementById('comment-send');
+  const compose = document.getElementById('comment-compose');
+  const signin = document.getElementById('comments-signin');
+
+  const viewer = await api.me().catch(() => null);
+  const signedIn = !!viewer?.username;
+  compose.style.display = signedIn ? '' : 'none';
+  signin.hidden = signedIn;
+
+  async function refresh() {
+    const comments = await api.gameComments(gameId);
+    document.getElementById('comments-count').textContent = comments.length;
+    list.innerHTML = comments.length
+      ? comments.map((c) => commentHTML(c, viewer)).join('')
+      : `<div class="comments-empty">no comments yet — be the first.</div>`;
+  }
+
+  sendBtn?.addEventListener('click', async () => {
+    const body = input.value.trim();
+    if (!body) return;
+    sendBtn.disabled = true;
+    try {
+      await api.addComment(gameId, body);
+      input.value = '';
+      await refresh();
+    } catch (err) {
+      $('status') && ($('status').textContent = err.message);
+    } finally {
+      sendBtn.disabled = false;
+    }
+  });
+
+  input?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendBtn.click();
+  });
+
+  list.addEventListener('click', async (e) => {
+    const del = e.target.closest('.comment-del');
+    if (!del) return;
+    const row = del.closest('.comment');
+    if (!window.confirm('Delete this comment?')) return;
+    const ok = await api.deleteComment(row.dataset.id);
+    if (ok) { row.remove(); const n = list.querySelectorAll('.comment').length; document.getElementById('comments-count').textContent = n; }
+  });
+
+  refresh();
 }
 
 // ---------------------------------------------------------------- publish

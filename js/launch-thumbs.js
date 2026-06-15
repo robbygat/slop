@@ -17,7 +17,7 @@ run3: `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/20
 <circle cx="326" cy="248" r="12" fill="#C9C9D4" stroke="#1A1A2E" stroke-width="3"/>
 <line x1="292" y1="176" x2="282" y2="156" stroke="#1A1A2E" stroke-width="4"/>
 <line x1="328" y1="176" x2="338" y2="156" stroke="#1A1A2E" stroke-width="4"/>
-<text x="48" y="52" font-family="Arial,sans-serif" font-size="42" font-weight="900" fill="#FFE135">RUN 3</text>
+<text x="48" y="52" font-family="Arial,sans-serif" font-size="40" font-weight="900" fill="#FFE135">RUN INFINITE</text>
 <text x="48" y="320" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#4ECAFF">gravity tunnel runner</text>
 </svg>`)}`,
 

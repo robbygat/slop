@@ -547,6 +547,8 @@ localStorage.setItem(bestKey(), String(Math.floor(game.best)));
 function endRun() {
 game.state = 'end';
 if (game.dist > game.best) { game.best = game.dist; saveBest(); }
+// hand the final solo distance to the leaderboard module (submits if signed in)
+try { window.dispatchEvent(new CustomEvent('run3:end', { detail: { dist: Math.floor(game.dist), difficulty: game.difficulty } })); } catch { /* */ }
 if (EMBED) { setTimeout(startSolo, 1400); return; }
 $('end-title').textContent = 'FELL INTO SPACE'; $('end-title').className = 'win-title lose';
 $('end-stats').textContent = `${Math.floor(game.dist)} m · ${game.orbs} orbs${game.difficulty === 'hard' ? ' · hard' : ''}`;

@@ -1,0 +1,63 @@
+/* Game comments (play page) */
+.comments {
+  max-width: 760px;
+  margin: 26px auto 80px;
+  padding: 0 18px;
+  font-family: 'Nunito', sans-serif;
+}
+.comments-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 22px; color: var(--ink, #1A1A2E);
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 16px;
+}
+.comments-count {
+  font-size: 13px; font-family: 'Nunito', sans-serif; font-weight: 900;
+  background: #1A1A2E; color: #FFE135; padding: 3px 10px; border-radius: 999px;
+}
+
+.comment-compose { display: flex; gap: 10px; margin-bottom: 8px; }
+.comment-compose textarea {
+  flex: 1; resize: vertical; min-height: 52px; max-height: 200px;
+  padding: 12px 14px; font: inherit; font-weight: 600;
+  border: 3px solid #1A1A2E; border-radius: 12px; background: #fff; color: #1A1A2E;
+}
+.comment-send {
+  align-self: stretch; padding: 0 22px;
+  font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 15px;
+  background: #FF4EB8; color: #fff; border: 3px solid #1A1A2E; border-radius: 12px;
+  box-shadow: 4px 4px 0 #1A1A2E; cursor: pointer; transition: transform .08s, box-shadow .08s;
+}
+.comment-send:hover { transform: translate(-1px,-1px); box-shadow: 6px 6px 0 #1A1A2E; }
+.comment-send[disabled] { opacity: .5; cursor: default; transform: none; }
+
+.comments-signin {
+  background: #fff; border: 3px dashed #1A1A2E; border-radius: 12px;
+  padding: 14px; text-align: center; font-weight: 800; color: #3A3A5C; margin-bottom: 8px;
+}
+.comments-signin a { color: #FF4EB8; }
+
+.comments-list { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
+.comment {
+  display: flex; gap: 12px;
+  background: #fff; border: 3px solid #1A1A2E; border-radius: 14px;
+  box-shadow: 4px 4px 0 #1A1A2E; padding: 12px 14px;
+}
+.comment-av {
+  width: 40px; height: 40px; border-radius: 50%; flex: none;
+  object-fit: cover; border: 2px solid #1A1A2E; background: #FF4EB8;
+  display: grid; place-items: center; color: #fff; font-weight: 900; font-size: 17px;
+}
+.comment-av-fb { font-family: 'Fredoka One', cursive; }
+.comment-body { flex: 1; min-width: 0; }
+.comment-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+.comment-user { font-weight: 900; color: #1A1A2E; text-decoration: none; }
+.comment-user:hover { color: #FF4EB8; }
+.comment-time { font-size: 12px; color: #3A3A5C; font-weight: 700; }
+.comment-text { color: #1A1A2E; font-weight: 600; line-height: 1.45; word-wrap: break-word; overflow-wrap: anywhere; }
+.comment-del {
+  margin-left: auto; background: none; border: none; cursor: pointer;
+  color: #3A3A5C; font-weight: 900; font-size: 13px; padding: 0 4px;
+}
+.comment-del:hover { color: #FF3B3B; }
+.comments-empty { color: #3A3A5C; font-weight: 800; padding: 18px 4px; }

@@ -148,9 +148,10 @@ body.embed .overlay { display: none !important; }
 
 <!-- title -->
 <div class="overlay" id="ov-title">
-<h1 class="game-title">RUN <span class="n">3</span></h1>
+<h1 class="game-title">RUN <span class="n">INFINITE</span></h1>
 <p class="subtitle">run the walls · bend gravity · don't fall into space</p>
 <div class="hiscore">best run: <span id="hi-score">0</span> m</div>
+<div class="run-lb" data-game="run3"></div>
 <div class="char-row" id="char-row">
 <div class="char sel" data-char="runner">
 <div class="cn">The Runner</div>
@@ -202,6 +203,7 @@ hit a side and gravity flips — run along the walls to dodge the holes
 <h2 class="win-title win" id="end-title">RUN OVER</h2>
 <p id="end-stats"></p>
 <p id="end-note">press R or click below to run it back</p>
+<div class="run-lb" data-game="run3"></div>
 <div class="btn-row">
 <button class="gbtn" id="btn-again">Run Again</button>
 <button class="gbtn dark" id="btn-title">← Title</button>
@@ -212,9 +214,22 @@ hit a side and gravity flips — run along the walls to dodge the holes
 <!-- the remix dock mounts itself here, beside the stage -->
 </div>
 
+<style>
+.run-lb { width: min(360px, 86vw); margin: 14px auto 0; text-align: left; font-family: 'Nunito', sans-serif; }
+.run-lb .lb-head { font-family: 'Fredoka One', cursive; font-size: 16px; color: #FFE135; margin-bottom: 7px; text-align: center; letter-spacing: .04em; }
+.run-lb .lb-row { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 9px; background: rgba(255,255,255,.06); margin-bottom: 5px; }
+.run-lb .lb-row.me { background: rgba(255,225,53,.18); outline: 2px solid #FFE135; }
+.run-lb .lb-rank { width: 26px; font-weight: 900; color: #C9C9D4; text-align: center; flex: none; }
+.run-lb .lb-name { flex: 1; font-weight: 800; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.run-lb .lb-score { font-family: 'Space Mono', monospace; font-weight: 700; color: #3DFFB0; flex: none; }
+.run-lb .lb-empty { text-align: center; color: #7FA899; font-weight: 700; font-size: 13px; padding: 12px; }
+.run-lb .lb-foot { text-align: center; margin-top: 8px; font-size: 12px; color: #9aa; font-weight: 700; }
+.run-lb .lb-foot a { color: #FF4EB8; font-weight: 900; }
+</style>
 <script type="module" src="game.js"></script>
 <script type="module">
-if (!new URLSearchParams(location.search).has('embed')) import('./remix.js');
+const embed = new URLSearchParams(location.search).has('embed');
+if (!embed) { import('./remix.js'); import('./leaderboard.js'); }
 </script>
 </body>
 </html>

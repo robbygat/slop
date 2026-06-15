@@ -1,8 +1,8 @@
-// iPhone section — embeds Run 3 in the mockup with working touch controls.
+// iPhone section — embeds Run Infinite in the mockup with working touch controls.
 
 import { showToast } from './toast.js';
 
-// Run 3 maps A/D to tube rotation; stick ←/→ were inverted on the old d-pad.
+// Run Infinite maps A/D to tube rotation; stick ←/→ were inverted on the old d-pad.
 const ROTATE_LEFT = 'd';
 const ROTATE_RIGHT = 'a';
 const JUMP = ' ';
