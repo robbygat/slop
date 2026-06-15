@@ -21,6 +21,47 @@ mobile nav, and responsive polish across every screen size. */
   display: none;
 }
 
+/* account links in nav menu (profile + sign out) */
+.nav-drawer-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 8px;
+}
+
+.nav-drawer-link {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--wh);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 6px 14px;
+  box-shadow: 2px 2px 0 var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.nav-drawer-link:hover { transform: translate(-1px, -1px); }
+
+button.nav-drawer-link {
+  font: inherit;
+  appearance: none;
+}
+.nav-drawer-signout {
+  background: transparent;
+  box-shadow: none;
+  border-color: transparent;
+  color: var(--soft);
+  text-decoration: underline;
+  padding: 6px 10px;
+}
+.nav-drawer-signout:hover {
+  color: var(--ink);
+  transform: none;
+}
+
 @media (max-width: 900px) {
   .nav-burger { display: inline-flex; }
 
@@ -106,30 +147,39 @@ mobile nav, and responsive polish across every screen size. */
     text-decoration: none;
   }
 
-  .nav-links > .nav-drawer-signout {
-    width: 100%;
-    margin-top: 6px;
+  .nav-drawer-account {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    margin: 12px 0 0;
+    padding-top: 12px;
+    border-top: 2px dashed rgba(26, 26, 46, 0.18);
+    margin-left: 0;
+  }
+
+  .nav-drawer-account .nav-drawer-link {
+    border-radius: 0;
+    border: none;
+    border-bottom: 2px dashed rgba(26, 26, 46, 0.12);
+    box-shadow: none;
+    background: transparent;
+    text-align: left;
     padding: 14px 10px;
     font-size: 15px;
-    font-weight: 700;
-    font-family: 'Space Mono', monospace;
-    color: var(--soft);
-    background: none;
-    border-top: 2px dashed rgba(26, 26, 46, 0.18);
-    border-bottom: 2px dashed rgba(26, 26, 46, 0.12);
-    text-align: left;
   }
-  .nav-links > .nav-drawer-signout:hover {
-    color: var(--ink);
-    background: rgba(255, 255, 255, 0.35);
-    transform: none;
+
+  .nav-drawer-signout {
+    color: var(--soft);
+    text-decoration: none;
+    font-weight: 800;
   }
 
   /* mobile: search lives in the drawer only — frees the top bar */
   .nav-right > .nav-search-bar { display: none; }
 
-  /* compact auth chip — avatar only in the top bar */
-  #nav-auth .nav-user span:not(.nav-avatar):not(.nav-avatar-fallback) { display: none; }
+  /* compact auth — avatar only in the bar */
+  #nav-auth .nav-user .nav-user-handle { display: none; }
   #nav-auth .nav-user {
     padding: 3px;
     border-radius: 50%;

@@ -87,15 +87,15 @@ export function renderProfileXP() {
   const unlocked = Object.keys(p.achievements || {}).length;
   slot.innerHTML = `
     <div class="pf-xp-inner">
-      <div class="pf-xp-level">${p.level}</div>
-      <div class="pf-xp-body">
-        <div class="pf-xp-top">
-          <span class="pf-xp-label">Level ${p.level}</span>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="pf-xp-level">${p.level}</div>
+        <div class="pf-xp-top" style="flex:1">
+          <span class="pf-xp-label">Your level</span>
           <span class="pf-xp-num">${p.xp.toLocaleString()} XP</span>
         </div>
-        <div class="pf-xp-track"><i style="width:${p.pct}%"></i></div>
-        <p class="pf-xp-sub">${p.into} / ${p.need} XP to level ${p.level + 1}${unlocked ? ` · ${unlocked} achievement${unlocked === 1 ? '' : 's'}` : ''}</p>
       </div>
+      <div class="pf-xp-track"><i style="width:${p.pct}%"></i></div>
+      <p class="pf-xp-sub">${p.into} / ${p.need} XP to level ${p.level + 1}${unlocked ? ` · ${unlocked} badge${unlocked === 1 ? '' : 's'}` : ''}</p>
     </div>`;
 }
 

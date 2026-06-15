@@ -4,7 +4,7 @@ import { api, escapeHTML } from './api.js';
 import { initAccount } from './account.js';
 import { loadPlays, playCount, fmtPlays } from './plays.js';
 import { initNav } from './nav.js';
-import { initXP, renderProfileXP } from './xp.js';
+import { initXP, renderProfileXP, getProgress } from './xp.js';
 import { showToast } from './toast.js';
 
 const params = new URLSearchParams(location.search);
@@ -12,11 +12,12 @@ const username = params.get('u') || decodeURIComponent(location.pathname.replace
 
 const $ = (id) => document.getElementById(id);
 
-const DEFAULT_BG = '#FFFFFF';
+const DEFAULT_BG = '#FFFBF0';
 
 const BG_PRESETS = [
-  '#FFFFFF', '#F7F9F9', '#EFF3F4', '#E7ECF0',
-  '#F0F4F8', '#E8EEF2', '#15202B', '#0F172A', '#111827',
+  '#FFFBF0', '#FFFFFF', '#FAFAFA', '#F5F0EB',
+  '#F0F4FF', '#F0FFF4', '#FFF8F0', '#F5F0FF',
+  '#1A1A2E', '#0F172A',
 ];
 
 let profile = null;
@@ -29,39 +30,10 @@ let bannerCleared = false;
 
 function initial(name) { return (String(name || 'S')[0] || 'S').toUpperCase(); }
 
-/** Muted blue-gray fallback — never pink. */
-function avatarFallbackColor(name) {
-  let h = 0;
-  const s = String(name || 'user');
-  for (let i = 0; i < s.length; i++) h = s.charCodeAt(i) + ((h << 5) - h);
-  const hue = 195 + (Math.abs(h) % 50);
-  return `hsl(${hue}, 12%, 44%)`;
-}
-
-function renderAvatar(elId, url, name) {
-  const el = $(elId);
-  if (!el) return;
-  if (url) {
-    el.style.background = '';
-    el.innerHTML = `<img src="${escapeHTML(url)}" alt="${escapeHTML(name || '')}">`;
-  } else {
-    el.innerHTML = '';
-    el.style.background = avatarFallbackColor(name);
-    el.textContent = initial(name);
-  }
-}
-
-function renderAvatarPreview(elId, url, name) {
-  const el = $(elId);
-  if (!el) return;
-  if (url) {
-    el.style.background = '';
-    el.innerHTML = `<img src="${escapeHTML(url)}" alt="">`;
-  } else {
-    el.innerHTML = '';
-    el.style.background = avatarFallbackColor(name);
-    el.textContent = initial(name);
-  }
+function avatarMarkup(url, name, cls) {
+  return url
+    ? `<img class="${cls}" src="${escapeHTML(url)}" alt="${escapeHTML(name)}">`
+    : initial(name);
 }
 
 function fmtMemberSince(iso) {
@@ -84,13 +56,13 @@ function applyLook(data) {
   const bg = data.bg_color || DEFAULT_BG;
   const page = $('pf-page');
   const dark = isDarkHex(bg);
-  page.style.setProperty('--pf-bg-custom', bg);
-  page.style.setProperty('--pf-surface', bg);
+  page.style.setProperty('--pf-bg', bg);
   page.style.background = bg;
   page.classList.toggle('pf-dark', dark);
 
   const bannerImg = $('pf-banner-img');
-  if (data.banner_url) {
+  const hasBanner = !!data.banner_url;
+  if (hasBanner) {
     bannerImg.src = data.banner_url;
     bannerImg.alt = `${data.display_name || data.username}'s banner`;
     bannerImg.hidden = false;
@@ -98,6 +70,8 @@ function applyLook(data) {
     bannerImg.hidden = true;
     bannerImg.removeAttribute('src');
   }
+  const def = $('pf-banner-default');
+  if (def) def.hidden = hasBanner;
 }
 
 function renderBioLink() {
@@ -135,14 +109,14 @@ function gameRow(g, canModerate) {
     ? `<img src="${escapeHTML(g.thumb)}" alt="" loading="lazy">`
     : `<span>${escapeHTML(g.name)}</span>`;
   return `
-    <div class="pf-game" data-game-id="${escapeHTML(g.gameId)}" data-slug="${escapeHTML(g.slug)}" data-name="${escapeHTML(g.name)}" data-href="/play/${escapeHTML(g.slug)}" role="link" tabindex="0">
-      <div class="pf-game-thumb">${thumb}</div>
-      <div class="pf-game-body">
+    <div class="pf-game-tile" data-game-id="${escapeHTML(g.gameId)}" data-slug="${escapeHTML(g.slug)}" data-name="${escapeHTML(g.name)}" data-href="/play/${escapeHTML(g.slug)}" role="link" tabindex="0">
+      ${canModerate ? '<button class="gdel" type="button" title="remove (moderator)">×</button>' : ''}
+      <div class="pf-tile-thumb">${thumb}</div>
+      <div class="pf-tile-body">
         <h3>${escapeHTML(g.name)}</h3>
         <p>${escapeHTML(g.desc || 'cooked with grok')}</p>
-        <div class="pf-game-meta">${fmtPlays(plays)} plays</div>
+        <div class="pf-tile-meta">${fmtPlays(plays)} plays</div>
       </div>
-      ${canModerate ? '<button class="gdel" type="button" title="remove (moderator)">×</button>' : ''}
     </div>`;
 }
 
@@ -158,17 +132,22 @@ function renderGamesGrid(games, canModerate) {
 function updateStats(games) {
   $('pf-plays').textContent = fmtPlays(totalPlaysForGames(games));
   $('pf-games-count').textContent = games.length;
-  $('pf-grid-count').textContent = String(games.length);
+  $('pf-grid-count').textContent = `${games.length} total`;
 }
 
 function showXP(isOwner) {
   const xpEl = $('pf-xp');
+  const badge = $('pf-level-badge');
   if (!isOwner) {
     xpEl.hidden = true;
+    badge.hidden = true;
     return;
   }
   xpEl.hidden = false;
   renderProfileXP();
+  const { level } = getProgress();
+  badge.textContent = `Lv ${level}`;
+  badge.hidden = false;
 }
 
 async function render() {
@@ -190,7 +169,7 @@ async function render() {
 
   $('pf-name').textContent = profile.display_name || profile.username;
   $('pf-handle').textContent = `@${profile.username}`;
-  renderAvatar('pf-avatar', profile.avatar_url, profile.username);
+  $('pf-avatar').innerHTML = avatarMarkup(profile.avatar_url, profile.username, 'pf-avatar');
   renderBioLink();
 
   const isOwner = viewer?.id === profile.id;
@@ -211,7 +190,7 @@ async function render() {
   renderGamesGrid(games, !!viewer?.is_moderator);
   $('pf-grid').onclick = onGridClick;
   $('pf-grid').onkeydown = (e) => {
-    const row = e.target.closest('.pf-game');
+    const row = e.target.closest('.pf-game-tile');
     if (row && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
       if (!e.target.closest('.gdel')) window.location.href = row.dataset.href;
@@ -222,7 +201,7 @@ async function render() {
 function renderActions(isOwner) {
   const slot = $('pf-actions');
   if (isOwner) {
-    slot.innerHTML = `<button class="pf-btn" id="pf-edit-btn" type="button">Edit profile</button>`;
+    slot.innerHTML = `<button class="pf-btn ghost" id="pf-edit-btn" type="button">Edit page</button>`;
     $('pf-edit-btn').onclick = openEdit;
     return;
   }
@@ -263,7 +242,7 @@ async function onGridClick(e) {
   if (del) {
     e.preventDefault();
     e.stopPropagation();
-    const row = del.closest('.pf-game');
+    const row = del.closest('.pf-game-tile');
     if (!window.confirm(`Remove “${row.dataset.name}” from slop.game?`)) return;
     const ok = await api.removeGame(row.dataset.gameId);
     if (ok) {
@@ -277,7 +256,7 @@ async function onGridClick(e) {
     }
     return;
   }
-  const row = e.target.closest('.pf-game');
+  const row = e.target.closest('.pf-game-tile');
   if (row?.dataset.href) window.location.href = row.dataset.href;
 }
 
@@ -311,7 +290,7 @@ function renderBannerPreview(url) {
   const box = $('pf-edit-banner-preview');
   box.innerHTML = url
     ? `<img src="${escapeHTML(url)}" alt="banner preview">`
-    : `<span class="pf-cover-placeholder">Add a header photo</span>`;
+    : `<span class="pf-banner-placeholder">upload a banner</span>`;
 }
 
 function openEdit() {
@@ -320,7 +299,7 @@ function openEdit() {
   $('pf-edit-tagline').value = profile.tagline || '';
   $('pf-edit-bio').value = profile.bio || '';
   $('pf-edit-link').value = profile.link || '';
-  renderAvatarPreview('pf-edit-prev', profile.avatar_url, profile.username);
+  $('pf-edit-prev').innerHTML = avatarMarkup(profile.avatar_url, profile.username, 'pf-avatar-prev');
   $('pf-edit-error').textContent = '';
   pendingAvatarUrl = undefined;
   pendingBannerUrl = undefined;
@@ -367,7 +346,7 @@ $('pf-edit-file').addEventListener('change', async (e) => {
   err.textContent = 'uploading…';
   try {
     pendingAvatarUrl = await api.uploadAvatar(file);
-    renderAvatarPreview('pf-edit-prev', pendingAvatarUrl, profile.username);
+    $('pf-edit-prev').innerHTML = `<img class="pf-avatar-prev" src="${escapeHTML(pendingAvatarUrl)}" alt="preview">`;
     err.textContent = '';
   } catch (e2) {
     err.textContent = e2.message || 'upload failed';
@@ -397,7 +376,7 @@ $('pf-edit-save').addEventListener('click', async () => {
 
     applyLook(profile);
     $('pf-name').textContent = profile.display_name || profile.username;
-    renderAvatar('pf-avatar', profile.avatar_url, profile.username);
+    $('pf-avatar').innerHTML = avatarMarkup(profile.avatar_url, profile.username, 'pf-avatar');
     renderBioLink();
     closeEdit();
     showToast('profile updated');

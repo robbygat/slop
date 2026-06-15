@@ -7,6 +7,8 @@
 <meta name="description" content="a slop.game creator's published games.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23FF4EB8%22/><text x=%2250%22 y=%2258%22 text-anchor=%22middle%22 font-family=%22system-ui,sans-serif%22 font-size=%2248%22 font-weight=%22700%22 fill=%22%23FFFFFF%22>S</text></svg>">
 
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/nav.css">
@@ -37,7 +39,7 @@
     <a href="/#multiplayer">Multiplayer</a>
     <a href="/#publish">Publish</a>
     <a class="nav-drawer-profile" href="studio.html">Cook a Game</a>
-    <button class="nav-drawer-signout" id="nav-drawer-signout" type="button" hidden>Sign out</button>
+    <div class="nav-drawer-account" id="nav-drawer-account" hidden></div>
   </div>
   <div class="nav-right">
     <label class="nav-search nav-search-bar" for="nav-search-input">
@@ -52,40 +54,60 @@
 </nav>
 
 <div id="pf-shell" hidden>
-  <div class="pf-canvas" id="pf-page">
-    <header class="pf-cover-block">
-      <div class="pf-cover" id="pf-banner">
-        <img class="pf-cover-img" id="pf-banner-img" alt="" hidden>
+  <div class="pf-stage">
+    <div class="pf-cover-zone">
+      <div class="pf-banner" id="pf-banner">
+        <img class="pf-banner-img" id="pf-banner-img" alt="" hidden>
+        <div class="pf-banner-default" id="pf-banner-default" aria-hidden="true"></div>
       </div>
-      <div class="pf-cover-bar">
-        <div class="pf-avatar-ring">
-          <div class="pf-avatar" id="pf-avatar">S</div>
+      <div class="pf-cover-dots" aria-hidden="true"></div>
+    </div>
+
+    <div class="pf-card" id="pf-page">
+      <div class="pf-identity">
+        <div class="pf-avatar-slot">
+          <div class="pf-avatar-ring" aria-hidden="true"></div>
+          <div class="pf-avatar-frame">
+            <div class="pf-avatar" id="pf-avatar">S</div>
+          </div>
+          <span class="pf-level-badge" id="pf-level-badge" hidden></span>
         </div>
-        <div class="pf-actions" id="pf-actions"></div>
+
+        <div class="pf-id">
+          <div class="pf-id-top">
+            <div class="pf-names">
+              <span class="pf-creator-tag">creator</span>
+              <h1 class="pf-name" id="pf-name">@user</h1>
+              <p class="pf-handle" id="pf-handle"></p>
+            </div>
+            <div class="pf-actions" id="pf-actions"></div>
+          </div>
+          <p class="pf-tagline" id="pf-tagline" hidden></p>
+          <p class="pf-bio" id="pf-bio" hidden></p>
+          <a class="pf-link" id="pf-link" target="_blank" rel="noopener nofollow ugc" hidden></a>
+
+          <div class="pf-stats">
+            <div class="pf-stat"><b id="pf-plays">0</b><span>plays</span></div>
+            <div class="pf-stat"><b id="pf-followers">0</b><span>followers</span></div>
+            <div class="pf-stat"><b id="pf-games-count">0</b><span>games</span></div>
+          </div>
+        </div>
       </div>
-    </header>
 
-    <div class="pf-body">
-      <h1 class="pf-name" id="pf-name">Name</h1>
-      <p class="pf-handle" id="pf-handle">@user</p>
-      <p class="pf-tagline" id="pf-tagline" hidden></p>
-      <p class="pf-bio" id="pf-bio" hidden></p>
-      <a class="pf-link" id="pf-link" target="_blank" rel="noopener nofollow ugc" hidden></a>
-      <p class="pf-joined" id="pf-member" hidden></p>
+      <div class="pf-body">
+        <aside class="pf-side">
+          <div class="pf-xp-card" id="pf-xp" hidden></div>
+          <p class="pf-member" id="pf-member" hidden></p>
+        </aside>
 
-      <div class="pf-counts">
-        <span><strong id="pf-followers">0</strong> <span>Followers</span></span>
-        <span><strong id="pf-plays">0</strong> <span>Plays</span></span>
-        <span><strong id="pf-games-count">0</strong> <span>Games</span></span>
+        <section class="pf-games">
+          <div class="pf-games-head">
+            <h2><span class="pf-tab-dot"></span> Published games</h2>
+            <span class="pf-games-count" id="pf-grid-count">0</span>
+          </div>
+          <div class="pf-game-grid" id="pf-grid"></div>
+        </section>
       </div>
-
-      <div class="pf-xp-block" id="pf-xp" hidden></div>
-
-      <nav class="pf-tabs" aria-label="Profile sections">
-        <span class="pf-tab active">Games <em id="pf-grid-count">0</em></span>
-      </nav>
-
-      <div class="pf-feed" id="pf-grid"></div>
     </div>
   </div>
 </div>
@@ -93,55 +115,57 @@
 <div class="pf-status-wrap" id="pf-status"></div>
 
 <div class="pf-modal hidden" id="pf-edit">
-  <div class="pf-dialog">
-    <header class="pf-dialog-head">
-      <button class="pf-dialog-close" id="pf-edit-cancel" type="button" aria-label="Close">×</button>
-      <h3>Edit profile</h3>
-      <button class="pf-dialog-save" id="pf-edit-save" type="button">Save</button>
-    </header>
-    <div class="pf-dialog-body">
+  <div class="pf-sheet">
+    <div class="pf-sheet-head">
+      <h3>Customize your page</h3>
+      <button class="pf-sheet-close" id="pf-edit-cancel" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="pf-sheet-body">
       <div class="pf-field">
         <label>Banner</label>
-        <div class="pf-cover-edit" id="pf-edit-banner-preview">
-          <span class="pf-cover-placeholder">Add a header photo</span>
+        <div class="pf-banner-edit" id="pf-edit-banner-preview">
+          <span class="pf-banner-placeholder">drop a banner image</span>
         </div>
-        <div class="pf-field-row">
+        <div class="pf-file-row">
           <input type="file" id="pf-edit-banner-file" accept="image/*">
-          <button type="button" class="pf-link-btn" id="pf-edit-banner-clear">Remove</button>
+          <button type="button" class="pf-text-btn" id="pf-edit-banner-clear">Remove</button>
         </div>
       </div>
       <div class="pf-field">
-        <label for="pf-edit-bg">Background color</label>
+        <label for="pf-edit-bg">Page color</label>
         <div class="pf-bg-row">
-          <input type="color" id="pf-edit-bg" value="#FFFFFF">
+          <input type="color" id="pf-edit-bg" value="#FFFBF0">
           <div class="pf-bg-presets" id="pf-edit-bg-presets"></div>
         </div>
       </div>
       <div class="pf-field">
         <label>Profile photo</label>
-        <div class="pf-photo-row">
-          <div class="pf-avatar-prev" id="pf-edit-prev">S</div>
+        <div class="pf-avatar-edit-row">
+          <div class="pf-avatar-edit-slot">
+            <div class="pf-avatar-prev" id="pf-edit-prev">S</div>
+          </div>
           <input type="file" id="pf-edit-file" accept="image/*">
         </div>
       </div>
       <div class="pf-field">
-        <label for="pf-edit-name">Name</label>
+        <label for="pf-edit-name">Display name</label>
         <input type="text" id="pf-edit-name" maxlength="40">
       </div>
       <div class="pf-field">
         <label for="pf-edit-tagline">Tagline</label>
-        <input type="text" id="pf-edit-tagline" maxlength="80">
+        <input type="text" id="pf-edit-tagline" maxlength="80" placeholder="what you cook…">
       </div>
       <div class="pf-field">
         <label for="pf-edit-bio">Bio</label>
         <textarea id="pf-edit-bio" maxlength="300" rows="3"></textarea>
       </div>
       <div class="pf-field">
-        <label for="pf-edit-link">Website</label>
-        <input type="text" id="pf-edit-link" maxlength="200" placeholder="https://">
+        <label for="pf-edit-link">Link</label>
+        <input type="text" id="pf-edit-link" maxlength="200" placeholder="yoursite.com">
       </div>
-      <p class="pf-error" id="pf-edit-error"></p>
     </div>
+    <p class="pf-error" id="pf-edit-error"></p>
+    <button class="pf-save" id="pf-edit-save" type="button">Save profile</button>
   </div>
 </div>
 

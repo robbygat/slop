@@ -75,19 +75,6 @@
   transform: translateY(-1px);
 }
 
-.nav-links > .nav-drawer-signout {
-  font-weight: 800;
-  font-size: 15px;
-  color: var(--soft);
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-}
-.nav-links > .nav-drawer-signout:hover {
-  color: var(--ink);
-  border-bottom-color: transparent;
-  transform: translateY(-1px);
-}
-
 .nav-drawer-search { display: none; }
 
 .nav-right {

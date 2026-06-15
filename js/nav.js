@@ -34,7 +34,7 @@ export function initNav(options = {}) {
   });
 
   links.addEventListener('click', (e) => {
-    if (e.target.closest('a, .nav-drawer-signout')) close();
+    if (e.target.closest('a')) close();
   });
 
   document.addEventListener('click', (e) => {
