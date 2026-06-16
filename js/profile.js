@@ -57,10 +57,18 @@ function isDarkHex(hex) {
 function applyLook(data) {
   const bg = data.bg_color || DEFAULT_BG;
   const page = $('pf-page');
-  const dark = isDarkHex(bg);
+  // Default page = the translucent "liquid glass" card over the ambient scene.
+  // Only paint a solid surface when the creator picked a real custom color (a
+  // dark one also flips text to light via .pf-dark).
+  const isCustom = bg.toUpperCase() !== DEFAULT_BG.toUpperCase();
   page.style.setProperty('--pf-bg', bg);
-  page.style.background = bg;
-  page.classList.toggle('pf-dark', dark);
+  if (isCustom) {
+    page.style.background = bg;
+    page.classList.toggle('pf-dark', isDarkHex(bg));
+  } else {
+    page.style.background = '';
+    page.classList.remove('pf-dark');
+  }
 
   const bannerImg = $('pf-banner-img');
   const hasBanner = !!data.banner_url;

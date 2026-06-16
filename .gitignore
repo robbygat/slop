@@ -10,3 +10,6 @@ slop.config.json
 # edge-function secrets — never commit real keys (only .env.example is tracked)
 supabase/functions/.env
 supabase/.env
+
+# Supabase CLI local cache
+supabase/.temp/

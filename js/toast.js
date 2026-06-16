@@ -1,7 +1,14 @@
 // Toast notification system — bottom-right, slides in, auto-removes.
 
 export function showToast(message) {
-const container = document.getElementById('toast-container');
+// create the container on demand so pages that don't ship one (e.g. studio)
+// still get toasts instead of a null-append crash
+let container = document.getElementById('toast-container');
+if (!container) {
+container = document.createElement('div');
+container.id = 'toast-container';
+document.body.appendChild(container);
+}
 const toast = document.createElement('div');
 toast.className = 'toast';
 

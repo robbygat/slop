@@ -112,6 +112,7 @@ function highlight(next) {
 export function initSearch(options = {}) {
   const { filterGrid = true } = options;
   const inputs = [
+    document.getElementById('hero-search-input'),
     document.getElementById('nav-search-input'),
     document.getElementById('nav-drawer-search-input'),
   ].filter(Boolean);

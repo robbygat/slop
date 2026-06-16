@@ -126,7 +126,6 @@
   background: rgba(255, 255, 255, 0.5);
 }
 
-.site-nav.nav--hideable .nav-search-bar { display: none; }
 .site-nav.nav--hideable .nav-pro-slot { display: none; }
 
 .site-nav.nav--hideable #nav-auth .nav-signin {

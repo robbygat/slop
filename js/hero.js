@@ -3,10 +3,14 @@
 import { showToast } from './toast.js';
 import { cookGameForReal } from './cook.js';
 import { MODELS, MODEL_CHOICES } from './ai.js';
+import { getUser, onUser, openAuthModal, promptUsername } from './account.js';
 
 let typeTimer = null;
 
 const MODEL_KEY = 'slop-model'; // shared with Slop Studio
+// a prompt typed while signed-out is stashed here so we can resume cooking it the
+// moment the account is ready (survives the Google OAuth / Stripe redirect too).
+const PENDING_PROMPT_KEY = 'slop:pending-prompt';
 
 function shortModelLabel(choice) {
   if (!choice) return 'Model';
@@ -111,11 +115,23 @@ export async function cookGame() {
   const btn = document.getElementById('generate-btn');
   const pwin = document.getElementById('pwin');
 
-  if (!textarea.value.trim()) {
+  const prompt = textarea.value.trim();
+  if (!prompt) {
     showToast('describe your game first! the pot is empty');
     pwin.classList.remove('shake');
     void pwin.offsetWidth; // restart animation
     pwin.classList.add('shake');
+    return;
+  }
+
+  // Cooking a game requires an account. Stash the prompt and send them through
+  // sign-up / username (it resumes automatically once they're in).
+  const user = getUser();
+  if (!user || !user.username) {
+    try { localStorage.setItem(PENDING_PROMPT_KEY, prompt); } catch { /* private mode */ }
+    showToast('create a free account to cook your game 🍲');
+    if (user && !user.username) promptUsername();
+    else openAuthModal();
     return;
   }
 
@@ -133,6 +149,27 @@ export async function cookGame() {
     btn.classList.remove('done');
     btn.textContent = 'Generate';
   }, 1200);
+}
+
+// Once the user is signed in with a username, pick up a prompt they tried to
+// cook while signed out and run it. Fires from the onUser subscription, so it
+// covers both the in-page modal flow and a return from Google / Stripe.
+function maybeResumePendingCook() {
+  let pending = null;
+  try { pending = localStorage.getItem(PENDING_PROMPT_KEY); } catch { /* */ }
+  if (!pending) return;
+  const user = getUser();
+  if (!user || !user.username) return; // wait until the account is fully ready
+  // a Pro signup is about to redirect to Stripe checkout — resume after we're back
+  try { if (localStorage.getItem('slop:pending-pro') === '1') return; } catch { /* */ }
+  try { localStorage.removeItem(PENDING_PROMPT_KEY); } catch { /* */ }
+  const textarea = document.getElementById('prompt-input');
+  if (!textarea) return;
+  textarea.value = pending;
+  autoGrow(textarea);
+  document.getElementById('pwin')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  showToast('signed in — cooking your game now 🍲');
+  cookGame();
 }
 
 function initWaitlist() {
@@ -188,6 +225,9 @@ export function initHero() {
     document.getElementById('pwin').scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => document.getElementById('prompt-input').focus(), 600);
   });
+
+  // resume a pending cook the moment an account becomes ready (also fires once on init)
+  onUser(maybeResumePendingCook);
 
   initWaitlist();
 }

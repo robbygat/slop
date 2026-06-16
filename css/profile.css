@@ -130,8 +130,8 @@
 .pf-banner {
   height: clamp(132px, 17vw, 208px);
   border-radius: 18px;
-  border: var(--bw) solid var(--ink);
-  box-shadow: var(--shb);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--soft2);
   overflow: hidden;
   position: relative;
   z-index: 1;
@@ -169,10 +169,14 @@
   margin-top: -52px;
   position: relative;
   z-index: 2;
-  background: var(--pf-bg, var(--cr));
-  border: var(--bw) solid var(--ink);
-  border-radius: 22px;
-  box-shadow: var(--shb);
+  /* default = liquid glass over the ambient scene; JS only sets a solid
+     background when the creator picks a custom page color */
+  background: rgba(255, 255, 255, 0.42);
+  -webkit-backdrop-filter: blur(26px) saturate(165%);
+  backdrop-filter: blur(26px) saturate(165%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 26px;
+  box-shadow: var(--soft3), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   padding: 0 26px 26px;
   overflow: visible;
 }
@@ -187,8 +191,8 @@
   background: linear-gradient(90deg, var(--y), var(--bl), var(--mt), var(--or), var(--y));
   background-size: 200% 100%;
   animation: pf-shimmer 6s linear infinite;
-  border-radius: 24px 24px 0 0;
-  z-index: 0;
+  border-radius: 26px 26px 0 0;
+  z-index: 1;
 }
 
 @keyframes pf-shimmer {
@@ -340,11 +344,10 @@
   letter-spacing: 0.1em;
   color: var(--ink);
   background: var(--mt);
-  border: 2px solid var(--ink);
+  border: 1.5px solid rgba(17, 18, 26, 0.18);
   border-radius: 999px;
-  padding: 3px 10px;
+  padding: 4px 11px;
   margin-bottom: 8px;
-  box-shadow: 2px 2px 0 var(--ink);
 }
 
 .pf-name {
@@ -496,10 +499,10 @@
   flex: 1 1 90px;
   text-align: center;
   padding: 14px 10px;
-  background: var(--wh);
-  border: var(--bw) solid var(--ink);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1.5px solid rgba(17, 18, 26, 0.12);
   border-radius: 16px;
-  box-shadow: 3px 3px 0 var(--ink);
+  box-shadow: var(--soft1);
 }
 .pf-stat b {
   display: block;
@@ -532,10 +535,10 @@
 .pf-xp-card {
   margin-top: 14px;
   padding: 14px 16px;
-  background: var(--wh);
-  border: var(--bw) solid var(--ink);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1.5px solid rgba(17, 18, 26, 0.12);
   border-radius: 16px;
-  box-shadow: var(--sh);
+  box-shadow: var(--soft1);
 }
 
 .pf-xp-inner {
@@ -634,8 +637,8 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--soft);
-  background: var(--wh);
-  border: 2px solid var(--ink);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1.5px solid rgba(17, 18, 26, 0.14);
   border-radius: 999px;
   padding: 4px 12px;
 }
@@ -649,20 +652,21 @@
 .pf-game-tile {
   display: flex;
   flex-direction: column;
-  background: var(--wh);
-  border: var(--bw) solid var(--ink);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1.5px solid rgba(17, 18, 26, 0.12);
   border-radius: 16px;
-  box-shadow: var(--sh);
+  box-shadow: var(--soft1);
   overflow: hidden;
   text-decoration: none;
   color: inherit;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
   position: relative;
 }
 .pf-game-tile:hover {
-  transform: translate(-3px, -3px);
-  box-shadow: var(--shb);
+  transform: translateY(-3px);
+  border-color: rgba(17, 18, 26, 0.28);
+  box-shadow: var(--soft2);
 }
 
 .pf-game-tile .gdel {
@@ -684,7 +688,7 @@
   aspect-ratio: 16 / 10;
   background: linear-gradient(135deg, var(--bl), var(--mt));
   overflow: hidden;
-  border-bottom: var(--bw) solid var(--ink);
+  border-bottom: 1.5px solid rgba(17, 18, 26, 0.12);
 }
 .pf-tile-thumb img {
   width: 100%;
@@ -786,10 +790,12 @@
 .pf-sheet {
   width: 100%;
   max-width: 480px;
-  background: var(--cr);
-  border: var(--bw) solid var(--ink);
+  background: rgba(255, 251, 240, 0.85);
+  -webkit-backdrop-filter: blur(28px) saturate(165%);
+  backdrop-filter: blur(28px) saturate(165%);
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
   border-radius: 24px 24px 0 0;
-  box-shadow: var(--shb);
+  box-shadow: 0 -10px 60px rgba(17, 18, 26, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   max-height: 92vh;
   display: flex;
   flex-direction: column;
@@ -846,9 +852,17 @@
   padding: 11px 14px;
   font: inherit;
   font-weight: 700;
-  border: var(--bw) solid var(--ink);
+  color: var(--ink);
+  border: 1.5px solid rgba(17, 18, 26, 0.16);
   border-radius: 12px;
-  background: var(--wh);
+  background: rgba(255, 255, 255, 0.7);
+  outline: none;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+}
+.pf-sheet input[type=text]:focus,
+.pf-sheet textarea:focus {
+  border-color: var(--el);
+  box-shadow: var(--ring);
 }
 
 .pf-banner-edit {
@@ -929,8 +943,8 @@
 .pf-sheet-foot {
   flex: 0 0 auto;
   padding: 14px 24px 16px;
-  border-top: 2.5px solid var(--ink);
-  background: var(--cr);
+  border-top: 1px solid rgba(17, 18, 26, 0.12);
+  background: rgba(255, 251, 240, 0.55);
   display: flex;
   flex-direction: column;
   gap: 10px;

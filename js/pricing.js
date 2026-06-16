@@ -116,7 +116,7 @@ function renderModal() {
   if (!u) {
     body.innerHTML = `${bal}<button class="pr-cta" id="pr-signin">Sign in to go Pro</button>
       <p class="pr-note">free to join — you get starter credits + a daily bonus.</p>`;
-    body.querySelector('#pr-signin').addEventListener('click', () => { close(); openAuthModal(); });
+    body.querySelector('#pr-signin').addEventListener('click', () => { close(); openAuthModal({ plan: 'pro' }); });
     return;
   }
 

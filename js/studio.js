@@ -14,6 +14,7 @@ import { SLOPNET_INLINE } from './netcore.js';
 import { SLOP_MP_INLINE, SLOP_MP_RULES } from './mp-boilerplate.js';
 import { initCollab } from './studio-collab.js';
 import { makeZip, dataUrlToBytes, downloadBlob } from './zip.js';
+import { initAccount, getUser, onUser, openAuthModal, promptUsername } from './account.js';
 
 const $ = (id) => document.getElementById(id);
 let collab = null;
@@ -887,10 +888,36 @@ list.appendChild(row);
 }
 
 // ---------------------------------------------------------------- prompt submit
+const STUDIO_PROMPT_KEY = 'slop:pending-studio-prompt';
+
+// Building a game requires an account. Stash the prompt, route them to sign-up /
+// username, and restore it once they're back (see maybeResumeStudioPrompt).
+function ensureAccount(ask) {
+const user = getUser();
+if (user && user.username) return true;
+try { localStorage.setItem(STUDIO_PROMPT_KEY, ask || ''); } catch { /* private mode */ }
+toast('create a free account to build a game');
+if (user && !user.username) promptUsername(); else openAuthModal();
+return false;
+}
+
+// When the account becomes ready, drop a stashed prompt back into the box. We
+// don't auto-build (studio runs are heavy) — just tee it up to hit Build It.
+function maybeResumeStudioPrompt(u) {
+if (!u || !u.username) return;
+let pend = null; try { pend = localStorage.getItem(STUDIO_PROMPT_KEY); } catch { /* */ }
+if (!pend) return;
+try { localStorage.removeItem(STUDIO_PROMPT_KEY); } catch { /* */ }
+const box = $('prompt');
+if (box && !box.value.trim()) { box.value = pend; box.focus(); }
+toast('you\'re in — hit Build It to cook your game 🍲');
+}
+
 async function submitPrompt() {
 const ask = $('prompt').value.trim();
 if (!ask || busy) return;
 if (collab?.isClient) { collab.postToBoard(ask); tlUser(ask); tlAgent('posted to the host\'s prompt board — they can click it to build it in.', 'good'); $('prompt').value = ''; return; }
+if (!ensureAccount(ask)) return;
 await runHostPrompt(ask, true);
 }
 async function runHostPrompt(ask, fromInput) {
@@ -1027,6 +1054,10 @@ toast('settings saved');
 // ---------------------------------------------------------------- boot
 async function boot() {
 initTabs(); initSettings(); initMobileStudio(); renderSprites(); renderFiles();
+
+// account state powers the build-button gate; resume a stashed prompt on return
+initAccount();
+onUser(maybeResumeStudioPrompt);
 
 // live shader behind the agent header — dynamically imported so a CDN/WebGL
 // failure only drops the visual (CSS gradient fallback) instead of the studio.

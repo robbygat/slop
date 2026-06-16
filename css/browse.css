@@ -1,10 +1,8 @@
 /* ============ browse section — widescreen arcade shelf ============ */
 
 .games-sec {
-background:
-radial-gradient(120% 80% at 50% -20%, rgba(255, 78, 184, 0.12), transparent 55%),
-radial-gradient(80% 60% at 100% 20%, rgba(78, 202, 255, 0.1), transparent 50%),
-linear-gradient(180deg, #fff9f0 0%, var(--cr) 28%, #eef4ff 100%);
+/* calm, neutral canvas so the borderless gallery is the only thing that pops */
+background: linear-gradient(180deg, #fffaf2 0%, var(--cr) 32%, #f6f8ff 100%);
 }
 
 .browse-intro {
@@ -213,87 +211,90 @@ gap: 14px;
 .pod-slot.third { order: 3; }
 }
 
+/* ---- borderless masonry gallery (Pinterest-style tight columns) ---- */
 .games-grid.browse-grid {
-display: grid;
-grid-template-columns: repeat(4, minmax(0, 1fr));
-gap: clamp(12px, 1.2vw, 18px);
+--browse-gap: clamp(7px, 0.8vw, 12px);
+display: block;
+columns: 4;
+column-gap: var(--browse-gap);
 max-width: none;
 }
 
-.browse-grid .gcard {
-grid-column: span 1;
-border-radius: 14px;
-box-shadow: 0 4px 16px rgba(26, 26, 46, 0.06), 2px 2px 0 var(--ink);
+/* no-results / empty notice spans the full width */
+.browse-grid > p {
+column-span: all;
 }
 
+/* every tile is pure artwork — no border, no card body, edge-to-edge */
+.browse-grid .gcard,
 .browse-grid .gcard.featured {
-grid-column: span 1;
+display: block;
+width: 100%;
+margin: 0 0 var(--browse-gap);
+grid-column: auto;
+break-inside: avoid;
+-webkit-column-break-inside: avoid;
+border: 0;
+border-radius: 12px;
+background: #0d0d16;
+box-shadow: 0 1px 3px rgba(17, 18, 26, 0.05);
+overflow: hidden;
+transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease;
 }
 
-.browse-grid .gcard.featured .gthumb {
-aspect-ratio: 16 / 10;
+.browse-grid .gcard:hover {
+transform: translateY(-4px);
+box-shadow: var(--soft2);
 }
 
-/* compact card chrome inside browse grid */
+/* the thumbnail is the whole tile; nth-child gives the masonry its height rhythm */
+.browse-grid .gcard .gthumb,
+.browse-grid .gcard.featured .gthumb,
 .browse-grid .gcard-v2 .gthumb {
-aspect-ratio: 16 / 10;
+aspect-ratio: 4 / 3;
 min-height: 0;
 border-bottom: none;
+border-radius: inherit;
 }
 
+.browse-grid .gthumb img {
+object-fit: cover;
+}
+
+.browse-grid .gcard:nth-child(7n + 1) .gthumb { aspect-ratio: 4 / 5; }
+.browse-grid .gcard:nth-child(7n + 2) .gthumb { aspect-ratio: 4 / 3; }
+.browse-grid .gcard:nth-child(7n + 3) .gthumb { aspect-ratio: 1 / 1; }
+.browse-grid .gcard:nth-child(7n + 4) .gthumb { aspect-ratio: 3 / 4; }
+.browse-grid .gcard:nth-child(7n + 5) .gthumb { aspect-ratio: 16 / 11; }
+.browse-grid .gcard:nth-child(7n + 6) .gthumb { aspect-ratio: 5 / 6; }
+.browse-grid .gcard:nth-child(7n + 7) .gthumb { aspect-ratio: 4 / 3; }
+
+/* the white text/CTA panel is gone — the tile itself is the content now */
+.browse-grid .gcard .gbody {
+display: none;
+}
+
+/* overlaid label (category + title) — always readable over the scrim */
 .browse-grid .gcard-v2 .gthumb-meta {
-padding: 10px 10px 8px;
+padding: clamp(10px, 1.3vw, 16px) clamp(11px, 1.3vw, 15px) clamp(10px, 1.1vw, 14px);
+transition: opacity 0.2s ease;
 }
 
 .browse-grid .gcard-v2 .gthumb-meta .gcat {
-margin-bottom: 4px;
+margin-bottom: 5px;
 font-size: 9px;
 padding: 2px 8px;
 }
 
 .browse-grid .gcard-v2 .gthumb-meta h3 {
-font-size: clamp(13px, 1.35vw, 16px);
+font-size: clamp(13px, 1.25vw, 17px);
 line-height: 1.12;
 }
 
-.browse-grid .gcard-v2 .gbody {
-padding: 10px 12px 12px;
-border-top-width: 3px;
-}
-
-.browse-grid .gcard-v2 .gdesc {
-font-size: 11px;
-line-height: 1.4;
-margin-top: 0;
--webkit-line-clamp: 2;
-}
-
-.browse-grid .gcard-v2 .gmeta {
-margin-top: 8px;
-}
-
-.browse-grid .gcard-v2 .gcreator {
-font-size: 10px;
-}
-
-.browse-grid .gcard-v2 .gplays {
-font-size: 11px;
-}
-
-.browse-grid .gcard-v2 .gcta-row {
-margin-top: 8px;
-gap: 6px;
-}
-
-.browse-grid .gcard-v2 .gcta {
-font-size: 11px;
-padding: 7px 10px;
-box-shadow: 2px 2px 0 var(--ink);
-}
-
+/* play affordance reveals on hover */
 .browse-grid .gplay::before {
-width: 44px;
-height: 44px;
+width: 46px;
+height: 46px;
 background-size: 20px;
 border-width: 2.5px;
 }
@@ -311,6 +312,15 @@ right: 8px;
 
 .browse-grid .gbadge {
 left: 8px;
+}
+
+/* report tucks bottom-right so it never sits on top of the title */
+.browse-grid .greport {
+bottom: 8px;
+left: auto;
+right: 8px;
+width: 26px;
+height: 26px;
 }
 
 .gcard-v2 .gthumb img,
@@ -453,14 +463,13 @@ box-shadow: 2px 2px 0 rgba(26, 26, 46, 0.25);
 
 @media (max-width: 1200px) {
 .games-grid.browse-grid {
-grid-template-columns: repeat(3, minmax(0, 1fr));
+columns: 3;
 }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 760px) {
 .games-grid.browse-grid {
-grid-template-columns: repeat(2, minmax(0, 1fr));
-gap: 10px;
+columns: 2;
 }
 
 .browse-stage {
@@ -469,27 +478,12 @@ padding-right: 12px;
 }
 }
 
-@media (max-width: 520px) {
-.games-grid.browse-grid {
-gap: 8px;
-}
-
-.browse-grid .gcard-v2 .gdesc {
--webkit-line-clamp: 1;
-font-size: 10px;
-}
-
+@media (max-width: 420px) {
 .browse-grid .gcard-v2 .gthumb-meta h3 {
 font-size: 12px;
 }
 
-.browse-grid .gcard-v2 .gcta {
-font-size: 10px;
-padding: 6px 8px;
-}
-
 .browse-grid .gcard {
-border-radius: 12px;
-box-shadow: 2px 2px 0 var(--ink);
+border-radius: 10px;
 }
 }

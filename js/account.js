@@ -13,6 +13,9 @@ import { showToast } from './toast.js';
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 const PENDING_KEY = 'slop:pending-username';
+// "Pro" intent survives an OAuth / email-confirm round-trip so we can open Stripe
+// checkout once the account + username actually exist.
+const PENDING_PRO_KEY = 'slop:pending-pro';
 
 let currentUser = null; // { id, username, ... } or null
 const listeners = new Set();
@@ -34,6 +37,7 @@ function setUser(u) {
 // ---------------------------------------------------------------- modal
 let modal = null;
 let mode = 'signup'; // 'signup' | 'login' | 'claim'
+let accountType = 'free'; // 'free' | 'pro' — picked during signup / username claim
 
 function ensureModal() {
   if (modal) return modal;
@@ -47,6 +51,16 @@ function ensureModal() {
       <div class="auth-tabs" id="auth-tabs">
         <button class="auth-tab active" data-mode="signup">Create account</button>
         <button class="auth-tab" data-mode="login">Sign in</button>
+      </div>
+      <div class="auth-plans" id="auth-plans">
+        <button type="button" class="auth-plan active" data-plan="free" aria-pressed="true">
+          <span class="ap-top"><span class="ap-name">Free</span><span class="ap-price">$0</span></span>
+          <span class="ap-desc">fast models · daily credits · supported by ads</span>
+        </button>
+        <button type="button" class="auth-plan" data-plan="pro" aria-pressed="false">
+          <span class="ap-top"><span class="ap-name">✦ Pro</span><span class="ap-price">$5<small>/mo</small></span></span>
+          <span class="ap-desc">frontier models · no ads · 600 credits / month</span>
+        </button>
       </div>
       <form id="auth-form">
         <input id="auth-username" placeholder="username (3-20 chars)" autocomplete="username" maxlength="20">
@@ -73,6 +87,11 @@ function ensureModal() {
   });
 
   modal.querySelector('#auth-form').addEventListener('submit', onSubmit);
+
+  modal.querySelectorAll('.auth-plan').forEach((plan) => {
+    plan.addEventListener('click', () => { accountType = plan.dataset.plan; syncPlanUI(); });
+  });
+
   wireGoogle();
   return modal;
 }
@@ -82,6 +101,10 @@ function setMode(next) {
   if (!modal) return;
   const claim = mode === 'claim';
   const signup = mode === 'signup';
+  // a username step that follows a Pro intent (e.g. Google) keeps that choice
+  if (claim) accountType = (localStorage.getItem(PENDING_PRO_KEY) === '1') ? 'pro' : 'free';
+  else if (signup) accountType = 'free';
+  modal.querySelector('#auth-plans').style.display = (signup || claim) ? '' : 'none';
   modal.querySelector('#auth-tabs').style.display = claim ? 'none' : '';
   modal.querySelector('#auth-divider').style.display = claim ? 'none' : '';
   modal.querySelector('#google-btn-slot').style.display = claim ? 'none' : '';
@@ -102,13 +125,29 @@ function setMode(next) {
     submit.textContent = 'Claim username';
   } else if (signup) {
     title.textContent = 'join slop.game';
-    sub.textContent = 'pick a username — it shows on everything you cook, post, and publish.';
+    sub.textContent = 'you need an account to cook a game — pick a plan, then claim your username.';
     submit.textContent = 'Create account';
   } else {
     title.textContent = 'welcome back';
     sub.textContent = 'sign in to publish games and keep your library in sync.';
     submit.textContent = 'Sign in';
   }
+  syncPlanUI();
+}
+
+// Reflect the chosen plan in the selector + submit button (signup / claim only).
+function syncPlanUI() {
+  if (!modal) return;
+  modal.querySelectorAll('.auth-plan').forEach((b) => {
+    const on = b.dataset.plan === accountType;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  if (mode === 'login') return;
+  const submit = modal.querySelector('#auth-submit');
+  const pro = accountType === 'pro';
+  if (mode === 'signup') submit.textContent = pro ? 'Create account → go Pro' : 'Create free account';
+  else if (mode === 'claim') submit.textContent = pro ? 'Claim & go Pro' : 'Claim username';
 }
 
 async function onSubmit(e) {
@@ -147,13 +186,18 @@ async function doSignup(username, email, password) {
   if (error) throw new Error(error.message);
 
   localStorage.setItem(PENDING_KEY, username);
+  // remember a Pro choice so checkout can fire once the account is fully set up
+  try { accountType === 'pro' ? localStorage.setItem(PENDING_PRO_KEY, '1') : localStorage.removeItem(PENDING_PRO_KEY); } catch { /* private mode */ }
   if (data.session) {
-    // Email confirmation disabled → we have a session right now: claim + go.
+    // Email confirmation disabled → we have a session right now: claim, then
+    // doClaim → routePostAuth either greets (Free) or opens Pro checkout.
     await doClaim(username);
   } else {
     // Confirmation required → finish after they click the email link.
     closeModal();
-    showToast('check your email to confirm, then your username is waiting');
+    showToast(accountType === 'pro'
+      ? 'check your email to confirm — then we’ll set up your Pro membership'
+      : 'check your email to confirm, then your username is waiting');
   }
 }
 
@@ -174,13 +218,38 @@ async function doClaim(username) {
   localStorage.removeItem(PENDING_KEY);
   const me = await api.me();
   setUser(me);
-  closeModal();
-  showToast(`welcome, ${claimed}!`);
+  await routePostAuth(`welcome, ${claimed}!`);
 }
 
-export function openAuthModal() {
+// Account + username now exist. If the user picked Pro (this session, or carried
+// across a Google / email-confirm round-trip), open Stripe checkout; otherwise
+// just greet and close. If billing isn't live yet, fall back to Free rather than
+// trap them mid-signup.
+async function routePostAuth(greet) {
+  const me = currentUser;
+  const wantsPro = accountType === 'pro' || localStorage.getItem(PENDING_PRO_KEY) === '1';
+  if (wantsPro && me?.username) {
+    try { localStorage.removeItem(PENDING_PRO_KEY); } catch { /* */ }
+    accountType = 'free';
+    try {
+      showToast('account ready — opening Pro checkout…');
+      const url = await api.createCheckout('pro');
+      location.href = url; // hands off to Stripe; we return via ?pro=success|cancelled
+      return;
+    } catch {
+      closeModal();
+      showToast("you're in! Pro checkout isn't live yet — you're on the Free plan for now.");
+      return;
+    }
+  }
+  try { localStorage.removeItem(PENDING_PRO_KEY); } catch { /* */ }
+  if (greet) { closeModal(); showToast(greet); }
+}
+
+export function openAuthModal(opts = {}) {
   ensureModal();
   setMode('signup');
+  if (opts.plan === 'pro') { accountType = 'pro'; syncPlanUI(); }
   modal.classList.remove('hidden');
   setTimeout(() => modal.querySelector('#auth-username').focus(), 60);
 }
@@ -209,6 +278,8 @@ function wireGoogle() {
   slot.querySelector('#google-oauth').addEventListener('click', async () => {
     const s = getSupabase();
     if (!s) { note.textContent = 'cannot reach slop.game servers — check your connection.'; return; }
+    // carry a "go Pro" choice through Google's redirect so checkout opens on return
+    try { (mode === 'signup' && accountType === 'pro') ? localStorage.setItem(PENDING_PRO_KEY, '1') : localStorage.removeItem(PENDING_PRO_KEY); } catch { /* */ }
     const { error } = await s.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${location.origin}/` },
@@ -292,7 +363,9 @@ async function resolveSession(session) {
 // pending one (from a just-confirmed signup) or force the picker.
 async function maybeClaimPending(me) {
   if (!me) { setUser(null); return; }
-  if (me.username) { setUser(me); return; }
+  // already has a handle → just sync; still honor a pending Pro checkout (e.g. a
+  // returning user who picked Pro then signed in with Google).
+  if (me.username) { setUser(me); routePostAuth(null); return; }
   setUser(me);
   const pending = localStorage.getItem(PENDING_KEY);
   if (pending && USERNAME_RE.test(pending) && !(await api.profileByUsername(pending))) {

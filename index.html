@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="css/multiplayer.css">
 <link rel="stylesheet" href="css/footer.css">
 <link rel="stylesheet" href="css/ai.css">
+<link rel="stylesheet" href="css/auth.css">
 <link rel="stylesheet" href="css/v2.css">
 <link rel="stylesheet" href="css/brand.css">
 <link rel="stylesheet" href="css/browse.css">
@@ -39,7 +40,9 @@
 <div id="toast-container"></div>
 
 <!-- ============ NAV ============ -->
-<nav class="site-nav">
+<!-- nav--hideable is set in markup (not just JS) so the global nav starts hidden
+     over the hero from first paint — otherwise it flashes on top of the hero bar -->
+<nav class="site-nav nav--hideable">
 <div class="nav-primary">
 <a class="brand" href="/">
 <span class="wordmark">slop<span class="dot-pk">.</span>game</span>
@@ -111,6 +114,10 @@
 <a href="#publish">Publish</a>
 </nav>
 <div class="hero-topcta">
+<label class="nav-search hero-search" for="hero-search-input">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+<input id="hero-search-input" placeholder="search games &amp; players…" autocomplete="off">
+</label>
 <a class="htb-ghost" href="studio.html">Open Studio</a>
 <button class="htb-signin" id="hero-signin" type="button">Sign in</button>
 </div>
