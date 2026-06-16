@@ -18,9 +18,9 @@ const EDGE_IMAGE = `${SUPABASE_URL}/functions/v1/image-proxy`;
 // without hitting the Pro gate. Pro members can pick the frontier models in the
 // picker (grok-4.3, claude-opus-4-8, …). Keep these in the 'free' tier of MODEL_CHOICES.
 export const MODELS = {
-cook: 'claude-haiku-4-5', // homepage quick-cook — fast + free
+cook: 'grok-4.20-0309-non-reasoning', // homepage quick-cook — fast + free (xAI)
 remix: 'grok-4.20-0309-non-reasoning', // live code edits — latency first
-studio: 'claude-haiku-4-5', // studio builds — fast + free by default
+studio: 'grok-4.20-0309-non-reasoning', // studio builds — fast + free by default
 };
 
 // Every model the picker offers (label → id). `tier` mirrors the server gate in
