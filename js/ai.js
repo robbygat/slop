@@ -81,6 +81,7 @@ const reader = res.body.getReader();
 const decoder = new TextDecoder();
 let buffer = '';
 let full = '';
+let finishReason = null;
 for (;;) {
 const { done, value } = await reader.read();
 if (done) break;
@@ -93,12 +94,14 @@ if (!s.startsWith('data:')) continue;
 const payload = s.slice(5).trim();
 if (!payload || payload === '[DONE]') continue;
 try {
-const delta = JSON.parse(payload).choices?.[0]?.delta?.content;
+const choice = JSON.parse(payload).choices?.[0];
+if (choice?.finish_reason) finishReason = choice.finish_reason;
+const delta = choice?.delta?.content;
 if (delta) { full += delta; onDelta?.(delta, full); }
 } catch { /* ignore malformed keep-alive frames */ }
 }
 }
-return full;
+return { text: full, finishReason, truncated: finishReason === 'length' };
 }
 
 // POST and surface a clean error message (the edge proxy returns {error, code}).
@@ -119,21 +122,27 @@ return res;
 *   1. your own xAI key (Settings) → straight to xAI, no credits used (xAI models only)
 *   2. local dev server.js proxy (carries the dev keys, no auth)
 *   3. production: the metered Supabase edge function (needs a signed-in session)
+*
+* After each call, check chatStream.lastMeta.truncated — true when the model hit its output limit.
 */
+chatStream.lastMeta = { finishReason: null, truncated: false };
 export async function chatStream({ model, messages, maxTokens = 16384, temperature = 0.6, signal, onDelta }) {
+let result;
 if (userKey) {
 if (providerFor(model) !== 'xai') throw new Error(`${model} runs on slop credits — remove your own key to use it, or pick a Grok model.`);
 const res = await postOrThrow(DIRECT_URL, { Authorization: `Bearer ${userKey}` }, { model, messages, max_tokens: maxTokens, temperature, stream: true }, signal);
-return readSSE(res, onDelta);
-}
-if (await hasProxy()) {
+result = await readSSE(res, onDelta);
+} else if (await hasProxy()) {
 const res = await postOrThrow('/api/ai/chat', {}, { model, messages, max_tokens: maxTokens, temperature, stream: true }, signal);
-return readSSE(res, onDelta);
-}
+result = await readSSE(res, onDelta);
+} else {
 const token = await sessionToken();
 if (!token) throw new Error('sign in to cook with slop AI — or add your own xAI key in Settings.');
 const res = await postOrThrow(EDGE_CHAT, { Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY }, { model, messages, max_tokens: maxTokens, temperature }, signal);
-return readSSE(res, onDelta);
+result = await readSSE(res, onDelta);
+}
+chatStream.lastMeta = { finishReason: result.finishReason, truncated: result.truncated };
+return result.text;
 }
 
 /**

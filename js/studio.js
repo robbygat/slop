@@ -146,7 +146,30 @@ Then EITHER one \`\`\`html block (single-file) OR multiple \`=== path ===\` + fe
 // streamed to a live "run card" stepper so players watch it think, paint, build, and debug.
 
 const MAX_FIX = 3;
+const STUDIO_BUILD_MAX = 32768;
+const CONTINUE_MSG = 'Your response was cut off mid-output. Continue EXACTLY where you stopped — no preamble, no repetition. Close every open ``` fence and finish all remaining files in the project.';
 const STEP_DEFS = [['plan', 'Plan'], ['art', 'Art'], ['build', 'Build'], ['test', 'Test & heal'], ['ship', 'Ship']];
+
+// Reasoning models (gpt-5.5) can burn the output budget on hidden thinking tokens.
+// Auto-continue up to 3 parts when the stream hits max_completion_tokens.
+async function agentStream({ model, messages, temperature, maxTokens = STUDIO_BUILD_MAX, onDelta }) {
+let full = '';
+let convo = messages;
+for (let part = 0; part < 3; part++) {
+const chunk = await chatStream({
+model, messages: convo, temperature, maxTokens,
+onDelta: (_, soFar) => onDelta?.(full + soFar),
+});
+full += chunk;
+if (!chatStream.lastMeta?.truncated) return full;
+convo = [
+...messages,
+{ role: 'assistant', content: full },
+{ role: 'user', content: CONTINUE_MSG },
+];
+}
+return full;
+}
 
 function makeRunCard() {
 const card = document.createElement('div');
@@ -269,13 +292,13 @@ renderSprites();
 
 async function buildGame(ask, plan, run, depth = 0) {
 let raf = null;
-const full = await chatStream({
-model: game.model, temperature: 0.7, maxTokens: 16384,
+const full = await agentStream({
+model: game.model, temperature: 0.7,
 messages: [
 { role: 'system', content: systemPrompt(false) },
 { role: 'user', content: `Build this game to the approved plan.\n\nPLAYER REQUEST: ${ask}\n\nPLAN:\n${JSON.stringify(plan)}\n\nBuild the complete project now, exactly per the OUTPUT FORMAT.` },
 ],
-onDelta(_, soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; run.detail(`writing… ${(soFar.length / 1024).toFixed(1)} KB`); $('code-view').textContent = soFar; }); },
+onDelta(soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; run.detail(`writing… ${(soFar.length / 1024).toFixed(1)} KB`); $('code-view').textContent = soFar; }); },
 });
 const meta = extractMetaLine(full) || {};
 // the build step may still discover it needs art — honor one round of sprite requests
@@ -293,13 +316,13 @@ return built;
 
 async function healBuild(built, errs, run) {
 let raf = null;
-const full = await chatStream({
-model: game.model, temperature: 0.3, maxTokens: 16384,
+const full = await agentStream({
+model: game.model, temperature: 0.3,
 messages: [
 { role: 'system', content: healSystemPrompt() },
 { role: 'user', content: `This project throws the following uncaught error(s) in a sandboxed iframe (the build is REJECTED if any uncaught error fires):\n\n${errs.map((e) => '- ' + e).join('\n')}\n\nCurrent project:\n${sourceForPrompt(built)}\n\nReturn the COMPLETE corrected project per the OUTPUT FORMAT.` },
 ],
-onDelta(_, soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; $('code-view').textContent = soFar; }); },
+onDelta(soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; $('code-view').textContent = soFar; }); },
 });
 const fixed = parseBuild(full);
 if (!fixed) return built; // couldn't parse a fix — keep current; the loop will end
@@ -377,13 +400,13 @@ const run = makeRunCard();
 run.set('plan', 'done', 'editing the current build'); run.set('art', 'done');
 run.set('build', 'active', 'applying your edit…');
 let raf = null;
-const full = await chatStream({
-model: game.model, temperature: 0.4, maxTokens: 16384,
+const full = await agentStream({
+model: game.model, temperature: 0.4,
 messages: [
 { role: 'system', content: systemPrompt(true) },
 { role: 'user', content: `Current project:\n${currentSourceForPrompt()}\n\nRequest: ${ask}` },
 ],
-onDelta(_, soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; run.detail(`writing… ${(soFar.length / 1024).toFixed(1)} KB`); $('code-view').textContent = soFar; }); },
+onDelta(soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; run.detail(`writing… ${(soFar.length / 1024).toFixed(1)} KB`); $('code-view').textContent = soFar; }); },
 });
 const meta = extractMetaLine(full) || {};
 if (Array.isArray(meta.sprites) && meta.sprites.length && depth < 1) {

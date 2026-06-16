@@ -219,6 +219,8 @@ if (!Array.isArray(messages) || !model) return json(res, 400, { error: 'bad AI r
 const provider = providerFor(model);
 if (provider === 'anthropic') return aiChatAnthropic(res, { model, messages, max_tokens, temperature });
 
+const maxOut = Math.min(Number(max_tokens) || 16384, 32768);
+const reasoning = provider === 'openai' && /^(gpt-5|o[0-9])/.test(String(model));
 const cfg = provider === 'openai'
 ? { url: `${OPENAI_BASE}/chat/completions`, key: OPENAI_API_KEY, name: 'OpenAI', env: 'OPENAI_API_KEY' }
 : { url: `${XAI_BASE}/chat/completions`, key: XAI_API_KEY, name: 'xAI', env: 'XAI_API_KEY' };
@@ -227,12 +229,20 @@ if (!cfg.key) return json(res, 501, { error: `${cfg.name} models aren't set up o
 const upstream = await fetch(cfg.url, {
 method: 'POST',
 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.key}` },
-body: JSON.stringify({
+body: JSON.stringify(reasoning ? {
 model: String(model).slice(0, 64),
 messages,
-max_tokens: Math.min(Number(max_tokens) || 16384, 32768),
+max_completion_tokens: maxOut,
+stream: true,
+stream_options: { include_usage: true },
+reasoning_effort: 'low',
+} : {
+model: String(model).slice(0, 64),
+messages,
+max_tokens: maxOut,
 temperature: Math.max(0, Math.min(Number(temperature) ?? 0.6, 1.5)),
 stream: true,
+stream_options: { include_usage: true },
 }),
 });
 

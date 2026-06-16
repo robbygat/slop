@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
       // gpt-4o use the legacy `max_tokens` + temperature shape.
       const reasoning = isOpenAI && /^(gpt-5|o[0-9])/.test(model);
       payload = reasoning
-        ? { model, messages, max_completion_tokens: maxOut, stream: true, stream_options: { include_usage: true } }
+        ? { model, messages, max_completion_tokens: maxOut, stream: true, stream_options: { include_usage: true }, reasoning_effort: 'low' }
         : { model, messages, max_tokens: maxOut, temperature: clamp(temperature, 0, 1.5), stream: true, stream_options: { include_usage: true } };
     }
 
