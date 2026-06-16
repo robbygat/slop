@@ -658,18 +658,40 @@ tlAgent('on slop.game mobile you need your own xAI key — tap Menu → Settings
 }
 
 // ---------------------------------------------------------------- settings
-function initSettings() {
-const sel = $('model-select');
-sel.innerHTML = MODEL_CHOICES.map((m) => `<option value="${m.id}">${m.tier === 'pro' ? '🔒 ' : ''}${m.label}</option>`).join('');
+function modelOptionsHTML() {
+return MODEL_CHOICES.map((m) => `<option value="${m.id}">${m.tier === 'pro' ? '🔒 ' : ''}${m.label}</option>`).join('');
+}
+
+function setBuildModel(id) {
+if (!MODEL_CHOICES.some((m) => m.id === id)) id = MODELS.studio;
+game.model = id;
+localStorage.setItem('slop-model', id);
+$('studio-model') && ($('studio-model').value = id);
+$('model-select') && ($('model-select').value = id);
+}
+
+function initModelPickers() {
+const saved = localStorage.getItem('slop-model') || MODELS.studio;
+setBuildModel(MODEL_CHOICES.some((m) => m.id === saved) ? saved : MODELS.studio);
+const html = modelOptionsHTML();
+for (const id of ['studio-model', 'model-select']) {
+const sel = $(id);
+if (!sel) continue;
+sel.innerHTML = html;
 sel.value = game.model;
+sel.addEventListener('change', () => setBuildModel(sel.value));
+}
+}
+
+function initSettings() {
+initModelPickers();
 $('api-key').value = localStorage.getItem('slop-key') || '';
 setUserKey(localStorage.getItem('slop-key') || '');
 $('settings-btn').addEventListener('click', () => $('settings-modal').classList.remove('hidden'));
 $('settings-close').addEventListener('click', () => $('settings-modal').classList.add('hidden'));
 $('settings-save').addEventListener('click', () => {
 const key = $('api-key').value.trim();
-game.model = sel.value;
-localStorage.setItem('slop-model', game.model);
+setBuildModel($('model-select').value);
 if (key) localStorage.setItem('slop-key', key); else localStorage.removeItem('slop-key');
 setUserKey(key);
 $('settings-note').textContent = key ? 'OK using your own key & model' : 'OK model saved — using slop\'s shared access';

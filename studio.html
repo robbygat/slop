@@ -115,10 +115,11 @@ background:var(--wh); border:2px solid var(--ink); border-radius:100px; padding:
 /* prompt console — echoes the homepage hero's macOS window */
 .pconsole { background:var(--wh); border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:var(--sh); overflow:hidden; transition:box-shadow .15s; }
 .pconsole:focus-within { box-shadow:var(--shb); }
-.pconsole-head { display:flex; align-items:center; gap:7px; padding:9px 13px; background:linear-gradient(180deg, rgba(78,202,255,.9), rgba(78,202,255,.65)); border-bottom:2.5px solid var(--ink); }
+.pconsole-head { display:flex; align-items:center; gap:7px; padding:9px 13px; background:linear-gradient(180deg, rgba(78,202,255,.9), rgba(78,202,255,.65)); border-bottom:2.5px solid var(--ink); flex-wrap:wrap; }
 .pconsole-head .d { width:11px; height:11px; border-radius:50%; border:2px solid var(--ink); }
 .pconsole-head .d.r{background:#FF6B6B} .pconsole-head .d.y{background:var(--y)} .pconsole-head .d.g{background:var(--mt)}
-.pconsole-head .pconsole-label { margin-left:6px; font-family:'Space Mono',monospace; font-weight:700; font-size:12px; color:var(--ink); }
+.pconsole-head .pconsole-label { margin-left:6px; font-family:'Space Mono',monospace; font-weight:700; font-size:12px; color:var(--ink); flex:1; min-width:0; }
+.studio-model-pick { margin-left:auto; font-family:'Nunito',sans-serif; font-weight:700; font-size:11px; color:var(--ink); background:var(--wh); border:2px solid var(--ink); border-radius:100px; padding:4px 10px; outline:none; max-width:100%; cursor:pointer; }
 .prompt-row { display:flex; gap:0; align-items:stretch; }
 #prompt { flex:1; min-height:66px; max-height:160px; resize:vertical; font-family:'Nunito',sans-serif; font-weight:700; font-size:14.5px; color:var(--ink);
 background:var(--wh); border:none; padding:13px 14px; outline:none; }
@@ -441,7 +442,7 @@ flex-shrink:0;
 <button class="chip">add chiptune music</button>
 </div>
 <div class="pconsole">
-<div class="pconsole-head"><span class="d r"></span><span class="d y"></span><span class="d g"></span><span class="pconsole-label">describe your game</span></div>
+<div class="pconsole-head"><span class="d r"></span><span class="d y"></span><span class="d g"></span><span class="pconsole-label">describe your game</span><select id="studio-model" class="studio-model-pick" aria-label="choose build model"></select></div>
 <div class="prompt-row">
 <textarea id="prompt" placeholder="a four-player kart racer with drift boosts and a neon track… (every aspect is promptable: rules, art, sprites, sound, difficulty, multiplayer)"></textarea>
 <button class="mic-btn" id="mic-btn" title="speak it">
