@@ -16,7 +16,7 @@ animation: mq 22s linear infinite;
 }
 
 .mq span {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 18px;
 color: var(--y);
 white-space: nowrap;
@@ -30,7 +30,7 @@ background: var(--y);
 border-bottom: var(--bw) solid var(--ink);
 text-align: center;
 padding: 20px 24px;
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 20px;
 }
 .meme-banner .pk { color: var(--pk); }
@@ -87,14 +87,6 @@ color: var(--pk);
 /* ============ games grid ============ */
 .games-sec { background: var(--cr); }
 
-.filter-row {
-display: flex;
-justify-content: center;
-flex-wrap: wrap;
-gap: 10px;
-margin-bottom: 40px;
-}
-
 .fbtn {
 font-weight: 800;
 font-size: 14px;
@@ -136,7 +128,7 @@ flex-direction: column;
 .crown {
 background: var(--y);
 border-bottom: var(--bw) solid var(--ink);
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 15px;
 text-align: center;
 padding: 9px;
@@ -236,7 +228,7 @@ color: var(--soft);
 }
 
 .gplays {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 15px;
 color: var(--pk);
 }
@@ -244,7 +236,7 @@ color: var(--pk);
 .gcta {
 margin-top: 16px;
 align-self: flex-start;
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 16px;
 background: var(--pk);
 color: var(--wh);

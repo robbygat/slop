@@ -44,7 +44,7 @@
   color: #fff; font-weight: 900; font-size: 15px;
   flex: none;
 }
-.sp-av-fb { font-family: 'Fredoka One', cursive; }
+.sp-av-fb { font-family: 'Space Grotesk', sans-serif; }
 .sp-thumb { border-radius: 9px; }
 
 .sp-main { display: flex; flex-direction: column; min-width: 0; flex: 1; }
@@ -89,7 +89,7 @@
 
 .pstat-num {
   display: block;
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: clamp(32px, 6vw, 44px);
   line-height: 1;
   color: var(--pk);

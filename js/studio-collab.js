@@ -21,7 +21,7 @@ display: flex; flex-direction: column; font-family: 'Nunito', sans-serif;
 }
 #collab-panel.open { transform: translateX(0); }
 .cp-head { display: flex; align-items: center; gap: 10px; padding: 16px; border-bottom: 3px solid var(--ink); background: var(--bl); }
-.cp-head h2 { font-family: 'Fredoka One', cursive; font-size: 17px; flex: 1; }
+.cp-head h2 { font-family: 'Space Grotesk', sans-serif; font-size: 17px; flex: 1; }
 .cp-close { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--ink); }
 .cp-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
 .cp-sect-t { font-family: 'Space Mono', monospace; font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--soft); margin-bottom: 7px; }
@@ -29,7 +29,7 @@ display: flex; flex-direction: column; font-family: 'Nunito', sans-serif;
 .cp-code { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 18px; color: var(--ink); background: var(--cr); border: 2.5px solid var(--ink); border-radius: 12px; padding: 10px 14px; text-align: center; letter-spacing: 1px; }
 .cp-share { display: flex; gap: 8px; }
 .cp-share input { flex: 1; min-width: 0; font-family: 'Space Mono', monospace; font-size: 11px; background: var(--cr); border: 2.5px solid var(--ink); border-radius: 100px; padding: 9px 12px; outline: none; }
-.cp-btn { font-family: 'Fredoka One', cursive; font-size: 13px; color: var(--ink); background: var(--y); border: 2.5px solid var(--ink); border-radius: 100px; padding: 9px 16px; cursor: pointer; box-shadow: 3px 3px 0 var(--ink); transition: transform .12s; white-space: nowrap; }
+.cp-btn { font-family: 'Space Grotesk', sans-serif; font-size: 13px; color: var(--ink); background: var(--y); border: 2.5px solid var(--ink); border-radius: 100px; padding: 9px 16px; cursor: pointer; box-shadow: 3px 3px 0 var(--ink); transition: transform .12s; white-space: nowrap; }
 .cp-btn:hover { transform: translate(-2px,-2px); }
 .cp-btn.pk { background: var(--pk); color: #fff; }
 .cp-btn.full { width: 100%; }
@@ -41,7 +41,7 @@ display: flex; flex-direction: column; font-family: 'Nunito', sans-serif;
 .cp-card .who { font-family: 'Space Mono', monospace; font-size: 10.5px; font-weight: 700; color: var(--pk); }
 .cp-card .txt { font-size: 13.5px; font-weight: 700; margin: 3px 0 8px; line-height: 1.4; }
 .cp-card .row { display: flex; gap: 6px; }
-.cp-card .add { flex: 1; font-family: 'Fredoka One', cursive; font-size: 12px; color: #fff; background: var(--pk); border: 2px solid var(--ink); border-radius: 100px; padding: 6px; cursor: pointer; }
+.cp-card .add { flex: 1; font-family: 'Space Grotesk', sans-serif; font-size: 12px; color: #fff; background: var(--pk); border: 2px solid var(--ink); border-radius: 100px; padding: 6px; cursor: pointer; }
 .cp-card .dismiss { font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; color: var(--soft); background: var(--wh); border: 2px solid var(--ink); border-radius: 100px; padding: 6px 12px; cursor: pointer; }
 .cp-card.done { opacity: .6; }
 .cp-card.done .txt::before { content: 'OK '; color: #0A7A4A; }
@@ -53,7 +53,7 @@ display: flex; flex-direction: column; font-family: 'Nunito', sans-serif;
 @keyframes cpPulse { to { opacity: .3; } }
 `;
 
-const AV_COLORS = ['#FF4EB8', '#4ECAFF', '#FFE135', '#3DFFB0', '#FF7A35', '#B94EFF'];
+const AV_COLORS = ['#FF4EB8', '#4ECAFF', '#FFE135', '#3DFFB0', '#FF7A35', '#2B6BFF'];
 const avatar = (name) => { let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) % AV_COLORS.length; return AV_COLORS[h]; };
 
 export function initCollab(hooks) {

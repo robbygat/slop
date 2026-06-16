@@ -1,4 +1,4 @@
-// The slop.game REMIX DOCK — one live-modding panel shared by every built-in game.
+// The SLOP.game REMIX DOCK — one live-modding panel shared by every built-in game.
 //
 // It docks BESIDE the game (the stage shrinks, nothing covers the canvas; on
 // small screens it becomes a bottom sheet). Type or speak any change → Grok
@@ -18,7 +18,7 @@ const STYLE = `
 #rxd-toggle {
 position: fixed; top: 14px; right: 14px; z-index: 80;
 display: flex; align-items: center; gap: 8px;
-font-family: 'Fredoka One', cursive; font-size: 14px;
+font-family: 'Space Grotesk', sans-serif; font-size: 14px;
 color: #1A1A2E; background: #4ECAFF;
 border: 3px solid #1A1A2E; border-radius: 100px; padding: 9px 18px;
 cursor: pointer; box-shadow: 4px 4px 0 #1A1A2E;
@@ -54,7 +54,7 @@ min-height: 0;
 #rxd .rxd-head { display: flex; align-items: center; gap: 10px; }
 #rxd h2 {
 flex: 1;
-font-family: 'Fredoka One', cursive; font-weight: 400;
+font-family: 'Space Grotesk', sans-serif; font-weight: 400;
 font-size: 16px; color: #FF4EB8; line-height: 1.25;
 }
 #rxd .rxd-close {
@@ -99,7 +99,7 @@ border: 2.5px solid #353048; border-radius: 12px; cursor: pointer;
 }
 
 #rxd .rxd-apply {
-font-family: 'Fredoka One', cursive; font-size: 15px; color: #fff;
+font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: #fff;
 background: #FF4EB8; border: 3px solid #000; border-radius: 100px;
 padding: 12px; cursor: pointer; box-shadow: 0 4px 0 #000;
 transition: transform .12s ease;
@@ -207,7 +207,7 @@ async function systemPrompt() {
 const srcs = await getSources();
 const srcBlock = sources.map((f, i) =>
 `REAL SOURCE — ${f}:\n\`\`\`js\n${srcs[i].slice(0, 90000)}\n\`\`\``).join('\n\n');
-return `You are the live modding engine for a browser game on slop.game. You receive the game's real source code and a player's requested change, and you respond with JavaScript that patches the RUNNING game in place.
+return `You are the live modding engine for a browser game on SLOP.game. You receive the game's real source code and a player's requested change, and you respond with JavaScript that patches the RUNNING game in place.
 
 YOUR CODE IS EXECUTED EXACTLY LIKE THIS, immediately, while the game loop runs:
 new Function('${apiName}', yourCode)(window.${apiName})

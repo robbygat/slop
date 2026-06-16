@@ -1,4 +1,4 @@
-// slop.game backend — zero npm dependencies.
+// SLOP.game backend — zero npm dependencies.
 // Static file server + JSON API backed by SQLite (node:sqlite).
 //
 // node server.js → http://localhost:3000
@@ -659,13 +659,25 @@ function serveStatic(req, res, url) {
 let filePath = path.normalize(path.join(ROOT, decodeURIComponent(url.pathname)));
 if (!filePath.startsWith(ROOT)) { res.writeHead(403); res.end(); return; }
 if (url.pathname === '/' || url.pathname === '') filePath = path.join(ROOT, 'index.html');
+
+// pretty play links: /play/{slug} → play.html (client resolves slug from path)
+const pathParts = url.pathname.split('/').filter(Boolean);
+if (pathParts[0] === 'play' && pathParts[1]) {
+fs.readFile(path.join(ROOT, 'play.html'), (e, data) => {
+if (e) { res.writeHead(404); res.end('not found'); return; }
+res.writeHead(200, { 'Content-Type': MIME['.html'], 'Cache-Control': 'no-cache' });
+res.end(data);
+});
+return;
+}
+
 // never serve the database or server internals
 const base = path.basename(filePath);
 if (base.startsWith('slop.db') || base === 'server.js' || base.startsWith('.')) {
 res.writeHead(404); res.end('not found'); return;
 }
 
-// pretty jam links: slop.game/<code> → open the collaborative studio for that
+// pretty jam links: SLOP.game/<code> → open the collaborative studio for that
 // session. Only for single-segment, file-less paths (real files/dirs win).
 const seg = url.pathname.slice(1);
 if (/^[A-Za-z0-9][A-Za-z0-9-]{3,48}$/.test(seg) && !fs.existsSync(path.join(ROOT, seg))) {
@@ -724,7 +736,7 @@ else res.end();
 });
 
 server.listen(PORT, () => {
-console.log(`slop.game serving on http://localhost:${PORT}`);
+console.log(`SLOP.game serving on http://localhost:${PORT}`);
 console.log(GOOGLE_CLIENT_ID ? 'Google sign-in: ENABLED' : 'Google sign-in: disabled (set GOOGLE_CLIENT_ID to enable)');
 console.log(XAI_API_KEY ? 'xAI key: configured' : 'xAI key: not set (set XAI_API_KEY or xaiApiKey in slop.config.json)');
 });

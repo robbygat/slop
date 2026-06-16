@@ -1,6 +1,6 @@
 // Canvas confetti engine — 120 pieces per burst, hard physics, brand colors only.
 
-const COLORS = ['#FFE135', '#FF4EB8', '#4ECAFF', '#3DFFB0', '#FF7A35', '#B94EFF'];
+const COLORS = ['#FFE135', '#FF4EB8', '#4ECAFF', '#3DFFB0', '#FF7A35', '#2B6BFF'];
 
 let canvas = null;
 let ctx = null;

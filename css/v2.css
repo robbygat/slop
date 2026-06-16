@@ -68,7 +68,7 @@ button.nav-drawer-link {
   .nav-links {
     display: none;
     position: absolute;
-    top: 64px;
+    top: var(--nav-height, 64px);
     left: 0;
     right: 0;
     z-index: 999;
@@ -79,7 +79,7 @@ button.nav-drawer-link {
     border-bottom: var(--bw) solid var(--ink);
     padding: 10px 16px 18px;
     box-shadow: 0 12px 28px rgba(26, 26, 46, 0.12);
-    max-height: calc(100dvh - 64px);
+    max-height: calc(100dvh - var(--nav-height, 64px));
     overflow-y: auto;
   }
 
@@ -140,7 +140,7 @@ button.nav-drawer-link {
   .nav-links .nav-drawer-profile {
     background: var(--pk);
     color: #fff;
-    font-family: 'Fredoka One', cursive;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 15px;
     padding: 12px 20px;
     box-shadow: var(--sh);
@@ -240,7 +240,7 @@ margin-bottom: 16px;
 }
 
 .studio-copy h2 {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-weight: 400;
 font-size: clamp(30px, 4.5vw, 44px);
 color: var(--wh);
@@ -265,7 +265,7 @@ padding: 5px 0;
 
 .studio-cta {
 display: inline-block;
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 17px;
 color: var(--ink);
 background: var(--y);
@@ -524,5 +524,5 @@ border-radius: 6px;
 @media (max-width: 640px) {
 .site-nav { padding: 0 14px; gap: 8px; }
 .nav-right .live-badge { display: none; }
-.brand .wordmark { font-size: 26px; }
+.brand .wordmark { font-size: 28px; font-weight: 800; }
 }

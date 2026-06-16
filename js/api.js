@@ -1,4 +1,4 @@
-// Data layer for slop.game, backed by Supabase (Postgres + RLS).
+// Data layer for SLOP.game, backed by Supabase (Postgres + RLS).
 //
 // Auth itself lives in account.js (it talks to supabase.auth directly); this
 // module is the typed gateway for profiles, games, plays, and reports. Every
@@ -96,7 +96,7 @@ export const api = {
   // Validate + claim a unique username for the signed-in user (RPC).
   async claimUsername(username) {
     const s = sb();
-    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    if (!s) throw new Error('cannot reach SLOP.game servers — check your connection');
     const { data, error } = await s.rpc('claim_username', { p_username: username });
     if (error) throw new Error(friendly(error.message));
     return data;
@@ -105,7 +105,7 @@ export const api = {
   // Update the signed-in user's own profile (display name / avatar).
   async updateProfile(patch) {
     const s = sb();
-    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    if (!s) throw new Error('cannot reach SLOP.game servers — check your connection');
     const { data: { user } } = await s.auth.getUser();
     if (!user) throw new Error('sign in first');
     const fields = {};
@@ -126,7 +126,7 @@ export const api = {
   // Upload a profile picture to the public `avatars` bucket → returns its URL.
   async uploadAvatar(file) {
     const s = sb();
-    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    if (!s) throw new Error('cannot reach SLOP.game servers — check your connection');
     const { data: { user } } = await s.auth.getUser();
     if (!user) throw new Error('sign in first');
     const ext = ((file.name || '').split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
@@ -142,7 +142,7 @@ export const api = {
   // namespaced by uid) → returns its URL. Used when publishing a game.
   async uploadThumb(file) {
     const s = sb();
-    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    if (!s) throw new Error('cannot reach SLOP.game servers — check your connection');
     const { data: { user } } = await s.auth.getUser();
     if (!user) throw new Error('sign in first');
     const ext = ((file.name || '').split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
@@ -156,7 +156,7 @@ export const api = {
   // Upload a profile banner to the public `avatars` bucket → returns its URL.
   async uploadBanner(file) {
     const s = sb();
-    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    if (!s) throw new Error('cannot reach SLOP.game servers — check your connection');
     const { data: { user } } = await s.auth.getUser();
     if (!user) throw new Error('sign in first');
     const ext = ((file.name || '').split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
@@ -192,7 +192,7 @@ export const api = {
 
   async follow(targetId) {
     const s = sb();
-    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    if (!s) throw new Error('cannot reach SLOP.game servers — check your connection');
     const { data: { user } } = await s.auth.getUser();
     if (!user) throw new Error('sign in to follow creators');
     const { error } = await s.from('follows').insert({ follower_id: user.id, following_id: targetId });
@@ -252,7 +252,7 @@ export const api = {
   // { slug, id, url } or throws a friendly error.
   async publishGame(game) {
     const s = sb();
-    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    if (!s) throw new Error('cannot reach SLOP.game servers — check your connection');
     const { data: { user } } = await s.auth.getUser();
     if (!user) throw new Error('sign in first, then come back to publish');
     const html = game.html || '';
@@ -342,7 +342,7 @@ export const api = {
   // Returns the redirect URL, or throws a friendly error.
   async createCheckout(kind) {
     const s = sb();
-    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    if (!s) throw new Error('cannot reach SLOP.game servers — check your connection');
     const { data: { session } } = await s.auth.getSession();
     if (!session) throw new Error('sign in first');
     const { data, error } = await s.functions.invoke('stripe-checkout', { body: { kind } });
@@ -403,7 +403,7 @@ export const api = {
 
   async addComment(gameId, body) {
     const s = sb();
-    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    if (!s) throw new Error('cannot reach SLOP.game servers — check your connection');
     const { data: { user } } = await s.auth.getUser();
     if (!user) throw new Error('sign in to comment');
     const text = String(body || '').trim().slice(0, 500);

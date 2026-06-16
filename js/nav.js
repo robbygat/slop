@@ -8,6 +8,61 @@ export function initNav(options = {}) {
 
   initSearch({ filterGrid });
 
+  // On pages with a hero (homepage), the global nav stays hidden over the hero
+  // and slides in only after you scroll past it. Elsewhere it's a normal nav.
+  const nav = document.querySelector('.site-nav');
+  const hero = document.querySelector('.hero');
+  if (nav && hero) {
+    nav.classList.add('nav--hideable');
+
+    const browseDock = document.getElementById('nav-browse-dock');
+    const gamesSec = document.getElementById('games');
+    const browseAnchor = document.querySelector('.mq-wrap');
+    let browseActive = false;
+
+    const setBrowseActive = (on) => {
+      if (on === browseActive || !browseDock) return;
+      browseActive = on;
+      nav.classList.toggle('nav--browse', on);
+      browseDock.toggleAttribute('hidden', !on);
+      browseDock.setAttribute('aria-hidden', on ? 'false' : 'true');
+      gamesSec?.classList.toggle('games-browse-nav', on);
+    };
+
+    const measureNavHeight = () => {
+      if (browseActive && browseDock) {
+        return Math.ceil(browseDock.getBoundingClientRect().bottom);
+      }
+      return Math.ceil(nav.getBoundingClientRect().bottom);
+    };
+
+    let ticking = false;
+    const update = () => {
+      const trigger = Math.max(120, hero.offsetHeight - nav.offsetHeight - 24);
+      nav.classList.toggle('nav--show', window.scrollY > trigger);
+
+      if (browseDock && gamesSec && browseAnchor && nav.classList.contains('nav--show')) {
+        const navBottom = nav.getBoundingClientRect().bottom;
+        const anchorTop = browseAnchor.getBoundingClientRect().top;
+        const gamesBottom = gamesSec.getBoundingClientRect().bottom;
+        // show browse row when the tag marquee under the hero reaches the nav —
+        // before "try out what's live" so the dock doesn't pop over that headline
+        setBrowseActive(anchorTop <= navBottom + 2 && gamesBottom > navBottom + 48);
+      } else {
+        setBrowseActive(false);
+      }
+
+      document.documentElement.style.setProperty('--nav-height', `${measureNavHeight()}px`);
+      ticking = false;
+    };
+    const onScroll = () => {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    update();
+  }
+
   const burger = document.getElementById('nav-burger');
   const links = document.getElementById('nav-links');
   if (!burger || !links) return;

@@ -1,4 +1,4 @@
--- slop.game — social layer: follows + avatar uploads.
+-- SLOP.game — social layer: follows + avatar uploads.
 --
 -- Apply after 001_initial.sql: paste into the Supabase SQL Editor and Run.
 -- Idempotent / safe to re-run.

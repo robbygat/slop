@@ -1,4 +1,4 @@
-// DUNGEON PANIC — live remix, powered by the shared slop.game remix dock.
+// DUNGEON PANIC — live remix, powered by the shared SLOP.game remix dock.
 // The dock sits BESIDE the game (never covering it), reads the real source,
 // and applies Grok-written patches to the running game. In multiplayer the
 // host's mods are broadcast to the whole room (see game.js mod sync).

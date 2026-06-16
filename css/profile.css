@@ -1,5 +1,5 @@
 /* ==========================================================================
-   slop.game profile — social creator card, hero-scene backdrop
+   SLOP.game profile — social creator card, hero-scene backdrop
    ========================================================================== */
 
 .pf-root {
@@ -39,7 +39,7 @@
     radial-gradient(26% 30% at 76% 22%, rgba(255, 78, 184, 0.45), transparent 60%),
     radial-gradient(34% 40% at 62% 72%, rgba(78, 202, 255, 0.45), transparent 62%),
     radial-gradient(26% 30% at 28% 76%, rgba(61, 255, 176, 0.40), transparent 60%),
-    radial-gradient(24% 28% at 86% 64%, rgba(185, 78, 255, 0.40), transparent 60%),
+    radial-gradient(24% 28% at 86% 64%, rgba(43,107,255, 0.40), transparent 60%),
     radial-gradient(22% 26% at 48% 12%, rgba(255, 122, 53, 0.38), transparent 60%);
   opacity: 0.28;
   animation: pf-hero-wc 28s ease-in-out infinite alternate;
@@ -117,7 +117,7 @@
     var(--bl) 72deg,
     var(--mt) 144deg,
     var(--or) 216deg,
-    var(--pu) 288deg,
+    var(--el) 288deg,
     var(--y) 360deg
   );
   opacity: 0.75;
@@ -155,7 +155,7 @@
     radial-gradient(26% 30% at 82% 28%, rgba(255, 78, 184, 0.45), transparent 60%),
     radial-gradient(34% 40% at 62% 88%, rgba(78, 202, 255, 0.48), transparent 62%),
     radial-gradient(26% 30% at 28% 78%, rgba(61, 255, 176, 0.40), transparent 60%),
-    linear-gradient(135deg, #fff9f0 0%, var(--cr) 45%, #f5f0ff 100%);
+    linear-gradient(135deg, #fff9f0 0%, var(--cr) 45%, #eef4ff 100%);
   z-index: 0;
 }
 
@@ -282,7 +282,7 @@
   object-fit: cover;
   display: grid;
   place-items: center;
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 44px;
   color: var(--y);
   overflow: hidden;
@@ -307,7 +307,7 @@
   grid-area: 1 / 1;
   align-self: end;
   justify-self: end;
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 12px;
   color: var(--ink);
   background: var(--y);
@@ -349,7 +349,7 @@
 
 .pf-name {
   margin: 0;
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: clamp(26px, 4vw, 36px);
   font-weight: 400;
   line-height: 1.05;
@@ -503,7 +503,7 @@
 }
 .pf-stat b {
   display: block;
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 28px;
   font-weight: 400;
   line-height: 1;
@@ -553,7 +553,7 @@
   box-shadow: 3px 3px 0 var(--ink);
   display: grid;
   place-items: center;
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 22px;
   color: var(--ink);
 }
@@ -564,7 +564,7 @@
   align-items: baseline;
 }
 .pf-xp-label {
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 16px;
 }
 .pf-xp-num {
@@ -612,7 +612,7 @@
 
 .pf-games-head h2 {
   margin: 0;
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 22px;
   font-weight: 400;
   display: flex;
@@ -697,7 +697,7 @@
   place-items: center;
   height: 100%;
   padding: 12px;
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 15px;
   color: var(--ink);
   text-align: center;
@@ -712,7 +712,7 @@
 }
 .pf-tile-body h3 {
   margin: 0;
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 16px;
   font-weight: 400;
   line-height: 1.15;
@@ -814,7 +814,7 @@
 }
 .pf-sheet-head h3 {
   margin: 0;
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 22px;
 }
 
@@ -917,7 +917,7 @@
   border: var(--bw) solid var(--ink);
   background: var(--ink);
   color: var(--y);
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 26px;
   display: grid;
   place-items: center;
@@ -939,7 +939,7 @@
 .pf-error:empty { display: none; }
 .pf-foot-btns { display: flex; gap: 10px; }
 .pf-cancel {
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 16px;
   padding: 13px 20px;
   border: var(--bw) solid var(--ink);
@@ -952,7 +952,7 @@
 .pf-cancel:hover { transform: translate(-2px, -2px); box-shadow: var(--shb); }
 .pf-save {
   flex: 1;
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 17px;
   padding: 13px;
   border: var(--bw) solid var(--ink);

@@ -1,4 +1,4 @@
-// Premium multiplayer boilerplate for AI-generated slop.games.
+// Premium multiplayer boilerplate for AI-generated SLOP.games.
 // Injected alongside SlopNet — games call SlopMP.boot() instead of wiring lobby/sync by hand.
 
 export const SLOP_MP_RULES = `MULTIPLAYER — use the injected SlopMP + SlopNet (DO NOT rebuild lobby/netcode):
@@ -40,7 +40,7 @@ background:radial-gradient(ellipse at 50% 30%,rgba(255,78,184,.25),rgba(26,26,46
 <script id="slop-mp-js">
 window.SlopMP=(function(){
 var cfg=null,players=[],myId='solo',started=false,hostLoop=null,overlay,card,statusEl;
-var COLORS=['#FF4EB8','#4ECAFF','#3DFFB0','#FFE135','#FF7A35','#B94EFF','#FF6B6B','#9CE8C6'];
+var COLORS=['#FF4EB8','#4ECAFF','#3DFFB0','#FFE135','#FF7A35','#2B6BFF','#FF6B6B','#9CE8C6'];
 function $(id){return document.getElementById(id);}
 function show(){if(overlay)overlay.classList.remove('hidden');}
 function hide(){if(overlay)overlay.classList.add('hidden');}

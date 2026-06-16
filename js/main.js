@@ -1,4 +1,4 @@
-// slop.game — homepage entry point. boots every module on DOM ready.
+// SLOP.game — homepage entry point. boots every module on DOM ready.
 
 import { initHero } from './hero.js';
 import { initGamesGrid } from './games-grid.js';
@@ -18,6 +18,11 @@ function init() {
 initAccount();
 initXP();
 initHero();
+
+// interactive Three.js shader showpiece — dynamically imported so a CDN/WebGL
+// failure only drops the visual (CSS gradient fallback) instead of the page JS.
+import('./hero-shader.js').then((m) => m.initHeroShader()).catch(() => {});
+
 initGamesGrid();
 initUpload();
 initFeatureCarousel();
@@ -26,10 +31,10 @@ initAppStore();
 initReveal();
 initStats();
 
-// remix CTA → SlopKart with the live remix dock open
-document.getElementById('remix-btn')?.addEventListener('click', () => {
-showToast('opening SlopKart with the remix dock...');
-setTimeout(() => { window.location.href = 'games/slopkart/index.html?remix=1'; }, 400);
+// hero top-bar "Sign in" → same auth modal as the global nav
+document.getElementById('hero-signin')?.addEventListener('click', () => {
+  if (getUser()) showToast(`you're already signed in as ${getUser().username}`);
+  else openAuthModal();
 });
 
 document.getElementById('footer-signup')?.addEventListener('click', (e) => {

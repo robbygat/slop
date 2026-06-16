@@ -9,7 +9,7 @@ import { prepareGameHTML } from './debug.js';
 import { launchConfetti } from './confetti.js';
 import { showToast } from './toast.js';
 
-const SYSTEM_PROMPT = `You are the game engine behind slop.game — you turn plain-english prompts into complete, genuinely playable browser games.
+const SYSTEM_PROMPT = `You are the game engine behind SLOP.game — you turn plain-english prompts into complete, genuinely playable browser games.
 
 HARD REQUIREMENTS:
 - Output ONE complete self-contained HTML document: inline <style> and <script>, nothing external. No CDNs, no fonts, no images, no fetch. Draw all art with <canvas> (or DOM), synthesize any audio with the Web Audio API.

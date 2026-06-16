@@ -1,6 +1,6 @@
 // Shared xAI (Grok) client.
 //
-// When the slop.game backend is running, every call routes through /api/ai/*
+// When the SLOP.game backend is running, every call routes through /api/ai/*
 // so the API key stays on the server (this is the production path). When the
 // site is opened as static files with no backend, direct calls require a
 // user-supplied key (Slop Studio settings) — no baked-in key ships in the repo.

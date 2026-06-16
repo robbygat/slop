@@ -1,4 +1,4 @@
-// stripe-checkout — creates a Stripe Checkout Session for slop.game.
+// stripe-checkout — creates a Stripe Checkout Session for SLOP.game.
 //   body: { kind: 'pro' | 'topup_small' | 'topup_large' }
 //   → { url } to redirect the browser to.
 //

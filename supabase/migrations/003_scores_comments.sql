@@ -1,4 +1,4 @@
--- slop.game — leaderboards (scores) + game comments.
+-- SLOP.game — leaderboards (scores) + game comments.
 --
 -- Apply after 001 + 002: paste into the Supabase SQL Editor and Run.
 -- Idempotent / safe to re-run.

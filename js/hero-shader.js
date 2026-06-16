@@ -1,0 +1,318 @@
+// Reusable interactive shader surface (vanilla Three.js).
+//
+// A port of the React Three Fiber "shader card" spec, recolored to SLOP.game's
+// palette: a 7-stop vertical gradient with domain-warped waves, a simplex-noise
+// layer, an overlay-blended grain, and click ripples. Used full-bleed behind the
+// homepage hero and, via mountShader(), behind "cool" surfaces in Slop Studio —
+// where setThinking(true) intensifies and speeds up the motion while the agent
+// works. Degrades gracefully: a CSS gradient fallback shows if WebGL/Three.js
+// is unavailable.
+
+import * as THREE from 'three';
+
+// 7 stops, top → bottom, all straight from css/tokens.css (light cream → ink).
+const PALETTE = [
+  [0xFF, 0xFB, 0xF0], // cream    #FFFBF0
+  [0xFF, 0xE1, 0x35], // yellow   #FFE135
+  [0xFF, 0x7A, 0x35], // orange   #FF7A35
+  [0xFF, 0x4E, 0xB8], // hot pink #FF4EB8
+  [0x4E, 0xCA, 0xFF], // sky      #4ECAFF
+  [0x2B, 0x6B, 0xFF], // electric #2B6BFF
+  [0x11, 0x12, 0x1A], // ink      #11121A
+].map(([r, g, b]) => new THREE.Color(r / 255, g / 255, b / 255));
+
+const MAX_RIPPLES = 10;
+
+const VERT = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = vec4(position.xy, 0.0, 1.0); // fullscreen clip-space quad
+  }
+`;
+
+const FRAG = /* glsl */ `
+  precision highp float;
+
+  uniform float uTime;
+  uniform float uAspect;
+  uniform float uBoost;          // 0 idle → 1 "thinking": faster, louder, brighter
+  uniform vec3  uColors[7];
+  uniform float uGrainIntensity, uGrainSpeed, uGrainMean, uGrainVariance;
+  uniform float uWaveIntensity, uNoiseIntensity, uNoiseScale, uNoiseSpeed;
+  uniform vec2  uRipplePos[10];
+  uniform float uRippleTime[10];
+  uniform int   uRippleCount;
+
+  varying vec2 vUv;
+
+  // ---- Ashima / Gustavson 3D simplex noise -----------------------------------
+  vec4 permute(vec4 x){ return mod(((x * 34.0) + 1.0) * x, 289.0); }
+  vec4 taylorInvSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314 * r; }
+  float snoise(vec3 v){
+    const vec2  C = vec2(1.0/6.0, 1.0/3.0);
+    const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
+    vec3 i  = floor(v + dot(v, C.yyy));
+    vec3 x0 = v - i + dot(i, C.xxx);
+    vec3 g = step(x0.yzx, x0.xyz);
+    vec3 l = 1.0 - g;
+    vec3 i1 = min(g.xyz, l.zxy);
+    vec3 i2 = max(g.xyz, l.zxy);
+    vec3 x1 = x0 - i1 + 1.0 * C.xxx;
+    vec3 x2 = x0 - i2 + 2.0 * C.xxx;
+    vec3 x3 = x0 - 1.0 + 3.0 * C.xxx;
+    i = mod(i, 289.0);
+    vec4 p = permute(permute(permute(
+               i.z + vec4(0.0, i1.z, i2.z, 1.0))
+             + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+             + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+    float n_ = 1.0 / 7.0;
+    vec3 ns = n_ * D.wyz - D.xzx;
+    vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+    vec4 x_ = floor(j * ns.z);
+    vec4 y_ = floor(j - 7.0 * x_);
+    vec4 x = x_ * ns.x + ns.yyyy;
+    vec4 y = y_ * ns.x + ns.yyyy;
+    vec4 h = 1.0 - abs(x) - abs(y);
+    vec4 b0 = vec4(x.xy, y.xy);
+    vec4 b1 = vec4(x.zw, y.zw);
+    vec4 s0 = floor(b0) * 2.0 + 1.0;
+    vec4 s1 = floor(b1) * 2.0 + 1.0;
+    vec4 sh = -step(h, vec4(0.0));
+    vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
+    vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
+    vec3 p0 = vec3(a0.xy, h.x);
+    vec3 p1 = vec3(a0.zw, h.y);
+    vec3 p2 = vec3(a1.xy, h.z);
+    vec3 p3 = vec3(a1.zw, h.w);
+    vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+    p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+    m = m * m;
+    return 42.0 * dot(m * m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+  }
+
+  // 7-stop vertical gradient (smooth segment blends).
+  vec3 gradient(float t){
+    t = clamp(t, 0.0, 1.0);
+    vec3 c = uColors[0];
+    c = mix(c, uColors[1], smoothstep(0.0,     1.0/6.0, t));
+    c = mix(c, uColors[2], smoothstep(1.0/6.0, 2.0/6.0, t));
+    c = mix(c, uColors[3], smoothstep(2.0/6.0, 3.0/6.0, t));
+    c = mix(c, uColors[4], smoothstep(3.0/6.0, 4.0/6.0, t));
+    c = mix(c, uColors[5], smoothstep(4.0/6.0, 5.0/6.0, t));
+    c = mix(c, uColors[6], smoothstep(5.0/6.0, 1.0,     t));
+    return c;
+  }
+
+  // Three-layer wave system at scales 0.5 / 0.8 / 1.2 and speeds 0.24 / 0.2 / 0.3.
+  float waveField(vec2 uv, float t){
+    float w  = snoise(vec3(uv * 0.5,         t * 0.24));
+          w += snoise(vec3(uv * 0.8 + 11.0,  t * 0.20)) * 0.7;
+          w += snoise(vec3(uv * 1.2 + 23.0,  t * 0.30)) * 0.5;
+    return w / 2.2;
+  }
+
+  float rand(vec2 c){ return fract(sin(dot(c, vec2(12.9898, 78.233))) * 43758.5453); }
+  float grain(vec2 uv, float t){
+    float seed = rand(uv + floor(t * uGrainSpeed * 30.0) * 0.013);
+    return uGrainMean + (seed - 0.5) * uGrainVariance;
+  }
+  vec3 overlayBlend(vec3 base, float g){
+    vec3 b  = vec3(0.5 + g);
+    vec3 lo = 2.0 * base * b;
+    vec3 hi = 1.0 - 2.0 * (1.0 - base) * (1.0 - b);
+    return mix(lo, hi, step(0.5, base));
+  }
+
+  // A clean expanding ring per click, with a soft halo, fading over 2s.
+  vec3 applyRipples(vec3 col, vec2 p){
+    for (int i = 0; i < 10; i++){
+      if (i >= uRippleCount) break;
+      float age = uTime - uRippleTime[i];
+      if (age < 0.0 || age > 2.0) continue;
+      vec2 rp = uRipplePos[i];
+      rp.x *= uAspect;
+      float d      = distance(p, rp);
+      float radius = age * 1.0;                              // expansion speed 1.0/s
+      float ring   = smoothstep(0.07, 0.0, abs(d - radius)); // crisp ring
+      float halo   = smoothstep(0.35, 0.0, abs(d - radius)); // soft glow around it
+      float wob    = 0.5 + 0.5 * sin(d * 15.0 - uTime * 8.0);
+      float fade   = 1.0 - age * 0.5;                        // fade over 2s
+      col = mix(col, vec3(1.0), (ring * wob * 0.6 + halo * 0.14) * fade);
+    }
+    return col;
+  }
+
+  void main(){
+    vec2 uv = vUv;
+    float boost = uBoost;
+
+    // Domain-warped, breathing, parabolic-arched gradient coordinate.
+    float arch    = -pow(uv.x - 0.5, 2.0) * 0.55;
+    float breathe = sin(uTime * 0.5) * 0.04;
+    float waveAmt = uWaveIntensity  * (1.0 + boost * 1.4);
+    float noizAmt = uNoiseIntensity * (1.0 + boost * 1.0);
+    float waves   = waveField(uv * uNoiseScale, uTime) * 0.07 * waveAmt;
+    float n       = snoise(vec3(uv * uNoiseScale, uTime * uNoiseSpeed * (1.0 + boost * 2.0))) * 0.05 * noizAmt;
+    float gy      = (1.0 - uv.y) + arch + breathe + waves + n;
+
+    vec3 col = gradient(gy);
+
+    // Grain (overlay blend).
+    col = mix(col, overlayBlend(col, grain(uv, uTime)), uGrainIntensity);
+
+    // Brightness pulse while "thinking".
+    col += boost * 0.07 * (0.5 + 0.5 * sin(uTime * 3.0));
+
+    // Ripples in aspect-corrected -1..1 space.
+    vec2 p = uv * 2.0 - 1.0;
+    p.x *= uAspect;
+    col = applyRipples(col, p);
+
+    gl_FragColor = vec4(col, 1.0);
+  }
+`;
+
+/**
+ * Mount the shader onto `el` (its canvas fills the element via CSS).
+ * @param {HTMLElement} el
+ * @param {{ interactionEl?: HTMLElement, ripples?: boolean }} [opts]
+ * @returns {{ setThinking:(b:boolean)=>void, resize:()=>void, destroy:()=>void } | null}
+ */
+export function mountShader(el, opts = {}) {
+  if (!el) return null;
+  const { interactionEl = el, ripples = true } = opts;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+  } catch (e) {
+    return null; // CSS gradient fallback stays in place
+  }
+  renderer.setClearColor(0xf9f9f9, 1);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  el.appendChild(renderer.domElement);
+
+  const uniforms = {
+    uTime: { value: 0 },
+    uAspect: { value: 4 / 3 },
+    uBoost: { value: 0 },
+    uColors: { value: PALETTE },
+    uGrainIntensity: { value: 0.075 },
+    uGrainSpeed: { value: 2.0 },
+    uGrainMean: { value: 0.0 },
+    uGrainVariance: { value: 0.5 },
+    uWaveIntensity: { value: 1.2 },
+    uNoiseIntensity: { value: 1.55 },
+    uNoiseScale: { value: 2.0 },
+    uNoiseSpeed: { value: 0.15 },
+    uRipplePos: { value: Array.from({ length: MAX_RIPPLES }, () => new THREE.Vector2()) },
+    uRippleTime: { value: new Array(MAX_RIPPLES).fill(-100) },
+    uRippleCount: { value: 0 },
+  };
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.Camera(); // vertex shader writes clip-space directly
+  const geometry = new THREE.PlaneGeometry(2, 2);
+  const material = new THREE.ShaderMaterial({ uniforms, vertexShader: VERT, fragmentShader: FRAG });
+  scene.add(new THREE.Mesh(geometry, material));
+
+  function resize() {
+    const r = el.getBoundingClientRect();
+    const w = Math.max(1, r.width);
+    const h = Math.max(1, r.height);
+    renderer.setSize(w, h, false); // keep CSS sizing; only update the drawing buffer
+    uniforms.uAspect.value = w / h;
+  }
+  resize();
+
+  // ---- click ripples (normalized to shader space, synced to shader time) -----
+  const list = []; // { x, y, t }
+  function addRipple(clientX, clientY) {
+    const r = el.getBoundingClientRect();
+    const x = ((clientX - r.left) / r.width) * 2 - 1;
+    const y = -(((clientY - r.top) / r.height) * 2 - 1);
+    list.push({ x, y, t: time });
+    if (list.length > MAX_RIPPLES) list.shift();
+  }
+  function syncRipples() {
+    for (let k = list.length - 1; k >= 0; k--) {
+      if (time - list[k].t > 2.0) list.splice(k, 1); // clean up after 2s
+    }
+    const n = Math.min(list.length, MAX_RIPPLES);
+    for (let k = 0; k < n; k++) {
+      uniforms.uRipplePos.value[k].set(list[k].x, list[k].y);
+      uniforms.uRippleTime.value[k] = list[k].t;
+    }
+    uniforms.uRippleCount.value = n;
+  }
+
+  const clock = new THREE.Clock();
+  let time = 0;          // shader "flow" time — speeds up while thinking
+  let boost = 0, boostTarget = 0;
+  let running = false, rafId = 0, onScreen = true;
+
+  function frame() {
+    const dt = Math.min(clock.getDelta(), 0.05);
+    boost += (boostTarget - boost) * Math.min(1, dt * 4);
+    time += dt * (1 + boost * 2.2);
+    uniforms.uTime.value = time;
+    uniforms.uBoost.value = boost;
+    syncRipples();
+    renderer.render(scene, camera);
+    rafId = requestAnimationFrame(frame);
+  }
+  function start() {
+    if (running || !onScreen || document.hidden) return;
+    running = true;
+    clock.start();
+    rafId = requestAnimationFrame(frame);
+  }
+  function stop() {
+    running = false;
+    cancelAnimationFrame(rafId);
+  }
+
+  const ro = new ResizeObserver(resize);
+  const io = new IntersectionObserver((entries) => {
+    onScreen = entries[0].isIntersecting;
+    onScreen ? start() : stop();
+  }, { threshold: 0.04 });
+  const onVis = () => (document.hidden ? stop() : start());
+  const onDown = (e) => addRipple(e.clientX, e.clientY);
+
+  if (reduce) {
+    uniforms.uTime.value = 2.0;
+    renderer.render(scene, camera); // one static frame
+  } else {
+    if (ripples) interactionEl.addEventListener('pointerdown', onDown);
+    ro.observe(el);
+    document.addEventListener('visibilitychange', onVis);
+    io.observe(el);
+  }
+
+  return {
+    setThinking: (b) => { boostTarget = b ? 1 : 0; if (b) start(); },
+    resize,
+    destroy: () => {
+      stop();
+      ro.disconnect();
+      io.disconnect();
+      document.removeEventListener('visibilitychange', onVis);
+      if (ripples) interactionEl.removeEventListener('pointerdown', onDown);
+      geometry.dispose();
+      material.dispose();
+      renderer.dispose();
+      renderer.domElement.remove();
+    },
+  };
+}
+
+/** Homepage hero: full-bleed background, ripples anywhere on the hero. */
+export function initHeroShader() {
+  const el = document.getElementById('hero-shader');
+  if (!el) return;
+  mountShader(el, { interactionEl: el.closest('.hero') || el });
+}

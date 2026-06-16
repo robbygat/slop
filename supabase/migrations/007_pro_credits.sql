@@ -1,4 +1,4 @@
--- slop.game — Pro memberships + metered AI credits (migration 007).
+-- SLOP.game — Pro memberships + metered AI credits (migration 007).
 --
 -- HOW TO APPLY (one time): Supabase Dashboard → SQL Editor → paste & Run.
 -- Re-running is safe (IF NOT EXISTS / CREATE OR REPLACE / drop-before-create).

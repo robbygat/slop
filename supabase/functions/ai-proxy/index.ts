@@ -1,4 +1,4 @@
-// ai-proxy — metered, multi-provider, streaming LLM proxy for slop.game.
+// ai-proxy — metered, multi-provider, streaming LLM proxy for SLOP.game.
 //
 // Flow: verify the caller's Supabase JWT → refresh allowance + read balance →
 // gate Pro-only models → pre-check enough credits for the worst case → call the

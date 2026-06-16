@@ -1,24 +1,18 @@
-/* slop.game — Pro pricing: nav pill + credit chip + pricing modal. */
+/* SLOP.game — Pro pricing: nav pill + credit chip + pricing modal. */
 
 /* ---- nav pill + credit chip ---- */
 .nav-pro-slot { display: inline-flex; align-items: center; gap: 8px; }
 
 .nav-pro {
   display: inline-flex; align-items: center; gap: 6px;
-  font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 13px;
-  color: var(--ink); background: var(--pk);
-  border: 2.5px solid var(--ink); border-radius: 100px;
-  padding: 6px 13px; cursor: pointer; white-space: nowrap;
-  box-shadow: 3px 3px 0 var(--ink); transition: transform .12s, box-shadow .12s;
+  font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: -0.01em;
+  color: #fff; background: linear-gradient(120deg, var(--pk), var(--el));
+  border: 2px solid var(--ink); border-radius: 100px;
+  padding: 7px 15px; cursor: pointer; white-space: nowrap;
+  box-shadow: 3px 3px 0 var(--ink); transition: transform .12s, box-shadow .12s, filter .15s;
 }
-.nav-pro:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
-.nav-pro s { opacity: .65; font-weight: 800; }
-.nav-pro-tag {
-  font-family: 'Space Mono', monospace; font-size: 8.5px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .04em;
-  background: var(--y); color: var(--ink); border: 1.5px solid var(--ink);
-  border-radius: 5px; padding: 1px 5px;
-}
+.nav-pro:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); filter: brightness(1.06); }
+.np-spark { font-size: 12px; line-height: 1; }
 .nav-credits {
   display: inline-flex; align-items: center; gap: 3px;
   font-family: 'Space Mono', monospace; font-weight: 700; font-size: 12.5px;
@@ -29,14 +23,13 @@
 }
 .nav-credits:hover { transform: translate(-1px, -1px); }
 .nav-pro-badge {
-  font-family: 'Fredoka One', cursive; font-size: 12px; letter-spacing: .04em;
-  color: #fff; background: linear-gradient(120deg, var(--pk), var(--pu));
+  font-family: 'Space Grotesk', sans-serif; font-size: 12px; letter-spacing: .04em;
+  color: #fff; background: linear-gradient(120deg, var(--pk), var(--el));
   border: 2.5px solid var(--ink); border-radius: 100px; padding: 4px 11px;
   cursor: pointer; box-shadow: 2px 2px 0 var(--ink);
 }
 @media (max-width: 720px) {
-  .nav-pro { font-size: 12px; padding: 5px 10px; }
-  .nav-pro s { display: none; }
+  .nav-pro { font-size: 12px; padding: 6px 12px; }
 }
 
 /* ---- pricing modal ---- */
@@ -59,11 +52,11 @@
 .pr-head { text-align: center; margin-bottom: 16px; }
 .pr-kicker { font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; color: var(--soft); text-transform: lowercase; }
 .pr-kicker b { color: var(--pk); }
-.pr-title { font-family: 'Fredoka One', cursive; font-size: 38px; margin: 4px 0 6px; }
-.pr-grad { background: linear-gradient(120deg, var(--pk), var(--pu)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pr-title { font-family: 'Space Grotesk', sans-serif; font-size: 38px; margin: 4px 0 6px; }
+.pr-grad { background: linear-gradient(120deg, var(--pk), var(--el)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .pr-price { display: flex; align-items: baseline; justify-content: center; gap: 6px; flex-wrap: wrap; }
 .pr-price s { font-size: 20px; font-weight: 800; color: var(--soft); opacity: .7; }
-.pr-price b { font-family: 'Fredoka One', cursive; font-size: 34px; color: var(--ink); }
+.pr-price b { font-family: 'Space Grotesk', sans-serif; font-size: 34px; color: var(--ink); }
 .pr-price span { font-weight: 800; color: var(--soft); }
 .pr-tag {
   font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; font-style: normal;
@@ -78,7 +71,7 @@
 .pr-balance { text-align: center; font-family: 'Space Mono', monospace; font-weight: 700; color: var(--ink); }
 .pr-balance b { font-size: 18px; }
 .pr-cta {
-  width: 100%; font-family: 'Fredoka One', cursive; font-size: 18px; padding: 14px;
+  width: 100%; font-family: 'Space Grotesk', sans-serif; font-size: 18px; padding: 14px;
   border: var(--bw) solid var(--ink); border-radius: 100px; background: var(--pk); color: #fff;
   cursor: pointer; box-shadow: var(--sh); transition: transform .12s, box-shadow .12s;
 }

@@ -6,15 +6,19 @@
 <title>Slop Studio — build a game by talking to it</title>
 <meta name="description" content="the prompt-based game studio: describe your game, watch the agent build it, playtest instantly, generate sprites, flip on multiplayer, and remix live.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23FF4EB8%22/><text x=%2250%22 y=%2258%22 text-anchor=%22middle%22 font-family=%22system-ui,sans-serif%22 font-size=%2248%22 font-weight=%22700%22 fill=%22%23FFFFFF%22>S</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <!-- ads paused during playtesting -->
 <style>
 :root {
---y:#FFE135; --pk:#FF4EB8; --bl:#4ECAFF; --mt:#3DFFB0; --or:#FF7A35; --pu:#B94EFF;
---cr:#FFFBF0; --wh:#FFFFFF; --ink:#1A1A2E; --soft:#3A3A5C; --red:#FF3B3B;
+--y:#FFE135; --pk:#FF4EB8; --bl:#4ECAFF; --mt:#3DFFB0; --or:#FF7A35;
+--el:#2B6BFF; --el-deep:#1E50D8; --pu:#2B6BFF;
+--cr:#FFFBF0; --wh:#FFFFFF; --ink:#11121A; --soft:#52526E; --red:#FF3B3B;
 --bw:3px; --sh:5px 5px 0 var(--ink); --shb:7px 7px 0 var(--ink);
---line: rgba(26,26,46,.1);
+--soft1:0 2px 8px rgba(17,18,26,.05); --soft2:0 12px 34px rgba(17,18,26,.10);
+--ring:0 0 0 4px rgba(43,107,255,.18);
+--font-display:'Space Grotesk',sans-serif; --font-body:'Nunito',sans-serif; --font-mono:'Space Mono',monospace;
+--line: rgba(17,18,26,.10);
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { height:100vh; height:100dvh; display:flex; flex-direction:column; overflow:hidden;
@@ -23,21 +27,23 @@ background:
 radial-gradient(40% 30% at 12% 4%, rgba(255,78,184,.10), transparent 60%),
 radial-gradient(38% 28% at 90% 6%, rgba(78,202,255,.12), transparent 60%),
 var(--cr); }
-.fred { font-family:'Fredoka One',cursive; font-weight:400; }
+.fred { font-family:'Space Grotesk', sans-serif; font-weight:400; }
 .mono { font-family:'Space Mono',monospace; }
 
 /* topbar */
-.topbar { flex:0 0 auto; display:flex; align-items:center; gap:12px; padding:11px 16px;
-background:var(--y); border-bottom:var(--bw) solid var(--ink); flex-wrap:wrap; }
+.topbar { flex:0 0 auto; display:flex; align-items:center; gap:12px; padding:11px 18px;
+background:var(--wh); border-bottom:2px solid var(--ink); box-shadow:var(--soft1); position:relative; z-index:50; flex-wrap:wrap; }
+.topbar .brand { letter-spacing:-.02em; }
+.topbar .brand .pk { color:var(--el); }
 .back-link { font-family:'Space Mono',monospace; font-weight:700; font-size:12.5px; color:var(--ink); text-decoration:none;
 background:var(--wh); border:2.5px solid var(--ink); border-radius:100px; padding:7px 14px; box-shadow:3px 3px 0 var(--ink); white-space:nowrap; transition:transform .12s; }
 .back-link:hover { transform:translate(-2px,-2px); }
-.brand { font-family:'Fredoka One',cursive; font-size:18px; white-space:nowrap; }
+.brand { font-family:'Space Grotesk', sans-serif; font-size:18px; white-space:nowrap; }
 .brand .pk { color:var(--pk); }
-#game-title { flex:1; min-width:120px; font-family:'Fredoka One',cursive; font-size:16px; color:var(--ink);
+#game-title { flex:1; min-width:120px; font-family:'Space Grotesk', sans-serif; font-size:16px; color:var(--ink);
 background:rgba(255,255,255,.7); border:2.5px solid var(--ink); border-radius:100px; padding:8px 16px; outline:none; }
 #game-title:focus { box-shadow:3px 3px 0 var(--ink); }
-.bar-btn { font-family:'Fredoka One',cursive; font-size:13.5px; border:2.5px solid var(--ink); border-radius:100px;
+.bar-btn { font-family:'Space Grotesk', sans-serif; font-size:13.5px; border:2.5px solid var(--ink); border-radius:100px;
 padding:8px 16px; cursor:pointer; box-shadow:3px 3px 0 var(--ink); white-space:nowrap; background:var(--wh); color:var(--ink);
 transition:transform .12s; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
 .bar-btn:hover:not(:disabled) { transform:translate(-2px,-2px); }
@@ -55,25 +61,54 @@ transition:transform .12s; text-decoration:none; display:inline-flex; align-item
 
 /* main */
 .main { flex:1; display:flex; min-height:0; }
-.agent { flex:0 0 410px; max-width:46vw; display:flex; flex-direction:column; min-height:0;
-background:linear-gradient(180deg, #fff 0%, #FFFBF0 100%); border-right:var(--bw) solid var(--ink); }
-.agent-head { flex:0 0 auto; display:flex; align-items:center; gap:12px; padding:14px 16px 10px;
-border-bottom:2px solid var(--line); background:linear-gradient(135deg, rgba(255,78,184,.12), rgba(78,202,255,.10)); }
-.agent-head-av { width:42px; height:42px; border-radius:14px; border:2.5px solid var(--ink); background:var(--y);
-display:grid; place-items:center; font-size:22px; box-shadow:3px 3px 0 var(--ink); flex:none; }
-.agent-head-text h2 { font-family:'Fredoka One',cursive; font-size:17px; margin:0; line-height:1.1; }
-.agent-head-text p { font-size:11px; font-weight:700; color:var(--soft); margin:2px 0 0; font-family:'Space Mono',monospace; }
+.agent { flex:0 0 420px; max-width:46vw; display:flex; flex-direction:column; min-height:0;
+background:var(--wh); border-right:2px solid var(--ink); }
+.agent-head { position:relative; flex:0 0 auto; display:flex; align-items:center; gap:12px; padding:16px 18px;
+border-bottom:2px solid var(--ink); overflow:hidden;
+background:#11121A linear-gradient(120deg, #FF4EB8, #FF7A35 38%, #2B6BFF 100%); }
+.agent-head-shader { position:absolute; inset:0; z-index:0; pointer-events:none; }
+.agent-head-shader canvas { display:block; width:100% !important; height:100% !important; }
+.agent-head::after { content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+background:linear-gradient(90deg, rgba(17,18,26,.64), rgba(17,18,26,.30)); }
+.agent-head > .agent-head-av, .agent-head > .agent-head-text { position:relative; z-index:2; }
+/* spinning gradient "AI" orb (replaces the old robot emoji) */
+.agent-head-av { width:42px; height:42px; border-radius:50%; flex:none; position:relative;
+background:conic-gradient(from 0deg, var(--pk), var(--or), var(--y), var(--mt), var(--bl), var(--el), var(--pk));
+box-shadow:inset 0 2px 6px rgba(255,255,255,.55), 0 6px 18px rgba(17,18,26,.45);
+animation:orbSpin 8s linear infinite; }
+.agent-head-av::after { content:""; position:absolute; inset:34%; border-radius:50%;
+background:rgba(255,255,255,.92); box-shadow:0 0 10px rgba(255,255,255,.6); }
+.agent-head-text h2 { font-family:'Space Grotesk', sans-serif; font-size:17px; margin:0; line-height:1.1; color:#fff; }
+.agent-head-text p { font-size:11px; font-weight:700; color:rgba(255,255,255,.74); margin:2px 0 0; font-family:'Space Mono',monospace; }
+/* "thinking" state: orb spins faster + pulses, header gets a glow */
+.agent-head.thinking .agent-head-av { animation:orbSpin 1.5s linear infinite, orbPulse 1.4s ease-out infinite; }
+.agent-head.thinking::after { background:linear-gradient(90deg, rgba(17,18,26,.5), rgba(17,18,26,.18)); }
+@keyframes orbSpin { to { transform:rotate(360deg); } }
+@keyframes orbPulse {
+0%,100% { box-shadow:inset 0 2px 6px rgba(255,255,255,.55), 0 0 0 0 rgba(78,202,255,.55), 0 6px 18px rgba(17,18,26,.45); }
+50%     { box-shadow:inset 0 2px 6px rgba(255,255,255,.55), 0 0 0 10px rgba(78,202,255,0), 0 8px 22px rgba(17,18,26,.55); }
+}
+@media (prefers-reduced-motion: reduce) { .agent-head-av { animation:none; } }
 #timeline { flex:1; overflow-y:auto; padding:14px 16px 16px; display:flex; flex-direction:column; gap:12px; scroll-behavior:smooth; }
 .tl-agent-wrap, .tl-user-wrap { display:flex; gap:8px; align-items:flex-end; max-width:100%; }
 .tl-user-wrap { justify-content:flex-end; }
-.tl-agent-av { width:28px; height:28px; border-radius:10px; border:2px solid var(--ink); background:var(--y);
-display:grid; place-items:center; font-size:14px; flex:none; box-shadow:2px 2px 0 var(--ink); }
-.tl-typing { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:var(--soft);
+/* timeline agent avatar — small spinning gradient orb */
+.tl-agent-av { width:28px; height:28px; border-radius:50%; border:2px solid var(--ink); flex:none;
+background:conic-gradient(from 0deg, var(--pk), var(--or), var(--y), var(--mt), var(--bl), var(--el), var(--pk));
+box-shadow:2px 2px 0 var(--ink); animation:orbSpin 9s linear infinite; }
+.tl-typing { display:flex; align-items:center; gap:9px; font-size:12px; font-weight:700; color:var(--soft);
 font-family:'Space Mono',monospace; padding:4px 0; }
-.tl-typing-dots { display:flex; gap:3px; }
-.tl-typing-dots i { width:6px; height:6px; border-radius:50%; background:var(--bl); animation:tl-dot 1.2s ease-in-out infinite; }
-.tl-typing-dots i:nth-child(2){animation-delay:.15s} .tl-typing-dots i:nth-child(3){animation-delay:.3s}
-@keyframes tl-dot { 0%,100%{opacity:.3;transform:translateY(0)} 50%{opacity:1;transform:translateY(-3px)} }
+/* cool "thinking" indicator: spinning orb + animated equalizer */
+.tl-think-orb { width:18px; height:18px; border-radius:50%; flex:none;
+background:conic-gradient(from 0deg, var(--pk), var(--or), var(--y), var(--mt), var(--bl), var(--el), var(--pk));
+box-shadow:0 0 10px rgba(43,107,255,.5); animation:orbSpin 1.4s linear infinite; }
+.tl-think-wave { display:flex; align-items:center; gap:3px; height:16px; }
+.tl-think-wave i { width:3px; height:6px; border-radius:2px; background:linear-gradient(var(--el), var(--pk));
+animation:thinkBar 1s ease-in-out infinite; }
+.tl-think-wave i:nth-child(2){animation-delay:.1s} .tl-think-wave i:nth-child(3){animation-delay:.2s}
+.tl-think-wave i:nth-child(4){animation-delay:.3s} .tl-think-wave i:nth-child(5){animation-delay:.4s}
+@keyframes thinkBar { 0%,100%{ height:5px; opacity:.5; } 50%{ height:15px; opacity:1; } }
+@media (prefers-reduced-motion: reduce) { .tl-agent-av, .tl-think-orb, .tl-think-wave i { animation:none; } }
 .tl-user { max-width:88%; background:linear-gradient(135deg, var(--pk), #e040a0); color:#fff; border:2.5px solid var(--ink);
 border-radius:16px 16px 4px 16px; padding:11px 15px; font-weight:800; font-size:13.5px; box-shadow:3px 3px 0 var(--ink); line-height:1.45; }
 .tl-agent { max-width:100%; background:var(--wh); border:2.5px solid var(--ink);
@@ -140,7 +175,7 @@ background:var(--cr); border:2px solid var(--ink); border-radius:100px; padding:
 border-radius:100px; padding:8px 12px; outline:none; background:var(--wh); }
 .plan-qa-custom:focus { border-color:var(--bl); box-shadow:2px 2px 0 var(--bl); }
 .plan-qa-actions { display:flex; flex-direction:column; gap:8px; margin-top:4px; }
-.plan-qa-go { font-family:'Fredoka One',cursive; font-size:15px; color:#fff; background:var(--pk); border:2.5px solid var(--ink);
+.plan-qa-go { font-family:'Space Grotesk', sans-serif; font-size:15px; color:#fff; background:var(--pk); border:2.5px solid var(--ink);
 border-radius:100px; padding:12px; cursor:pointer; box-shadow:4px 4px 0 var(--ink); }
 .plan-qa-go:hover { transform:translate(-2px,-2px); }
 .plan-qa-skip { font-family:'Space Mono',monospace; font-size:11px; font-weight:700; color:var(--soft); background:none; border:none; cursor:pointer; text-decoration:underline; padding:4px; }
@@ -164,38 +199,40 @@ border-radius:100px; padding:12px; cursor:pointer; box-shadow:4px 4px 0 var(--in
 .slop-err-overlay[hidden] { display:none !important; }
 .slop-err-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
 .slop-err-icon { width:22px; height:22px; border-radius:50%; background:var(--red); color:#fff; font-weight:900; display:grid; place-items:center; font-size:14px; flex:none; }
-.slop-err-title { font-family:'Fredoka One',cursive; font-size:14px; color:var(--red); flex:1; }
+.slop-err-title { font-family:'Space Grotesk', sans-serif; font-size:14px; color:var(--red); flex:1; }
 .slop-err-dismiss { background:transparent; border:none; font-size:20px; cursor:pointer; color:var(--ink); line-height:1; }
 .slop-err-msg { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; color:#8B0000; white-space:pre-wrap; word-break:break-word; margin:0 0 8px; max-height:120px; overflow:auto; }
-.slop-err-fix { font-family:'Fredoka One',cursive; font-size:12px; color:#fff; background:var(--pk); border:2px solid var(--ink); border-radius:100px; padding:6px 14px; cursor:pointer; box-shadow:2px 2px 0 var(--ink); }
+.slop-err-fix { font-family:'Space Grotesk', sans-serif; font-size:12px; color:#fff; background:var(--pk); border:2px solid var(--ink); border-radius:100px; padding:6px 14px; cursor:pointer; box-shadow:2px 2px 0 var(--ink); }
 
-.prompt-zone { flex:0 0 auto; padding:14px 16px 16px; border-top:var(--bw) solid var(--ink); background:var(--cr); }
+.prompt-zone { flex:0 0 auto; padding:14px 16px 16px; border-top:2px solid var(--line); background:linear-gradient(180deg, rgba(255,255,255,0), var(--wh) 42%); }
 .template-row { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:9px; }
-.template { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; color:var(--ink);
-background:var(--y); border:2px solid var(--ink); border-radius:100px; padding:5px 11px; cursor:pointer; transition:transform .12s; }
-.template:hover { transform:translate(-1px,-1px); }
-.chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:9px; }
-.chip { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; color:var(--soft);
-background:var(--wh); border:2px solid var(--ink); border-radius:100px; padding:5px 11px; cursor:pointer; transition:transform .12s,color .12s; }
-.chip:hover { transform:translate(-1px,-1px); color:var(--pk); }
+.template { font-family:var(--font-body); font-size:11.5px; font-weight:800; color:var(--ink);
+background:var(--wh); border:2px solid var(--ink); border-radius:100px; padding:6px 12px; cursor:pointer; box-shadow:var(--soft1); transition:transform .12s, background .15s, color .15s; }
+.template:hover { transform:translateY(-2px); background:var(--el); color:#fff; }
+.chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+.chip { font-family:var(--font-mono); font-size:10.5px; font-weight:700; color:var(--soft);
+background:var(--cr); border:1.5px solid var(--line); border-radius:100px; padding:6px 11px; cursor:pointer; transition:transform .12s,color .12s,border-color .12s; }
+.chip:hover { transform:translateY(-1px); color:var(--el); border-color:var(--el); }
 
-/* prompt — plain text box */
-.prompt-box { background:var(--wh); border:var(--bw) solid var(--ink); border-radius:14px; box-shadow:var(--sh); overflow:hidden; }
-.prompt-box:focus-within { box-shadow:var(--shb); }
-.prompt-toolbar { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:2.5px solid var(--ink); background:var(--cr); flex-wrap:wrap; }
-.prompt-toolbar label { font-family:'Space Mono',monospace; font-size:11px; font-weight:700; color:var(--soft); }
-.studio-model-pick { font-family:'Nunito',sans-serif; font-weight:700; font-size:12px; color:var(--ink); background:var(--wh); border:2px solid var(--ink); border-radius:100px; padding:5px 10px; outline:none; flex:1; min-width:140px; cursor:pointer; }
-.prompt-input-row { display:flex; align-items:stretch; }
-#prompt { flex:1; min-height:88px; max-height:220px; resize:vertical; font-family:'Nunito',sans-serif; font-weight:700; font-size:15px; color:var(--ink);
-background:var(--wh); border:none; padding:14px 16px; outline:none; line-height:1.45; }
-.mic-btn { flex:0 0 48px; display:grid; place-items:center; color:var(--soft); background:var(--cr);
-border:none; border-left:2.5px solid var(--ink); cursor:pointer; }
-.mic-btn:hover { color:var(--pk); }
+/* premium command bar */
+.prompt-box { background:var(--wh); border:2px solid var(--ink); border-radius:22px; box-shadow:var(--soft2); overflow:hidden; transition:box-shadow .2s, border-color .2s; }
+.prompt-box:focus-within { border-color:var(--el); box-shadow:var(--soft2), var(--ring); }
+.prompt-toolbar { display:flex; align-items:center; gap:8px; padding:10px 12px 0; flex-wrap:wrap; }
+.prompt-toolbar label { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--soft); }
+.studio-model-pick { font-family:var(--font-body); font-weight:700; font-size:12px; color:var(--ink); background:#F3F4FB; border:1.5px solid var(--line); border-radius:100px; padding:6px 12px; outline:none; flex:1; min-width:140px; cursor:pointer; }
+.studio-model-pick:hover { background:#ECEEF8; }
+.prompt-input-row { display:flex; align-items:flex-end; }
+#prompt { flex:1; min-height:74px; max-height:220px; resize:none; font-family:var(--font-body); font-weight:600; font-size:15px; color:var(--ink);
+background:var(--wh); border:none; padding:12px 6px 12px 16px; outline:none; line-height:1.5; }
+#prompt::placeholder { color:#9A9AAE; }
+.mic-btn { flex:0 0 46px; align-self:flex-end; display:grid; place-items:center; height:46px; margin:0 6px 6px 0; color:var(--soft); background:none;
+border:none; border-radius:14px; cursor:pointer; transition:color .12s, background .12s; }
+.mic-btn:hover { color:var(--el); background:#F3F4FB; }
 .mic-btn.listening { color:var(--red); animation:micp 1s ease-in-out infinite; }
-@keyframes micp { 0%,100%{box-shadow:3px 3px 0 var(--ink)} 50%{box-shadow:3px 3px 0 var(--ink),0 0 0 6px rgba(255,59,59,.25)} }
-#build-btn { width:100%; margin-top:10px; font-family:'Fredoka One',cursive; font-size:16px; color:#fff;
-background:var(--pk); border:var(--bw) solid var(--ink); border-radius:100px; padding:13px; cursor:pointer; box-shadow:var(--sh); transition:transform .12s,box-shadow .12s; }
-#build-btn:hover:not(:disabled) { transform:translate(-2px,-2px); box-shadow:var(--shb); }
+@keyframes micp { 0%,100%{box-shadow:0 0 0 0 rgba(255,59,59,0)} 50%{box-shadow:0 0 0 6px rgba(255,59,59,.25)} }
+#build-btn { width:100%; margin-top:10px; font-family:var(--font-display); font-weight:600; font-size:16px; letter-spacing:-.01em; color:#fff;
+background:var(--pk); border:2px solid var(--ink); border-radius:100px; padding:14px; cursor:pointer; box-shadow:3px 3px 0 var(--ink); transition:transform .12s,box-shadow .12s; }
+#build-btn:hover:not(:disabled) { transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--ink); }
 #build-btn:disabled { opacity:.6; cursor:wait; }
 
 /* work area */
@@ -213,17 +250,18 @@ background:var(--pk); border:var(--bw) solid var(--ink); border-radius:100px; pa
 #panel-play { padding:16px; flex-direction:column; gap:10px; }
 #play-frame-wrap { flex:1; display:flex; flex-direction:column; min-width:0; min-height:0; position:relative; }
 #play-frame { flex:1; width:100%; min-height:200px; border:var(--bw) solid var(--ink); border-radius:14px; background:var(--wh); box-shadow:var(--shb); }
-#play-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:30px; }
-#play-empty .big { font-family:'Fredoka One',cursive; font-size:26px; }
-#play-empty .hint-mono { font-family:'Space Mono',monospace; font-size:12px; color:var(--soft); line-height:1.8; max-width:430px; }
-#play-empty .ic { font-size:50px; }
+#play-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:30px;
+border:2px dashed var(--line); border-radius:18px; background:radial-gradient(60% 50% at 50% 0%, rgba(43,107,255,.06), transparent 70%); }
+#play-empty .big { font-family:var(--font-display); font-weight:700; letter-spacing:-.02em; font-size:24px; }
+#play-empty .hint-mono { font-family:var(--font-mono); font-size:12px; color:var(--soft); line-height:1.8; max-width:440px; }
+#play-empty .ic { font-size:46px; filter:drop-shadow(0 6px 0 rgba(17,18,26,.07)); }
 
 #panel-sprites { flex-direction:column; overflow-y:auto; padding:18px; gap:14px; }
 .sprite-intro { font-family:'Space Mono',monospace; font-size:12px; color:var(--soft); line-height:1.7; }
 .sprite-form { display:flex; gap:8px; flex-wrap:wrap; }
 .sprite-form input { font-family:'Nunito',sans-serif; font-weight:700; font-size:13px; color:var(--ink); background:var(--wh); border:2.5px solid var(--ink); border-radius:100px; padding:9px 16px; outline:none; }
 #sprite-name { flex:0 0 150px; } #sprite-prompt { flex:1; min-width:200px; }
-#sprite-gen { font-family:'Fredoka One',cursive; font-size:13px; color:var(--ink); background:var(--mt); border:2.5px solid var(--ink); border-radius:100px; padding:9px 18px; cursor:pointer; box-shadow:3px 3px 0 var(--ink); }
+#sprite-gen { font-family:'Space Grotesk', sans-serif; font-size:13px; color:var(--ink); background:var(--mt); border:2.5px solid var(--ink); border-radius:100px; padding:9px 18px; cursor:pointer; box-shadow:3px 3px 0 var(--ink); }
 #sprite-gen:disabled { opacity:.6; }
 .sprite-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; }
 .sprite-card { background:var(--wh); border:2.5px solid var(--ink); border-radius:14px; padding:10px; display:flex; flex-direction:column; gap:8px; box-shadow:3px 3px 0 var(--ink); }
@@ -250,11 +288,11 @@ background:var(--pk); border:var(--bw) solid var(--ink); border-radius:100px; pa
 .modal { position:fixed; inset:0; z-index:100; display:grid; place-items:center; background:rgba(26,26,46,.4); backdrop-filter:blur(6px); padding:20px; }
 .modal.hidden { display:none; }
 .modal-card { width:min(440px,92vw); background:var(--wh); border:var(--bw) solid var(--ink); border-radius:20px; box-shadow:var(--shb); padding:24px; display:flex; flex-direction:column; gap:12px; }
-.modal-card h3 { font-family:'Fredoka One',cursive; color:var(--pk); font-size:19px; }
+.modal-card h3 { font-family:'Space Grotesk', sans-serif; color:var(--pk); font-size:19px; }
 .modal-card p, .modal-note { font-size:13px; font-weight:700; color:var(--soft); line-height:1.6; }
 .friend-row { display:flex; align-items:center; gap:10px; background:var(--cr); border:2.5px solid var(--ink); border-radius:12px; padding:9px 12px; }
 .friend-row span { flex:1; font-family:'Space Mono',monospace; font-size:13px; font-weight:700; }
-.friend-row button { font-family:'Fredoka One',cursive; font-size:12px; color:var(--ink); background:var(--y); border:2.5px solid var(--ink); border-radius:100px; padding:6px 14px; cursor:pointer; }
+.friend-row button { font-family:'Space Grotesk', sans-serif; font-size:12px; color:var(--ink); background:var(--y); border:2.5px solid var(--ink); border-radius:100px; padding:6px 14px; cursor:pointer; }
 .modal-close { align-self:flex-end; background:none; border:none; color:var(--soft); font-size:18px; cursor:pointer; }
 
 #studio-toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(80px); z-index:120; font-weight:800; font-size:14px; color:#fff; background:var(--ink); border-radius:100px; padding:12px 24px; box-shadow:var(--shb); transition:transform .25s; max-width:90vw; }
@@ -272,7 +310,7 @@ border-bottom:var(--bw) solid var(--ink);
 
 .studio-mtab {
 flex:1;
-font-family:'Fredoka One',cursive;
+font-family:'Space Grotesk', sans-serif;
 font-size:13px;
 color:var(--soft);
 background:var(--cr);
@@ -466,7 +504,7 @@ flex-shrink:0;
 <body>
 
 <div class="topbar">
-<a class="back-link" href="index.html">← slop.game</a>
+<a class="back-link" href="index.html">← SLOP.game</a>
 <span class="brand">SLOP<span class="pk">STUDIO</span></span>
 <input id="game-title" value="untitled slop" maxlength="48" spellcheck="false">
 <button type="button" class="bar-btn bar-menu" id="bar-menu" aria-expanded="false" aria-controls="topbar-actions">Menu</button>
@@ -492,7 +530,8 @@ flex-shrink:0;
 <div class="main view-build" id="studio-main">
 <aside class="agent">
 <div class="agent-head">
-<div class="agent-head-av" aria-hidden="true">🤖</div>
+<div class="agent-head-shader" id="agent-shader" aria-hidden="true"></div>
+<div class="agent-head-av" aria-hidden="true"></div>
 <div class="agent-head-text">
 <h2>slop agent</h2>
 <p>GPT-5.5 · plans, asks, builds, debugs</p>
@@ -543,9 +582,9 @@ flex-shrink:0;
 <div class="panel active" id="panel-play">
 <div id="play-frame-wrap">
 <div id="play-empty">
-<div class="ic"></div>
+<div class="ic">🎮</div>
 <div class="big">your game appears here</div>
-<p class="hint-mono">describe a game below and hit Build It. the agent writes the code, crash-tests it, and boots it in Preview — then keep prompting to change anything.</p>
+<p class="hint-mono">describe a game and hit Build It. the agent plans it, writes the code, crash-tests it, and boots it right here — then keep prompting to change anything.</p>
 </div>
 <iframe id="play-frame" sandbox="allow-scripts allow-pointer-lock" title="playtest" style="display:none"></iframe>
 </div>
@@ -557,13 +596,13 @@ flex-shrink:0;
 <input id="sprite-name" placeholder="name (e.g. player)" maxlength="24" spellcheck="false">
 <input id="sprite-prompt" placeholder="describe it — e.g. tiny pixel-art knight with a red plume" maxlength="300">
 <button id="sprite-gen">Generate</button>
-<button id="sprite-upload-btn" style="font-family:'Fredoka One',cursive;font-size:13px;color:var(--ink);background:var(--bl);border:2.5px solid var(--ink);border-radius:100px;padding:9px 16px;cursor:pointer;box-shadow:3px 3px 0 var(--ink)">Upload</button>
+<button id="sprite-upload-btn" style="font-family:'Space Grotesk', sans-serif;font-size:13px;color:var(--ink);background:var(--bl);border:2.5px solid var(--ink);border-radius:100px;padding:9px 16px;cursor:pointer;box-shadow:3px 3px 0 var(--ink)">Upload</button>
 <input type="file" id="sprite-file" accept="image/*" multiple hidden>
 </div>
 <div class="sprite-select-row" id="sprite-select-row" style="display:none;align-items:center;gap:8px;flex-wrap:wrap">
 <span style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--soft)">use a sprite:</span>
 <select id="sprite-select" style="font-family:'Space Mono',monospace;font-weight:700;font-size:12px;border:2.5px solid var(--ink);border-radius:100px;padding:7px 12px;background:var(--wh);outline:none"></select>
-<button id="sprite-use" style="font-family:'Fredoka One',cursive;font-size:12px;color:#fff;background:var(--pk);border:2.5px solid var(--ink);border-radius:100px;padding:7px 14px;cursor:pointer">→ add to prompt</button>
+<button id="sprite-use" style="font-family:'Space Grotesk', sans-serif;font-size:12px;color:#fff;background:var(--pk);border:2.5px solid var(--ink);border-radius:100px;padding:7px 14px;cursor:pointer">→ add to prompt</button>
 </div>
 <div class="sprite-grid" id="sprite-grid"></div>
 </div>
@@ -607,6 +646,9 @@ flex-shrink:0;
 
 <div id="studio-toast"></div>
 
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
 <script type="module" src="js/studio.js"></script>
 </body>
 </html>

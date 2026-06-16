@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RUN 3 — run3.slop.game</title>
-<meta name="description" content="a gravity-bending space tunnel runner. race a friend side by side, run on the walls, dodge the holes. live-remixable on slop.game.">
+<title>RUN 3 — run3.SLOP.game</title>
+<meta name="description" content="a gravity-bending space tunnel runner. race a friend side by side, run on the walls, dodge the holes. live-remixable on SLOP.game.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23FF4EB8%22/><text x=%2250%22 y=%2258%22 text-anchor=%22middle%22 font-family=%22system-ui,sans-serif%22 font-size=%2248%22 font-weight=%22700%22 fill=%22%23FFFFFF%22>S</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -138,7 +138,7 @@ body.embed .overlay { display: none !important; }
 </style>
 </head>
 <body>
-<a class="back-link" href="../../index.html">← slop.game</a>
+<a class="back-link" href="/index.html#games" target="_top">← SLOP.game</a>
 
 <div id="shell">
 <div id="stage-wrap">
@@ -226,6 +226,7 @@ hit a side and gravity flips — run along the walls to dodge the holes
 .run-lb .lb-foot { text-align: center; margin-top: 8px; font-size: 12px; color: #9aa; font-weight: 700; }
 .run-lb .lb-foot a { color: #FF4EB8; font-weight: 900; }
 </style>
+<script src="/games/play-embed.js"></script>
 <script type="module" src="game.js"></script>
 <script type="module">
 const embed = new URLSearchParams(location.search).has('embed');

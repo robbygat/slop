@@ -1,5 +1,5 @@
 /* ============================================================================
-slop.game — iPhone section with a live Run 3 embed + touch controls.
+SLOP.game — iPhone section with a live Run 3 embed + touch controls.
 ========================================================================== */
 
 .appstore-sec {
@@ -80,7 +80,7 @@ flex-wrap: nowrap;
 }
 
 .app-play-full {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 16px;
 color: var(--ink);
 background: var(--y);
@@ -112,7 +112,7 @@ width: 195px;
 .app-badge .ab-icon { flex: 0 0 26px; width: 26px; height: 26px; }
 .app-badge .ab-text { display: flex; flex-direction: column; line-height: 1.05; text-align: left; min-width: 0; }
 .app-badge .ab-top { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 11px; opacity: .85; white-space: nowrap; }
-.app-badge .ab-bot { font-family: 'Fredoka One', cursive; font-size: 20px; white-space: nowrap; }
+.app-badge .ab-bot { font-family: 'Space Grotesk', sans-serif; font-size: 20px; white-space: nowrap; }
 .app-badge-google .ab-bot { font-size: 17px; letter-spacing: -0.02em; }
 
 /* ---------------------------------------------------------------- the phone */
@@ -226,7 +226,7 @@ transition: opacity .35s ease;
 .ds-idle.hide { opacity: 0; pointer-events: none; }
 
 .ds-idle-title {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: clamp(18px, 5vw, 24px);
 color: #3dffb0;
 letter-spacing: 2px;
@@ -323,7 +323,7 @@ box-shadow: 0 3px 0 rgba(0, 0, 0, .3), inset 0 2px 1px rgba(255, 255, 255, .7);
 .sh.r { border-radius: 0 0 0 14px; border-right: none; margin-right: -2px; }
 
 .delta-word {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 13px;
 letter-spacing: 3px;
 color: var(--pk);
@@ -417,7 +417,7 @@ display: grid;
 place-items: center;
 cursor: pointer;
 user-select: none;
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 17px;
 color: #fff;
 border: 2.5px solid var(--btn-edge);

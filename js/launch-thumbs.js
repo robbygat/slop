@@ -24,7 +24,7 @@ run3: `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/20
 slopkart: `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
 <defs>
 <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#12082A"/><stop offset="100%" stop-color="#FF4EB8"/></linearGradient>
-<linearGradient id="track" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4ECAFF"/><stop offset="50%" stop-color="#B94EFF"/><stop offset="100%" stop-color="#FFE135"/></linearGradient>
+<linearGradient id="track" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4ECAFF"/><stop offset="50%" stop-color="#2B6BFF"/><stop offset="100%" stop-color="#FFE135"/></linearGradient>
 </defs>
 <rect width="640" height="360" fill="url(#sky)"/>
 <ellipse cx="320" cy="380" rx="420" ry="120" fill="#1A1A2E" opacity=".55"/>
@@ -60,7 +60,7 @@ slopkart: `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.or
 <rect width="640" height="360" fill="#120A18"/>
 <g opacity=".9">
 <rect x="120" y="60" width="80" height="80" fill="#2A2038" stroke="#4A3A58" stroke-width="2"/>
-<rect x="200" y="60" width="80" height="80" fill="#3D2B55" stroke="#B94EFF" stroke-width="3"/>
+<rect x="200" y="60" width="80" height="80" fill="#3D2B55" stroke="#2B6BFF" stroke-width="3"/>
 <rect x="280" y="60" width="80" height="80" fill="#2A2038" stroke="#4A3A58" stroke-width="2"/>
 <rect x="360" y="60" width="80" height="80" fill="#2A2038" stroke="#4A3A58" stroke-width="2"/>
 <rect x="120" y="140" width="80" height="80" fill="#2A2038" stroke="#4A3A58" stroke-width="2"/>
@@ -74,7 +74,7 @@ slopkart: `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.or
 </g>
 <circle cx="240" cy="180" r="22" fill="#4ECAFF" stroke="#1A1A2E" stroke-width="3"/>
 <circle cx="400" cy="100" r="14" fill="#FF3B3B" stroke="#1A1A2E" stroke-width="2"/>
-<text x="40" y="52" font-family="Arial,sans-serif" font-size="36" font-weight="900" fill="#B94EFF">DUNGEON PANIC</text>
+<text x="40" y="52" font-family="Arial,sans-serif" font-size="36" font-weight="900" fill="#2B6BFF">DUNGEON PANIC</text>
 <text x="40" y="320" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#FFE135">roguelike co-op</text>
 </svg>`)}`,
 

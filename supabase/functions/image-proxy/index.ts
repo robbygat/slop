@@ -1,4 +1,4 @@
-// image-proxy — metered sprite generation (xAI grok-imagine) for slop.game.
+// image-proxy — metered sprite generation (xAI grok-imagine) for SLOP.game.
 // Verify JWT → ensure >= IMAGE_CREDITS → generate → spend a flat IMAGE_CREDITS.
 // Secret: XAI_API_KEY.
 

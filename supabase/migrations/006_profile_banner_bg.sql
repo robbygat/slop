@@ -1,4 +1,4 @@
--- slop.game — profile banner image + page background color.
+-- SLOP.game — profile banner image + page background color.
 --
 -- Apply after 001–005: paste into the Supabase SQL Editor and Run.
 -- Idempotent / safe to re-run.

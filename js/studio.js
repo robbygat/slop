@@ -17,6 +17,14 @@ import { makeZip, dataUrlToBytes, downloadBlob } from './zip.js';
 
 const $ = (id) => document.getElementById(id);
 let collab = null;
+let agentShader = null; // live shader behind the agent header (loaded lazily)
+
+// Drive the agent's "thinking" visuals: the header shader speeds up + brightens,
+// and the orb spins faster / pulses while the agent works.
+function setAgentThinking(on) {
+document.querySelector('.agent-head')?.classList.toggle('thinking', on);
+agentShader?.setThinking(on);
+}
 
 // ---------------------------------------------------------------- state
 const game = {
@@ -152,7 +160,7 @@ return s;
 // ---------------------------------------------------------------- timeline UI
 function tlAgent(text, cls = '') {
 const wrap = document.createElement('div'); wrap.className = 'tl-agent-wrap';
-wrap.innerHTML = `<div class="tl-agent-av" aria-hidden="true">🤖</div>`;
+wrap.innerHTML = `<div class="tl-agent-av" aria-hidden="true"></div>`;
 const el = document.createElement('div'); el.className = `tl-agent ${cls}`; el.textContent = text;
 wrap.appendChild(el);
 $('timeline').appendChild(wrap);
@@ -171,7 +179,7 @@ let el = document.getElementById('tl-typing');
 if (!on) { el?.remove(); return; }
 if (el) return;
 el = document.createElement('div'); el.id = 'tl-typing'; el.className = 'tl-typing';
-el.innerHTML = '<span class="tl-agent-av">🤖</span><span class="tl-typing-dots"><i></i><i></i><i></i></span><span>thinking…</span>';
+el.innerHTML = '<span class="tl-think-orb" aria-hidden="true"></span><span class="tl-think-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span>thinking…</span>';
 $('timeline').appendChild(el);
 el.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
@@ -199,7 +207,7 @@ function multiplayerRules() {
 return SLOP_MP_RULES;
 }
 function systemPrompt(isEdit) {
-return `You are the build agent inside Slop Studio on slop.game — you turn plain-english prompts into complete, genuinely playable browser games. Default model reasoning: plan carefully, then output complete working code with no placeholders.
+return `You are the build agent inside Slop Studio on SLOP.game — you turn plain-english prompts into complete, genuinely playable browser games. Default model reasoning: plan carefully, then output complete working code with no placeholders.
 
 ${CREATE_RULES}
 
@@ -335,7 +343,7 @@ options: Array.isArray(q.options) ? q.options.slice(0, 5).map((o) => String(o).s
 
 function discussSystemPrompt() {
 const mp = game.multiplayer ? 'Multiplayer is ON — ask about player count and co-op vs competitive.' : 'Include one question about single-player vs online multiplayer.';
-return `You are the creative director of Slop Studio on slop.game. The player described a game idea. React warmly, then ask 3-4 planning questions so the build nails their vision. ${mp}
+return `You are the creative director of Slop Studio on SLOP.game. The player described a game idea. React warmly, then ask 3-4 planning questions so the build nails their vision. ${mp}
 
 Respond with ONLY JSON (no markdown):
 {"intro":"1-2 sentence enthusiastic reaction","questions":[{"id":"style","text":"What should it feel like?","options":["arcade & juicy","chill & minimal","hardcore skill"],"hint":"optional"}]}
@@ -440,7 +448,7 @@ function modelLabel(id) { const m = MODEL_CHOICES.find((x) => x.id === id); retu
 // -------- prompts (planner + debugger; build/edit reuse systemPrompt())
 function planSystemPrompt() {
 const mp = game.multiplayer ? ' This game MUST include online multiplayer (SlopNet host/join rooms, host-authoritative sync).' : '';
-return `You are the lead designer of Slop Studio on slop.game. Turn the player's request into a BUILD PLAN for ONE polished browser game (HTML5 canvas/JS, sandboxed iframe).${mp} Think deep: core loop, juice, progression, file layout for a substantial build (up to 50 KB published).
+return `You are the lead designer of Slop Studio on SLOP.game. Turn the player's request into a BUILD PLAN for ONE polished browser game (HTML5 canvas/JS, sandboxed iframe).${mp} Think deep: core loop, juice, progression, file layout for a substantial build (up to 50 KB published).
 
 Respond with ONLY a single JSON object — no prose, no markdown, no code fences:
 {"name":"Game Name","desc":"one punchy lowercase line, max 90 chars","pitch":"one sentence on why it's fun, max 140 chars","files":[{"path":"index.html","role":"what it holds"},{"path":"js/game.js","role":"main logic"}],"sprites":[{"name":"player","prompt":"detailed art prompt, single centered subject, plain white background, no text"}],"mechanics":["core mechanic","progression","juice/feedback","win/lose","multiplayer flow if applicable"]}
@@ -823,7 +831,7 @@ const slug = (game.name || 'slop-game').toLowerCase().replace(/[^a-z0-9]+/g, '-'
 const files = [
 { name: `${slug}/index.html`, data: finalHTML() }, // standalone, double-click to play
 { name: `${slug}/src/index.html`, data: game.srcHtml }, // raw entry
-{ name: `${slug}/README.txt`, data: `${game.name}\n\n${game.desc || ''}\n\nprompt: ${game.prompt}\n\nopen index.html in any browser to play. raw source is in src/.\nmade with slop studio — slop.game` },
+{ name: `${slug}/README.txt`, data: `${game.name}\n\n${game.desc || ''}\n\nprompt: ${game.prompt}\n\nopen index.html in any browser to play. raw source is in src/.\nmade with slop studio — SLOP.game` },
 ];
 for (const [p, c] of Object.entries(game.files)) files.push({ name: `${slug}/src/${p}`, data: c });
 for (const [n, url] of Object.entries(game.sprites)) { try { files.push({ name: `${slug}/sprites/${n}.png`, data: dataUrlToBytes(url) }); } catch { /* */ } }
@@ -887,11 +895,11 @@ await runHostPrompt(ask, true);
 }
 async function runHostPrompt(ask, fromInput) {
 if (busy) { toast('still building the last one…'); return; }
-busy = true; $('build-btn').disabled = true; $('build-btn').textContent = game.srcHtml ? 'Editing…' : 'Cooking…';
+busy = true; setAgentThinking(true); $('build-btn').disabled = true; $('build-btn').textContent = game.srcHtml ? 'Editing…' : 'Cooking…';
 if (fromInput) { tlUser(ask); $('prompt').value = ''; }
 try { await runPrompt(ask); }
 catch (err) { tlAgent(`! ${err.message}`, 'bad'); console.error(err); }
-finally { busy = false; setTimeout(() => { $('build-btn').disabled = false; $('build-btn').textContent = collab?.isClient ? 'Post to board' : (game.srcHtml ? 'Apply Edit' : 'Build It'); }, 700); }
+finally { busy = false; setAgentThinking(false); setTimeout(() => { $('build-btn').disabled = false; $('build-btn').textContent = collab?.isClient ? 'Post to board' : (game.srcHtml ? 'Apply Edit' : 'Build It'); }, 700); }
 }
 
 function initTabs() {
@@ -968,7 +976,7 @@ const res = await fetch('/api/config');
 if (res.ok) proxy = !!(await res.json())?.ai;
 } catch { /* static hosting */ }
 if (!hasKey && !proxy) {
-tlAgent('on slop.game mobile you need your own xAI key — tap Menu → Settings, paste your key, save, then build.', 'bad');
+tlAgent('on SLOP.game mobile you need your own xAI key — tap Menu → Settings, paste your key, save, then build.', 'bad');
 }
 }
 
@@ -1019,6 +1027,13 @@ toast('settings saved');
 // ---------------------------------------------------------------- boot
 async function boot() {
 initTabs(); initSettings(); initMobileStudio(); renderSprites(); renderFiles();
+
+// live shader behind the agent header — dynamically imported so a CDN/WebGL
+// failure only drops the visual (CSS gradient fallback) instead of the studio.
+import('./hero-shader.js').then(({ mountShader }) => {
+const el = $('agent-shader');
+if (el) agentShader = mountShader(el, { interactionEl: el });
+}).catch(() => {});
 const wrap = $('play-frame-wrap');
 debugPanel = createDebugPanel(wrap);
 errOverlay = mountErrorOverlay(wrap, {

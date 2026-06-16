@@ -1,4 +1,4 @@
-# slop.game × Supabase
+# SLOP.game × Supabase
 
 The live site (https://slop.game) is a **static GitHub Pages** build with no Node
 server. Accounts and published games are powered entirely by Supabase, so signup,

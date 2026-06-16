@@ -1,4 +1,4 @@
-// Shared CORS + JSON helpers for slop.game edge functions.
+// Shared CORS + JSON helpers for SLOP.game edge functions.
 // Origin '*' is safe here: auth is a Bearer access token (not cookies), so a
 // hostile origin can't ride the user's session.
 export const corsHeaders = {

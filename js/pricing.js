@@ -1,4 +1,4 @@
-// Pricing + Pro membership UI for slop.game.
+// Pricing + Pro membership UI for SLOP.game.
 //
 // Injects a nav "Go Pro" pill (with the launch discount) + a live credit chip, and
 // a focused pricing modal: Stripe checkout for Pro, credit top-ups, the referral
@@ -71,9 +71,9 @@ function renderNav() {
   const creditLabel = billing?.unlimited ? '∞' : billing?.credits;
   const chip = (u && billing) ? `<button class="nav-credits" id="nav-credits" title="${billing.unlimited ? 'moderator — unlimited credits' : 'your slop credits — click for more'}">⚡ ${creditLabel}</button>` : '';
   if (billing?.is_pro) {
-    slot.innerHTML = `${chip}<span class="nav-pro-badge" id="nav-pro-badge" title="${billing.unlimited ? 'moderator' : 'Pro member — thank you!'}">${billing.unlimited ? 'ADMIN' : 'PRO'}</span>`;
+    slot.innerHTML = `${chip}<span class="nav-pro-badge" id="nav-pro-badge" title="${billing.unlimited ? 'moderator' : 'Pro member — thank you!'}">✦ ${billing.unlimited ? 'ADMIN' : 'PRO'}</span>`;
   } else {
-    slot.innerHTML = `${chip}<button class="nav-pro" id="nav-pro"><s>$8</s> Go Pro · $5/mo <span class="nav-pro-tag">launch</span></button>`;
+    slot.innerHTML = `${chip}<button class="nav-pro" id="nav-pro" title="SLOP Pro — frontier models, no ads, more credits"><span class="np-spark" aria-hidden="true">✦</span> Go Pro</button>`;
   }
   slot.querySelector('#nav-pro')?.addEventListener('click', openPricing);
   slot.querySelector('#nav-credits')?.addEventListener('click', openPricing);

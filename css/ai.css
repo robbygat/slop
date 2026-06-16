@@ -33,7 +33,7 @@ box-shadow: var(--sh);
 .waitlist-form input:focus { border-color: var(--pk); }
 
 .waitlist-form button {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 16px;
 color: var(--ink);
 background: var(--mt);
@@ -62,7 +62,7 @@ align-items: center;
 justify-content: center;
 width: 52px;
 height: 52px;
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 22px;
 color: var(--wh);
 background: var(--pk);
@@ -109,13 +109,13 @@ pointer-events: none;
 
 .gbadge.hot {
 background: var(--y);
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 11px;
 z-index: 3;
 }
 
 .gthumb-fallback {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 26px;
 color: var(--wh);
 text-shadow: 3px 3px 0 var(--ink);
@@ -129,7 +129,7 @@ z-index: 1;
 .nav-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 
 .nav-signin {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 14px;
 color: var(--ink);
 background: var(--wh);
@@ -170,7 +170,7 @@ font-size: 12px;
 color: var(--y);
 flex: none;
 }
-.nav-avatar-fallback { font-family: 'Fredoka One', cursive; }
+.nav-avatar-fallback { font-family: 'Space Grotesk', sans-serif; }
 
 /* sign out lives in the nav drawer / menu — not the top bar */
 .nav-signout { display: none !important; }
@@ -217,7 +217,7 @@ border-radius: 100px;
 cursor: pointer;
 }
 
-.auth-title { font-family: 'Fredoka One', cursive; font-size: 24px; }
+.auth-title { font-family: 'Space Grotesk', sans-serif; font-size: 24px; }
 
 .auth-sub {
 margin: 8px 0 18px;
@@ -261,7 +261,7 @@ outline: none;
 #auth-form input:focus { border-color: var(--bl); }
 
 .auth-submit {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 16px;
 color: var(--wh);
 background: var(--pk);
@@ -390,7 +390,7 @@ letter-spacing: .4px;
 
 .remix-quote {
 margin: 14px 0;
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 18px;
 line-height: 1.4;
 color: var(--ink);
@@ -428,7 +428,7 @@ margin-top: 34px;
 }
 
 .remix-cta {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 17px;
 border: var(--bw) solid var(--ink);
 border-radius: 100px;
@@ -493,7 +493,7 @@ min-width: 0;
 .post-form input:focus { border-color: var(--pk); }
 
 .post-submit {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 14px;
 color: var(--wh);
 background: var(--pk);
@@ -569,7 +569,7 @@ box-shadow: var(--shb);
 padding: 26px 24px;
 }
 
-.community-aside h3 { font-family: 'Fredoka One', cursive; font-size: 20px; color: var(--y); }
+.community-aside h3 { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: var(--y); }
 
 .community-aside p {
 margin-top: 12px;
@@ -582,7 +582,7 @@ color: rgba(255,255,255,0.85);
 .aside-cta {
 margin-top: 18px;
 width: 100%;
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 16px;
 color: var(--ink);
 background: var(--mt);
@@ -640,7 +640,7 @@ border-bottom: var(--bw) solid var(--ink);
 }
 
 .cook-title {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 19px;
 color: var(--ink);
 }
@@ -717,7 +717,7 @@ color: var(--soft);
 
 .cook-play,
 .cook-stay {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 15px;
 padding: 10px 22px;
 border: var(--bw) solid var(--ink);

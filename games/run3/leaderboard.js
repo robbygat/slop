@@ -1,5 +1,5 @@
 // Run Infinite — global leaderboard, backed by Supabase and tied to real
-// accounts. Same-origin with slop.game, so the persisted auth session is shared:
+// accounts. Same-origin with SLOP.game, so the persisted auth session is shared:
 // a signed-in player's run is submitted as a verified score (RLS enforces it's
 // attributed to their account). Renders into every .run-lb panel on the page.
 
@@ -33,7 +33,7 @@ async function render() {
   }
   const foot = me?.username
     ? ''
-    : `<div class="lb-foot"><a href="/" target="_top">sign in on slop.game</a> to put your runs on the board</div>`;
+    : `<div class="lb-foot"><a href="/" target="_top">sign in on SLOP.game</a> to put your runs on the board</div>`;
 
   slots.forEach((s) => { s.innerHTML = `<div class="lb-head">🏆 Leaderboard</div>${body}${foot}`; });
 }

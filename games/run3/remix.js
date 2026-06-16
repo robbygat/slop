@@ -1,4 +1,4 @@
-// RUN 3 — live remix via the shared slop.game dock. Sits beside the game, reads
+// RUN 3 — live remix via the shared SLOP.game dock. Sits beside the game, reads
 // the real source, applies Grok-written patches to the running game with no
 // reload. In a race the host's mods broadcast to the room (see game.js shareMod).
 

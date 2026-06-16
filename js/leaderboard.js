@@ -1,4 +1,4 @@
-// Universal scoreboard for AI-cooked and community games on slop.game.
+// Universal scoreboard for AI-cooked and community games on SLOP.game.
 // Games submit scores by dispatching: window.dispatchEvent(new CustomEvent('slop:score', { detail: { score: N } }))
 
 import { api, escapeHTML } from './api.js';
@@ -28,7 +28,7 @@ function renderPanel(el, rows, me, unit) {
   }
   const foot = me?.username
     ? ''
-    : `<div class="lb-foot"><a href="/">sign in on slop.game</a> to save your score</div>`;
+    : `<div class="lb-foot"><a href="/">sign in on SLOP.game</a> to save your score</div>`;
   el.innerHTML = `<div class="lb-head">🏆 Leaderboard</div>${body}${foot}`;
 }
 

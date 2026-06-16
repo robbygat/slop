@@ -1,4 +1,4 @@
--- slop.game — moderators (admins) get unlimited credits + Pro model access.
+-- SLOP.game — moderators (admins) get unlimited credits + Pro model access.
 -- Re-run safe (CREATE OR REPLACE). Apply in Supabase SQL Editor after 007.
 
 -- ----------------------------------------------------------------- refresh_allowance

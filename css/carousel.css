@@ -48,8 +48,8 @@ display: flex;
 align-items: center;
 justify-content: space-between;
 gap: 16px;
-padding-top: 28px;
-padding-bottom: 18px;
+padding-top: 18px;
+padding-bottom: 12px;
 flex-wrap: wrap;
 }
 
@@ -136,7 +136,7 @@ border-radius: 50%;
 background: var(--wh);
 border: 2.5px solid #000;
 box-shadow: 3px 3px 0 #000;
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 20px;
 line-height: 1;
 cursor: pointer;
@@ -170,7 +170,7 @@ transition: width 0.1s linear, background 0.45s ease;
 display: flex;
 justify-content: center;
 gap: 10px;
-padding: 18px 32px 28px;
+padding: 12px 32px 18px;
 background: var(--fc-chrome-bg);
 transition: background 0.45s ease;
 }
@@ -207,14 +207,183 @@ box-shadow: 3px 3px 0 #000;
 .feature-carousel .fc-slide .multiplayer-sec,
 .feature-carousel .fc-slide .remix-sec {
 border: none;
-min-height: clamp(520px, 72vh, 820px);
+min-height: clamp(220px, 32vh, 340px);
 transition: background 0.45s ease;
+}
+
+.feature-carousel .fc-slide.fc-compact .how-sec,
+.feature-carousel .fc-slide.fc-compact .studio-sec,
+.feature-carousel .fc-slide.fc-compact .publish-sec,
+.feature-carousel .fc-slide.fc-compact .multiplayer-sec,
+.feature-carousel .fc-slide.fc-compact .remix-sec {
+min-height: clamp(200px, 28vh, 300px);
 }
 
 .feature-carousel .fc-slide .wrap,
 .feature-carousel .fc-slide .fc-panel {
-padding-top: clamp(36px, 5vw, 56px);
-padding-bottom: clamp(40px, 6vw, 72px);
+padding-top: clamp(20px, 3vw, 32px);
+padding-bottom: clamp(24px, 3.5vw, 36px);
+}
+
+.feature-carousel .fc-slide.fc-compact .fc-panel {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: clamp(14px, 2vw, 20px);
+text-align: center;
+max-width: 920px;
+margin: 0 auto;
+padding-top: clamp(16px, 2.5vw, 24px);
+padding-bottom: clamp(20px, 3vw, 28px);
+}
+
+/* ---- compact slide shell (shared by all five tabs) ---- */
+
+.feature-carousel .fc-compact-head {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 6px;
+margin: 0;
+}
+
+.feature-carousel .fc-compact-title {
+font-family: 'Space Grotesk', sans-serif;
+font-weight: 400;
+font-size: clamp(22px, 2.8vw, 30px);
+line-height: 1.12;
+letter-spacing: -0.02em;
+margin: 0;
+color: var(--slide-title, var(--ink));
+}
+
+.feature-carousel .fc-compact-lead {
+font-family: 'Nunito', sans-serif;
+font-size: clamp(13px, 1.2vw, 15px);
+font-weight: 600;
+line-height: 1.5;
+margin: 0;
+max-width: 52ch;
+color: var(--slide-body, var(--soft));
+}
+
+.feature-carousel .fc-steps {
+display: flex;
+flex-wrap: wrap;
+justify-content: center;
+gap: 8px;
+list-style: none;
+margin: 0;
+padding: 0;
+}
+
+.feature-carousel .fc-steps li {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+font-family: 'Space Grotesk', sans-serif;
+font-size: 13px;
+font-weight: 700;
+color: var(--ink);
+background: rgba(255, 255, 255, 0.96);
+border: 2px solid var(--ink);
+border-radius: 999px;
+padding: 6px 12px 6px 8px;
+box-shadow: 2px 2px 0 var(--ink);
+}
+
+.feature-carousel .fc-step-n {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+width: 22px;
+height: 22px;
+border-radius: 50%;
+font-size: 11px;
+font-weight: 800;
+background: var(--ink);
+color: var(--y);
+flex-shrink: 0;
+}
+
+.feature-carousel .fc-facts {
+display: flex;
+flex-wrap: wrap;
+justify-content: center;
+gap: 8px;
+list-style: none;
+margin: 0;
+padding: 0;
+max-width: 640px;
+}
+
+.feature-carousel .fc-facts li {
+font-family: 'Nunito', sans-serif;
+font-size: 13px;
+font-weight: 700;
+line-height: 1.35;
+color: var(--slide-fact-fg, var(--ink));
+background: var(--slide-fact-bg, rgba(255, 255, 255, 0.92));
+border: 2px solid var(--ink);
+border-radius: 10px;
+padding: 8px 12px;
+box-shadow: 2px 2px 0 var(--ink);
+}
+
+.feature-carousel .fc-compact-upload {
+width: 100%;
+max-width: 420px;
+}
+
+.feature-carousel .fc-compact-upload .upload-zone {
+padding: 18px 16px;
+min-height: 0;
+}
+
+.feature-carousel .fc-compact-upload .upload-zone .uz-text {
+font-size: 11px;
+line-height: 1.4;
+}
+
+.feature-carousel .fc-remix-row {
+display: flex;
+flex-wrap: wrap;
+justify-content: center;
+gap: 10px;
+width: 100%;
+max-width: 640px;
+}
+
+.feature-carousel .fc-remix-chip {
+flex: 1 1 220px;
+max-width: 300px;
+text-align: left;
+background: rgba(255, 255, 255, 0.96);
+border: 2px solid var(--ink);
+border-radius: 12px;
+padding: 10px 12px;
+box-shadow: 2px 2px 0 var(--ink);
+}
+
+.feature-carousel .fc-remix-label {
+display: block;
+font-family: 'Space Mono', monospace;
+font-size: 10px;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.04em;
+color: var(--soft);
+margin-bottom: 4px;
+}
+
+.feature-carousel .fc-remix-chip p {
+font-family: 'Space Grotesk', sans-serif;
+font-size: 14px;
+font-weight: 600;
+line-height: 1.35;
+margin: 0;
+color: var(--ink);
 }
 
 .feature-carousel .sec-head.fc-panel-head {
@@ -235,7 +404,7 @@ margin: 0 auto;
 .feature-carousel .fc-slide .fc-title,
 .feature-carousel .fc-slide .studio-copy h2.fc-title,
 .feature-carousel .fc-slide .remix-banner h2.fc-title {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-weight: 400;
 font-size: clamp(28px, 3.4vw, 40px);
 line-height: 1.1;
@@ -270,15 +439,16 @@ margin-right: auto;
 .feature-carousel .fc-slide .sec-tag,
 .feature-carousel .fc-slide .fc-tag,
 .feature-carousel .fc-slide .studio-kicker,
-.feature-carousel .fc-slide .remix-kicker {
+.feature-carousel .fc-slide .remix-kicker,
+.feature-carousel .fc-compact-head .fc-tag {
 display: inline-block;
 font-family: 'Space Mono', monospace;
 font-weight: 700;
-font-size: 12px;
+font-size: 11px;
 line-height: 1.2;
 border: 2.5px solid var(--ink);
 border-radius: 100px;
-padding: 5px 14px;
+padding: 4px 12px;
 margin-bottom: 0;
 box-shadow: 2px 2px 0 var(--ink);
 background: var(--slide-tag-bg, var(--wh));
@@ -302,7 +472,7 @@ text-align: left;
 .feature-carousel .how-card h3,
 .feature-carousel .pub-card h3,
 .feature-carousel .mp-card h3 {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-weight: 400;
 font-size: clamp(17px, 1.6vw, 21px);
 color: var(--ink);
@@ -359,19 +529,26 @@ background: var(--ink);
 color: var(--y);
 }
 
-/* ---- 2 · STUDIO — pink/purple: create / build ---- */
+/* ---- 2 · STUDIO — pink/electric-blue: create / build ---- */
 
 .feature-carousel .fc-slide[data-theme="studio"] {
 --slide-title: #fff;
 --slide-body: rgba(255, 255, 255, 0.9);
 --slide-tag-bg: var(--y);
 --slide-tag-fg: var(--ink);
+--slide-fact-fg: #fff;
+--slide-fact-bg: rgba(0, 0, 0, 0.22);
+}
+
+.feature-carousel .fc-slide[data-theme="studio"] .fc-facts li {
+border-color: rgba(255, 255, 255, 0.35);
+box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
 }
 
 .feature-carousel .fc-slide[data-theme="studio"] .studio-sec {
 background:
-radial-gradient(70% 60% at 90% 10%, rgba(185, 78, 255, 0.45), transparent 55%),
-linear-gradient(145deg, var(--pk) 0%, #e846a8 40%, var(--pu) 100%);
+radial-gradient(70% 60% at 90% 10%, rgba(43,107,255, 0.45), transparent 55%),
+linear-gradient(145deg, var(--pk) 0%, #e846a8 40%, var(--el) 100%);
 }
 
 .feature-carousel .fc-slide[data-theme="studio"] .studio-banner {
@@ -387,7 +564,7 @@ padding: 4px 0;
 }
 
 .feature-carousel .fc-slide[data-theme="studio"] .studio-cta {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 color: var(--ink);
 background: var(--y);
 }
@@ -478,14 +655,14 @@ background: rgba(255, 255, 255, 0.96);
 }
 
 .feature-carousel .fc-slide[data-theme="play"] .mp-num {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 20px;
 background: var(--ink);
 color: var(--mt);
 }
 
 .feature-carousel .fc-slide[data-theme="play"] .mp-cta {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 color: #fff;
 background: var(--pk);
 }
@@ -531,7 +708,7 @@ letter-spacing: 0.04em;
 }
 
 .feature-carousel .fc-slide[data-theme="remix"] .remix-quote {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: clamp(16px, 1.5vw, 18px);
 color: var(--ink);
 }
@@ -555,12 +732,13 @@ padding: 12px 16px;
 }
 
 .feature-carousel .fc-slide[data-theme="remix"] .remix-cta {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 }
 
 .feature-carousel .fc-slide[data-theme="ship"] .pub-grid {
 display: grid;
-grid-template-columns: 1fr 1fr;
+grid-template-columns: 1fr;
+max-width: 36rem;
 gap: clamp(16px, 2vw, 24px);
 }
 

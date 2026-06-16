@@ -1,4 +1,4 @@
--- slop.game — profile cover theme, accent color, and tagline.
+-- SLOP.game — profile cover theme, accent color, and tagline.
 --
 -- Apply after 001–004: paste into the Supabase SQL Editor and Run.
 -- Idempotent / safe to re-run.

@@ -37,7 +37,7 @@ transition: transform .15s ease, box-shadow .15s ease;
 .mp-card:hover { transform: translate(-3px, -3px); box-shadow: var(--shb); }
 
 .mp-num {
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 22px;
 color: var(--wh);
 background: var(--bl);
@@ -63,7 +63,7 @@ line-height: 1.55;
 .mp-cta {
 justify-self: center;
 margin-top: 8px;
-font-family: 'Fredoka One', cursive;
+font-family: 'Space Grotesk', sans-serif;
 font-size: 17px;
 color: var(--wh);
 background: var(--pk);

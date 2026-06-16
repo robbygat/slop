@@ -1,4 +1,4 @@
-# slop.game
+# SLOP.game
 
 **Prompt. Publish. Play.**
 
@@ -73,7 +73,7 @@ this server. Scale the AI rate limits in `server.js` to taste.
   crash-tested, thumbnailed, saved to your grid. The hero sits on a slow,
   animated **watercolor wash** of the brand palette (ink-in-water, CSS-only).
 - **Branding** — the nav wordmark is just **slop** (the heavy brand word), while
-  "slop.game" still appears throughout the copy. The 🍲 pot mascot is used large
+  "SLOP.game" still appears throughout the copy. The 🍲 pot mascot is used large
   in the **slop games** and **how-it-works** section headers.
 - **slop games** (homepage games section, placed immediately after the hero) — a
   Newgrounds-style dense grid mixing launch games, community publishes, and your

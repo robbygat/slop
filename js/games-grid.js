@@ -55,9 +55,10 @@ name: 'Run Infinite',
 thumb: LAUNCH_THUMBS.run3,
 previewVideo: 'assets/run3-preview.mp4',
 desc: 'a gravity-bending space tunnel runner — flip gravity onto the walls, dodge the crumbling holes, and race a friend side by side over a shared seeded track. live-remixable mid-run.',
-creator: 'slop.game team',
+creator: 'SLOP.game team',
 tags: ['Multiplayer', 'Action'],
 href: 'games/run3/index.html',
+aspect: [4, 3],
 multi: true,
 featured: true,
 createdAt: Date.now(),
@@ -68,9 +69,10 @@ id: 'slopkart',
 name: 'SlopKart',
 thumb: LAUNCH_THUMBS.slopkart,
 desc: 'a fully 3D kart racer — drift for turbo boost, grab item boxes, sling shells, and battle AI racers or 4 friends online across a neon circuit. remixable mid-race.',
-creator: 'slop.game team',
+creator: 'SLOP.game team',
 tags: ['Multiplayer', 'Racing'],
 href: 'games/slopkart/index.html',
+aspect: [16, 10],
 multi: true,
 remixHref: 'games/slopkart/index.html?remix=1',
 },
@@ -79,9 +81,10 @@ id: 'sloppy-zombies',
 name: 'Sloppy Zombies',
 thumb: LAUNCH_THUMBS['sloppy-zombies'],
 desc: 'round-based undead survival — board the windows, bank your points, spin the mystery box, and hold out with up to 4 friends. fully live-remixable.',
-creator: 'slop.game team',
+creator: 'SLOP.game team',
 tags: ['Multiplayer', 'Action'],
 href: 'games/sloppy-zombies/index.html',
+aspect: [4, 3],
 multi: true,
 remixHref: 'games/sloppy-zombies/index.html?remix=1',
 },
@@ -90,9 +93,10 @@ id: 'dungeon-panic',
 name: 'Dungeon Panic',
 thumb: LAUNCH_THUMBS['dungeon-panic'],
 desc: 'roguelike dungeon crawler. fight horrors. collect power-ups. die gloriously. up to 4 players via shared link.',
-creator: 'slop.game team',
+creator: 'SLOP.game team',
 tags: ['Multiplayer', 'RPG'],
 href: 'games/dungeon-panic/index.html',
+aspect: [4, 3],
 multi: true,
 remixHref: 'games/dungeon-panic/index.html?remix=1',
 },
@@ -101,9 +105,10 @@ id: 'umbral-red',
 name: 'Umbral Red',
 thumb: LAUNCH_THUMBS['umbral-red'],
 desc: 'a creature-taming RPG from an alternate universe — roam the tall grass, battle wild umbrae, and bind them to your lantern.',
-creator: 'slop.game team',
+creator: 'SLOP.game team',
 tags: ['RPG'],
 href: 'games/umbral-red/index.html',
+aspect: [4, 3],
 remixHref: 'games/umbral-red/index.html?remix=1',
 },
 {
@@ -111,15 +116,24 @@ id: 'slopcraft',
 name: 'Slopcraft',
 thumb: LAUNCH_THUMBS.slopcraft,
 desc: 'a first-person voxel sandbox — mine, build, and reshape a fully destructible blocky world. your builds save automatically.',
-creator: 'slop.game team',
+creator: 'SLOP.game team',
 tags: ['Sandbox'],
 href: 'games/slopcraft/index.html',
+aspect: [16, 9],
 remixHref: 'games/slopcraft/index.html?remix=1',
 },
 ];
 
 // the built-in launch games, exposed for other modules (e.g. the App Store phone)
 export function getLaunchGames() { return games.slice(); }
+
+export function getLaunchGame(id) {
+return games.find((g) => g.id === id) || null;
+}
+
+export function launchPlayHref(g) {
+return `play.html?game=${encodeURIComponent(g.id)}`;
+}
 
 function escapeHTML(s) {
 return String(s ?? '').replace(/[&<>"']/g, (c) => (
@@ -179,11 +193,11 @@ const overlayMeta = v2
 <div class="gthumb-meta"><span class="gcat">${escapeHTML(g.tags?.[0] || 'Game')}</span><h3>${escapeHTML(g.name)}</h3></div>`
 : '';
 return `
-<article class="${cardClass}" data-id="${g.id}" data-href="${g.href}">
+<article class="${cardClass}" data-id="${g.id}">
 <div class="gthumb shot">
 ${thumbMedia(g, { video: useVideo })}
 ${overlayMeta}
-${opts.hot ? '<span class="gbadge hot">#1 on slop.game</span>' : ''}
+${opts.hot ? '<span class="gbadge hot">#1 on SLOP.game</span>' : ''}
 ${g.multi ? '<span class="gmulti">MULTIPLAYER</span>' : ''}
 <div class="gplay" aria-hidden="true"></div>
 <button class="greport" data-report="${g.id}" data-report-name="${escapeHTML(g.name)}" title="report this game"></button>
@@ -196,8 +210,8 @@ ${v2 ? '' : `<span class="gcat">${escapeHTML(g.tags?.[0] || 'Game')}</span><div 
 <span class="gplays">${fmtPlays(playCount(g.id))} plays</span>
 </div>
 <div class="gcta-row">
-<a class="gcta" href="${g.href}">Play Now</a>
-${g.remixHref ? `<a class="gcta remix" href="${g.remixHref}">Remix Live</a>` : ''}
+<a class="gcta" href="${launchPlayHref(g)}">Play Now</a>
+<a class="gcta remix" href="${launchPlayHref(g)}&remix=1">Remix Live</a>
 </div>
 </div>
 </article>`;
@@ -322,7 +336,7 @@ return all.sort((a, b) => totalPlays(b.g) - totalPlays(a.g)).slice(0, n);
 function podiumHref(g, kind) {
 if (kind === 'cooked') return `play.html?id=${encodeURIComponent(g.id)}`;
 if (kind === 'community') return `/play/${encodeURIComponent(g.slug)}`;
-return g.href;
+return launchPlayHref(g);
 }
 
 function podiumCardHTML(item, rank) {
@@ -449,8 +463,8 @@ if (card.dataset.cookedId) {
 window.location.href = `play.html?id=${encodeURIComponent(card.dataset.cookedId)}`;
 } else if (card.dataset.communityId) {
 window.location.href = `/play/${encodeURIComponent(card.dataset.communityId)}`;
-} else if (card.dataset.href) {
-window.location.href = card.dataset.href;
+} else if (card.dataset.id) {
+window.location.href = launchPlayHref({ id: card.dataset.id });
 }
 }
 

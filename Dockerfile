@@ -1,4 +1,4 @@
-# slop.game — zero-dependency Node server (needs Node 22.5+ for node:sqlite)
+# SLOP.game — zero-dependency Node server (needs Node 22.5+ for node:sqlite)
 FROM node:22-slim
 WORKDIR /app
 COPY . .

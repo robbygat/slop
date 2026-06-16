@@ -1,4 +1,4 @@
-// RUN 3 — a Run-3-style gravity TUBE runner for slop.game.
+// RUN 3 — a Run-3-style gravity TUBE runner for SLOP.game.
 //
 // You auto-run along the INSIDE of a tunnel. Whatever surface is under you is
 // "down" — A/D (or arrows) rotate you around the tube, so when the platform

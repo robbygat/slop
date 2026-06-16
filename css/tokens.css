@@ -1,15 +1,18 @@
 :root {
 /* Brand colors */
---y: #FFE135; /* sunshine yellow — nav, accents, chips */
+--y: #FFE135; /* sunshine yellow — accents, chips */
 --pk: #FF4EB8; /* hot pink — primary CTA, badges, active */
---bl: #4ECAFF; /* sky blue — input header, how-it-works bg */
+--bl: #4ECAFF; /* sky blue — soft fills, input header */
+--el: #2B6BFF; /* electric blue — premium accent, links, focus, gradients */
+--el-deep: #1E50D8; /* electric blue, pressed/contrast */
 --mt: #3DFFB0; /* mint green — success, free badges */
 --or: #FF7A35; /* orange — hot badges, secondary accents */
---pu: #B94EFF; /* purple — creator section bg, top-rated */
+--pu: #2B6BFF; /* legacy name → now electric blue (no purple anywhere) */
 --cr: #FFFBF0; /* warm cream — page bg, hero bg */
 --wh: #FFFFFF;
---ink: #1A1A2E; /* near-black — borders, text, shadows */
---soft:#3A3A5C; /* muted navy — secondary text */
+--ink: #11121A; /* near-black — borders, text, shadows */
+--soft:#52526E; /* muted slate — secondary text */
+--line: rgba(17,18,26,.10); /* hairline dividers */
 --red: #FF3B3B; /* live dot pulse */
 --green:#00C853; /* ready states */
 
@@ -18,4 +21,14 @@
 --r: 16px;
 --sh: 5px 5px 0 var(--ink);
 --shb: 7px 7px 0 var(--ink);
+/* premium soft elevation (paired with the brutalist offset on hero surfaces) */
+--soft1: 0 2px 8px rgba(17,18,26,.05);
+--soft2: 0 12px 34px rgba(17,18,26,.10);
+--soft3: 0 28px 70px rgba(17,18,26,.14);
+--ring: 0 0 0 4px rgba(43,107,255,.18); /* focus ring */
+
+/* Type */
+--font-display: 'Space Grotesk', sans-serif;
+--font-body: 'Nunito', sans-serif;
+--font-mono: 'Space Mono', monospace;
 }

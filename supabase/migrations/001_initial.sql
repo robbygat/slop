@@ -1,4 +1,4 @@
--- slop.game — initial schema for Supabase-backed auth, profiles, and publishing.
+-- SLOP.game — initial schema for Supabase-backed auth, profiles, and publishing.
 --
 -- HOW TO APPLY (one time):
 --   1. Open the Supabase Dashboard → SQL Editor for project yqlolbebqfsodqgjlbeh

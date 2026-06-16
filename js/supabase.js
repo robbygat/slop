@@ -1,4 +1,4 @@
-// Supabase client singleton for slop.game.
+// Supabase client singleton for SLOP.game.
 //
 // The URL + anon key below are PUBLIC by design — the anon key is meant to ship
 // in the browser and is safe to commit because every table is protected by

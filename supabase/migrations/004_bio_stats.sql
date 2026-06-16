@@ -1,4 +1,4 @@
--- slop.game — profile bio + link, global play totals, and platform stats.
+-- SLOP.game — profile bio + link, global play totals, and platform stats.
 --
 -- Apply after 001–003: paste into the Supabase SQL Editor and Run.
 -- Idempotent / safe to re-run.
