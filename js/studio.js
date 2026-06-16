@@ -11,6 +11,7 @@ import { createSpeech } from './speech.js';
 import { api, escapeHTML } from './api.js';
 import { getCookedGame, addCookedGame, updateCookedGame } from './games-grid.js';
 import { SLOPNET_INLINE } from './netcore.js';
+import { SLOP_MP_INLINE, SLOP_MP_RULES } from './mp-boilerplate.js';
 import { initCollab } from './studio-collab.js';
 import { makeZip, dataUrlToBytes, downloadBlob } from './zip.js';
 
@@ -79,7 +80,11 @@ return html
 .replace(/<script id="slop-mod-rx">[\s\S]*?<\/script>\n?/i, '')
 .replace(/<script id="slop-debug">[\s\S]*?<\/script>\n?/i, '')
 .replace(/<script id="slop-play-ctx">[\s\S]*?<\/script>\n?/i, '')
-.replace(/<!--slopnet-->[\s\S]*?<!--\/slopnet-->\n?/i, '');
+.replace(/<!--slopnet-->[\s\S]*?<!--\/slopnet-->\n?/i, '')
+.replace(/<!--slopmp-->[\s\S]*?<!--\/slopmp-->\n?/i, '')
+.replace(/<style id="slop-mp-css">[\s\S]*?<\/style>\n?/i, '')
+.replace(/<script id="slop-mp-js">[\s\S]*?<\/script>\n?/i, '')
+.replace(/<div id="slop-mp-overlay">[\s\S]*?<\/div>\n?/i, '');
 }
 // inline local <script src> / <link href> from the project file map
 function bundleFrom(entry, files) {
@@ -111,7 +116,10 @@ out = injectPlayContext(out, {
   room: new URLSearchParams(location.search).get('room'),
 });
 if (Object.keys(sprites).length) out = injectHead(out, `<script id="slop-sprites">window.SPRITES=${JSON.stringify(sprites)};</scr` + `ipt>`);
-if (multiplayer) out = injectHead(out, `<!--slopnet-->${SLOPNET_INLINE}<!--/slopnet-->`);
+if (multiplayer) {
+out = injectHead(out, `<!--slopnet-->${SLOPNET_INLINE}<!--/slopnet-->`);
+out = injectHead(out, `<!--slopmp-->${SLOP_MP_INLINE}<!--/slopmp-->`);
+}
 return out;
 }
 const bundle = () => bundleFrom(game.srcHtml || '', game.files);
@@ -142,8 +150,31 @@ return s;
 }
 
 // ---------------------------------------------------------------- timeline UI
-function tlUser(text) { const el = document.createElement('div'); el.className = 'tl-user'; el.textContent = text; $('timeline').appendChild(el); el.scrollIntoView({ behavior: 'smooth', block: 'end' }); }
-function tlAgent(text, cls = '') { const el = document.createElement('div'); el.className = `tl-agent ${cls}`; el.textContent = text; $('timeline').appendChild(el); el.scrollIntoView({ behavior: 'smooth', block: 'end' }); return el; }
+function tlAgent(text, cls = '') {
+const wrap = document.createElement('div'); wrap.className = 'tl-agent-wrap';
+wrap.innerHTML = `<div class="tl-agent-av" aria-hidden="true">🤖</div>`;
+const el = document.createElement('div'); el.className = `tl-agent ${cls}`; el.textContent = text;
+wrap.appendChild(el);
+$('timeline').appendChild(wrap);
+wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+return el;
+}
+function tlUser(text) {
+const wrap = document.createElement('div'); wrap.className = 'tl-user-wrap';
+const el = document.createElement('div'); el.className = 'tl-user'; el.textContent = text;
+wrap.appendChild(el);
+$('timeline').appendChild(wrap);
+wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+function showTyping(on) {
+let el = document.getElementById('tl-typing');
+if (!on) { el?.remove(); return; }
+if (el) return;
+el = document.createElement('div'); el.id = 'tl-typing'; el.className = 'tl-typing';
+el.innerHTML = '<span class="tl-agent-av">🤖</span><span class="tl-typing-dots"><i></i><i></i><i></i></span><span>thinking…</span>';
+$('timeline').appendChild(el);
+el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
 function toast(text) { const el = $('studio-toast'); el.textContent = text; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2800); }
 function queueXP(e) { try { const q = JSON.parse(localStorage.getItem('slop-xp-queue') || '[]'); q.push(e); localStorage.setItem('slop-xp-queue', JSON.stringify(q)); } catch { /* */ } }
 
@@ -165,20 +196,7 @@ return `SPRITES (images the game can draw): the shell injects window.SPRITES = {
 const LIVE_MOD_RULES = `LIVE REMIX: expose the game's live state + tunables on window.GAME (e.g. window.GAME={state,player,config,...}) and keep difficulty/speed numbers in window.GAME.config, so a one-line patch like GAME.config.speed*=2 takes effect with no reload.`;
 const MULTIFILE_RULES = `PROJECT STRUCTURE: games under ~12 KB = one \`\`\`html block. Bigger games MUST split: === index.html === (shell + canvas) + === js/game.js === (logic) + optional === css/style.css ===. index.html references others with relative <script src="js/game.js"> / <link href="css/style.css"> (the shell bundles them). Use folders (js/, css/) for anything substantial.`;
 function multiplayerRules() {
-return `MULTIPLAYER (REQUIRED — SlopNet + PeerJS are injected by the shell):
-window.SlopNet is already on the page. window.__SLOP_ROOM holds ?room= from the URL (auto-join). window.slopShareUrl(code) builds the correct invite link for published games.
-
-YOU MUST implement this exact lobby flow:
-1. Title screen with three buttons: "Single Player", "Host Online Game", "Join Game" (+ text input for room code).
-2. On load: if (window.__SLOP_ROOM) call your joinRoom(window.__SLOP_ROOM) automatically.
-3. Host: SlopNet.host(function(code){ show code; copy SlopNet.shareLink() or slopShareUrl(code) to a share input; });
-4. Join: SlopNet.join(code, function(){ /* wait for state */ });
-5. HOST simulates the full game (including turn order for chess). SlopNet.broadcastState(state) ~10-20Hz (turn-based can be on each move).
-6. CLIENT sends moves/inputs via SlopNet.sendInput({...}); SlopNet.on('state', renderState); SlopNet.on('input', hostHandlesInput);
-7. SlopNet.on('join'|'leave'|'init'|'connected'|'error', fn); SlopNet.assignId(conn, playerId);
-8. Fall back to solo if !SlopNet.available().
-
-For turn-based games (chess, checkers): host validates moves, broadcasts board after each turn, clients never simulate locally.`;
+return SLOP_MP_RULES;
 }
 function systemPrompt(isEdit) {
 return `You are the build agent inside Slop Studio on slop.game — you turn plain-english prompts into complete, genuinely playable browser games. Default model reasoning: plan carefully, then output complete working code with no placeholders.
@@ -239,7 +257,7 @@ const MAX_FIX = 5;
 const STUDIO_BUILD_MAX = 49152;
 const MAX_CONTINUE_PARTS = 8;
 const CONTINUE_MSG = 'Your response was cut off mid-output. Continue EXACTLY where you stopped — no preamble, no repetition. Close every open ``` fence and finish ALL remaining files. Do not restart files you already completed.';
-const STEP_DEFS = [['plan', 'Plan'], ['art', 'Art'], ['build', 'Build'], ['test', 'Test & heal'], ['ship', 'Ship']];
+const STEP_DEFS = [['discuss', 'Discuss'], ['plan', 'Plan'], ['art', 'Art'], ['build', 'Build'], ['test', 'Test & heal'], ['ship', 'Ship']];
 
 async function agentStream({ model, messages, temperature, maxTokens = STUDIO_BUILD_MAX, onDelta }) {
 let full = '';
@@ -296,6 +314,117 @@ card.innerHTML =
 + `${mech ? `<div class="run-plan-col"><h5>core loop</h5><ul>${mech}</ul></div>` : ''}`
 + `${files ? `<div class="run-plan-col"><h5>files</h5><ul class="run-files">${files}</ul></div>` : ''}`;
 run.body.appendChild(card);
+}
+
+function parseDiscuss(text) {
+const tryParse = (s) => { try { return JSON.parse(s); } catch { return null; } };
+let obj = tryParse(text.trim());
+if (!obj) { const f = extractFence(text); if (f) obj = tryParse(f.trim()); }
+if (!obj) { const m = text.match(/\{[\s\S]*\}/); if (m) obj = tryParse(m[0]); }
+if (!obj || !Array.isArray(obj.questions)) return null;
+return {
+intro: String(obj.intro || '').slice(0, 280),
+questions: obj.questions.slice(0, 4).map((q) => ({
+id: String(q.id || 'q').slice(0, 24),
+text: String(q.text || '').slice(0, 120),
+hint: String(q.hint || '').slice(0, 80),
+options: Array.isArray(q.options) ? q.options.slice(0, 5).map((o) => String(o).slice(0, 48)) : [],
+})).filter((q) => q.text && q.options.length),
+};
+}
+
+function discussSystemPrompt() {
+const mp = game.multiplayer ? 'Multiplayer is ON — ask about player count and co-op vs competitive.' : 'Include one question about single-player vs online multiplayer.';
+return `You are the creative director of Slop Studio on slop.game. The player described a game idea. React warmly, then ask 3-4 planning questions so the build nails their vision. ${mp}
+
+Respond with ONLY JSON (no markdown):
+{"intro":"1-2 sentence enthusiastic reaction","questions":[{"id":"style","text":"What should it feel like?","options":["arcade & juicy","chill & minimal","hardcore skill"],"hint":"optional"}]}
+
+Rules: exactly 3-4 questions, 3-5 options each, short labels. Cover: vibe/art, core mechanic depth, difficulty/progression, and multiplayer if relevant.`;
+}
+
+/** Interactive planning card — user picks options or types custom answers. */
+function showDiscussUI(run, data) {
+return new Promise((resolve) => {
+const card = document.createElement('div'); card.className = 'plan-qa';
+const answers = {};
+let html = `<p class="plan-qa-intro">${escapeHTML(data.intro)}</p>`;
+for (const q of data.questions) {
+html += `<div class="plan-qa-item" data-qid="${escapeHTML(q.id)}">`
++ `<div class="plan-qa-q">${escapeHTML(q.text)}</div>`
++ (q.hint ? `<div class="plan-qa-hint">${escapeHTML(q.hint)}</div>` : '')
++ `<div class="plan-qa-opts">${q.options.map((o, i) => `<button type="button" class="plan-qa-opt" data-q="${escapeHTML(q.id)}" data-val="${escapeHTML(o)}">${escapeHTML(o)}</button>`).join('')}</div>`
++ `<input class="plan-qa-custom" data-q="${escapeHTML(q.id)}" placeholder="or type your own…" maxlength="80">`
++ `</div>`;
+}
+html += `<div class="plan-qa-actions">`
++ `<button type="button" class="plan-qa-go">Start building →</button>`
++ `<button type="button" class="plan-qa-skip">Skip — surprise me</button>`
++ `</div>`;
+card.innerHTML = html;
+run.body.appendChild(card);
+card.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+const pick = (qid, val) => {
+answers[qid] = val;
+card.querySelectorAll(`.plan-qa-opt[data-q="${qid}"]`).forEach((b) => b.classList.toggle('picked', b.dataset.val === val));
+const inp = card.querySelector(`.plan-qa-custom[data-q="${qid}"]`);
+if (inp) inp.value = val === inp.value.trim() ? val : inp.value;
+};
+card.querySelectorAll('.plan-qa-opt').forEach((btn) => {
+btn.addEventListener('click', () => pick(btn.dataset.q, btn.dataset.val));
+});
+card.querySelectorAll('.plan-qa-custom').forEach((inp) => {
+inp.addEventListener('input', () => { if (inp.value.trim()) pick(inp.dataset.q, inp.value.trim()); });
+});
+card.querySelector('.plan-qa-skip').addEventListener('click', () => { card.classList.add('done'); resolve({ skipped: true, answers: {} }); });
+card.querySelector('.plan-qa-go').addEventListener('click', () => {
+for (const q of data.questions) {
+if (!answers[q.id]) {
+const inp = card.querySelector(`.plan-qa-custom[data-q="${q.id}"]`);
+answers[q.id] = inp?.value.trim() || q.options[0];
+}
+}
+card.classList.add('done');
+resolve({ skipped: false, answers });
+});
+});
+}
+
+async function runDiscussPhase(ask, run) {
+run.set('discuss', 'active', 'reading your idea…');
+showTyping(true);
+try {
+const full = await chatStream({
+model: game.model, temperature: 0.65, maxTokens: 1400,
+messages: [{ role: 'system', content: discussSystemPrompt() }, { role: 'user', content: ask }],
+});
+showTyping(false);
+const data = parseDiscuss(full);
+if (!data?.questions?.length) {
+run.set('discuss', 'done', 'got it — planning…');
+return ask;
+}
+run.set('discuss', 'active', 'your call — pick options below');
+tlAgent(data.intro, 'working');
+const { skipped, answers } = await showDiscussUI(run, data);
+run.set('discuss', 'done', skipped ? 'surprise build!' : 'choices locked in');
+if (skipped) return ask;
+const lines = [ask, '--- player choices ---'];
+for (const q of data.questions) {
+if (answers[q.id]) lines.push(`${q.text}: ${answers[q.id]}`);
+}
+const enriched = lines.join('\n');
+enableMultiplayerFromPrompt(enriched, run);
+for (const q of data.questions) {
+if (answers[q.id]) tlUser(`${q.text} → ${answers[q.id]}`);
+}
+return enriched;
+} catch {
+showTyping(false);
+run.set('discuss', 'done', 'planning…');
+return ask;
+}
 }
 function addErrChip(run, msg) {
 const chip = document.createElement('div'); chip.className = 'run-err'; chip.textContent = msg; run.body.appendChild(chip);
@@ -501,8 +630,9 @@ return true;
 async function runCreate(ask) {
 const run = makeRunCard();
 enableMultiplayerFromPrompt(ask, run);
+const enriched = await runDiscussPhase(ask, run);
 run.set('plan', 'active', 'designing your game…');
-const plan = await getPlan(ask, run);
+const plan = await getPlan(enriched, run);
 run.set('plan', 'done', plan.name);
 renderPlanCard(run, plan);
 
@@ -510,7 +640,7 @@ if (plan.sprites?.length) { run.set('art', 'active', `painting ${plan.sprites.le
 run.set('art', 'done', Object.keys(game.sprites).length ? `${Object.keys(game.sprites).length} sprite(s) ready` : 'pure shapes — no art needed');
 
 run.set('build', 'active', 'writing the game…');
-const built = await buildGame(ask, plan, run);
+const built = await buildGame(enriched, plan, run);
 run.set('build', 'done');
 
 run.set('test', 'active', 'crash-testing…');
@@ -518,7 +648,7 @@ const res = await healUntilClean(built, run);
 if (!res.ok) { run.el.classList.add('run-failed'); throw new Error(`couldn't get it running cleanly (last error: ${res.error || 'unknown'}) — try rephrasing or simplifying it.`); }
 
 run.set('ship', 'active', 'plating…');
-commitBuild(res.built, plan, ask, false);
+commitBuild(res.built, plan, enriched, false);
 run.set('ship', 'done');
 run.el.classList.add('run-done');
 const nf = Object.keys(game.files).length;
@@ -528,6 +658,7 @@ addSuggestChips(run, ['make it harder and faster', 'add a boss every 5 waves', '
 
 async function runEdit(ask, depth = 0) {
 const run = makeRunCard();
+run.set('discuss', 'done', 'editing existing build');
 enableMultiplayerFromPrompt(ask, run);
 if (depth === 0 && await tryStudioLivePatch(ask, run)) return;
 
@@ -898,7 +1029,7 @@ $('prompt').focus();
 toast('error sent to prompt — hit Build It to patch in place');
 },
 });
-tlAgent('welcome to the studio. describe a game — any game — and I\'ll build it. then keep talking: "make it harder", "the hero is a dragon", "generate a sprite for the boss", "split this into files", "add multiplayer". every aspect is promptable.', '');
+tlAgent('hey — I\'m your game agent. describe anything and I\'ll ask a few planning questions, then build it live. edits patch in place; say "online multiplayer" for shareable rooms.', 'good');
 warnIfStudioNeedsKey();
 
 const params = new URLSearchParams(location.search);

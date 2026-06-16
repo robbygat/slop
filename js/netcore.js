@@ -137,7 +137,8 @@ broadcastState:function(s){conns.forEach(function(c){if(c.open)try{c.send({t:'st
 broadcastMod:function(code,summary){mods.push({t:'mod',code:code,summary:summary});conns.forEach(function(c){if(c.open)c.send({t:'mod',code:code,summary:summary})});},
 sendInput:function(i){if(conn&&conn.open)conn.send({t:'input',i:i});},
 get isHost(){return isHost;}, get peerCount(){return isHost?conns.length:(conn?1:0);},
-shareLink:function(){return window.slopShareUrl?window.slopShareUrl(code):(location.origin+location.pathname+'?room='+code);}, roomCode:function(){return code;}
+shareLink:function(){return window.slopShareUrl?window.slopShareUrl(code):(location.origin+location.pathname+'?room='+code);}, roomCode:function(){return code;},
+destroy:function(){try{peer&&peer.destroy();}catch(e){}peer=null;conn=null;conns=[];isHost=false;code=null;}
 };
 })();
 </scr`+`ipt>`;
