@@ -18,9 +18,9 @@ const EDGE_IMAGE = `${SUPABASE_URL}/functions/v1/image-proxy`;
 // without hitting the Pro gate. Pro members can pick the frontier models in the
 // picker (grok-4.3, claude-opus-4-8, …). Keep these in the 'free' tier of MODEL_CHOICES.
 export const MODELS = {
-cook: 'grok-4.20-0309-non-reasoning', // homepage quick-cook — fast + free (xAI)
-remix: 'grok-4.20-0309-non-reasoning', // live code edits — latency first
-studio: 'grok-4.20-0309-non-reasoning', // studio builds — fast + free by default
+cook: 'gpt-5.5', // homepage quick-cook — OpenAI flagship (strongest)
+remix: 'grok-4.20-0309-non-reasoning', // live code edits — latency first (kept on fast Grok)
+studio: 'gpt-5.5', // studio builds — OpenAI flagship (strongest)
 };
 
 // Every model the picker offers (label → id). `tier` mirrors the server gate in
@@ -29,6 +29,7 @@ studio: 'grok-4.20-0309-non-reasoning', // studio builds — fast + free by defa
 // sync with that file. Selecting a Pro model while signed out / on the free tier
 // returns an honest 403 from the proxy.
 export const MODEL_CHOICES = [
+{ id: 'gpt-5.5', label: 'GPT-5.5 — OpenAI flagship', provider: 'openai', tier: 'free' },
 { id: 'grok-4.20-0309-non-reasoning', label: 'Grok 4.20 — fast', provider: 'xai', tier: 'free' },
 { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5 — fast', provider: 'anthropic', tier: 'free' },
 { id: 'gpt-4o-mini', label: 'GPT-4o mini — fast', provider: 'openai', tier: 'free' },

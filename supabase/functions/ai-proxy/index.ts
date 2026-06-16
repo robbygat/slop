@@ -77,10 +77,13 @@ Deno.serve(async (req) => {
       if (!key) return jsonRes(501, { error: `${provider} models are not configured on this server yet` });
       url = isOpenAI ? 'https://api.openai.com/v1/chat/completions' : 'https://api.x.ai/v1/chat/completions';
       headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` };
-      payload = {
-        model, messages, max_tokens: maxOut, temperature: clamp(temperature, 0, 1.5),
-        stream: true, stream_options: { include_usage: true },
-      };
+      // OpenAI's reasoning models (gpt-5*, o-series) require `max_completion_tokens`
+      // and reject a custom temperature (only the default is allowed). xAI (grok) and
+      // gpt-4o use the legacy `max_tokens` + temperature shape.
+      const reasoning = isOpenAI && /^(gpt-5|o[0-9])/.test(model);
+      payload = reasoning
+        ? { model, messages, max_completion_tokens: maxOut, stream: true, stream_options: { include_usage: true } }
+        : { model, messages, max_tokens: maxOut, temperature: clamp(temperature, 0, 1.5), stream: true, stream_options: { include_usage: true } };
     }
 
     const upstream = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });

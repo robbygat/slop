@@ -29,7 +29,12 @@ export const MODELS: Record<string, ModelInfo> = {
   'claude-opus-4-8': { in: 5, out: 25, tier: 'pro', provider: 'anthropic' },
   'claude-sonnet-4-6': { in: 3, out: 15, tier: 'pro', provider: 'anthropic' },
   'claude-haiku-4-5': { in: 1, out: 5, tier: 'free', provider: 'anthropic' },
-  // OpenAI — set to your real OpenAI prices
+  // OpenAI — set to your real OpenAI prices (platform.openai.com/pricing)
+  // gpt-5.5 is the default model. PLACEHOLDER price — VERIFY it against OpenAI's real
+  // gpt-5.5 pricing or you'll mis-bill credits. It's a reasoning model: the server
+  // sends max_completion_tokens + no temperature (see ai-proxy). Flip tier to 'pro'
+  // if you'd rather gate it behind a membership and keep a cheaper free default.
+  'gpt-5.5': { in: 2.5, out: 15, tier: 'free', provider: 'openai' },
   'gpt-4o': { in: 2.5, out: 10, tier: 'pro', provider: 'openai' },
   'gpt-4o-mini': { in: 0.15, out: 0.6, tier: 'free', provider: 'openai' },
 };
