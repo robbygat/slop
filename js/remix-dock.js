@@ -176,6 +176,8 @@ Line 1: SUMMARY: <max 60 chars describing the change>
 Then exactly one \`\`\`js fenced code block containing the patch. Nothing else.`;
 
 export function mountRemixDock(cfg) {
+if (window.__SLOP_PLAY_PAGE || new URLSearchParams(location.search).has('play')) return null;
+
 const {
 gameId, title, apiName, getApi, sources = [], storageKey,
 shell, chips = [], describe = '', smokeTest, model = MODELS.remix,

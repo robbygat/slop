@@ -61,7 +61,6 @@ function mountLaunchGame(launch) {
   qs.set('play', '1');
   const room = params.get('room');
   if (room) qs.set('room', room);
-  if (params.get('remix') === '1') qs.set('remix', '1');
   let src = launch.href;
   const extra = qs.toString();
   if (extra) src += (src.includes('?') ? '&' : '?') + extra;
@@ -484,7 +483,12 @@ function setCreatorLinks(profileUrl) {
 }
 
 function followButtons() {
-  return ['creator-follow', 'meta-follow'].map((id) => $(id)).filter(Boolean);
+  return [$('creator-follow')].filter(Boolean);
+}
+
+function syncCreatorProfileLink(url) {
+  const profileBtn = $('creator-profile-btn');
+  if (profileBtn && url) profileBtn.href = url;
 }
 
 function hideFollowButtons() {
@@ -492,23 +496,14 @@ function hideFollowButtons() {
 }
 
 function syncFollowButtons() {
-  const label = following ? 'Following' : 'Follow';
-  const metaLabel = game?.username
-    ? (following ? `Following @${game.username}` : `Follow @${game.username}`)
-    : label;
-
+  const label = following ? 'Following' : 'Follow +';
   followButtons().forEach((btn) => {
     btn.classList.toggle('following', following);
-    if (btn.id === 'meta-follow') {
-      const span = btn.querySelector('.meta-follow-label');
-      if (span) span.textContent = metaLabel;
-    } else {
-      btn.textContent = label;
-    }
+    btn.textContent = label;
   });
 }
 
-function setupFollowButton({ ownerId, username, isSelf }) {
+function setupFollowButton({ ownerId, isSelf }) {
   const btns = followButtons();
   if (!btns.length) return;
 
@@ -517,13 +512,19 @@ function setupFollowButton({ ownerId, username, isSelf }) {
     btn.disabled = false;
   });
 
-  if (!ownerId || isSelf) {
+  if (isSelf) {
     hideFollowButtons();
     return;
   }
 
   btns.forEach((btn) => { btn.hidden = false; });
   syncFollowButtons();
+
+  if (!ownerId) {
+    const handler = () => showToast('sign in to follow creators');
+    btns.forEach((btn) => { btn.onclick = handler; });
+    return;
+  }
 
   if (!viewer) {
     const handler = () => showToast('sign in to follow creators');
@@ -556,6 +557,7 @@ async function initCreator() {
     const initial = (game.username?.[0] || 'S').toUpperCase();
     const profileUrl = `/${encodeURIComponent(game.username)}`;
     setCreatorLinks(profileUrl);
+    syncCreatorProfileLink(profileUrl);
     $('creator-name').textContent = `@${game.username}`;
 
     if (profile?.avatar_url) {
@@ -578,7 +580,6 @@ async function initCreator() {
 
     setupFollowButton({
       ownerId: game.owner_id,
-      username: game.username,
       isSelf: viewer?.id === game.owner_id,
     });
 
@@ -590,6 +591,7 @@ async function initCreator() {
 
   if (isLaunch) {
     setCreatorLinks('index.html#games');
+    syncCreatorProfileLink('index.html#games');
     av.textContent = 'S';
     $('creator-name').textContent = 'SLOP.game team';
     if (bioEl) {
@@ -602,8 +604,8 @@ async function initCreator() {
       followers: null,
       games: launchList.length,
     });
-    hideFollowButtons();
     showCreatorMore(launchList.filter((g) => g.id !== game.id).slice(0, 6), 'launch');
+    setupFollowButton({ ownerId: null, isSelf: false });
     sec.removeAttribute('data-empty');
     syncSidePanelVisibility();
     return;
@@ -613,6 +615,7 @@ async function initCreator() {
   viewer = await api.me().catch(() => null);
   const profileUrl = viewer?.username ? `/${encodeURIComponent(viewer.username)}` : 'index.html#games';
   setCreatorLinks(profileUrl);
+  syncCreatorProfileLink(profileUrl);
   av.textContent = (viewer?.username?.[0] || 'Y').toUpperCase();
   $('creator-name').textContent = viewer?.username ? `@${viewer.username}` : 'You';
   if (bioEl) {

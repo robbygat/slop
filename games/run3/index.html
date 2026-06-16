@@ -229,8 +229,8 @@ hit a side and gravity flips — run along the walls to dodge the holes
 <script src="/games/play-embed.js"></script>
 <script type="module" src="game.js"></script>
 <script type="module">
-const embed = new URLSearchParams(location.search).has('embed');
-if (!embed) { import('./remix.js'); import('./leaderboard.js'); }
+const embed = new URLSearchParams(location.search);
+if (!embed.has('embed') && !embed.has('play')) { import('./remix.js'); import('./leaderboard.js'); }
 </script>
 </body>
 </html>

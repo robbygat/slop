@@ -1,8 +1,9 @@
 // Loaded by launch games when embedded on play.html (?play=1).
-// Hides the in-game back link, centers the stage at its native aspect ratio,
-// and breaks out to the top window if a legacy back link is clicked.
+// Hides the in-game back link + remix dock; centers the stage at its native aspect ratio.
 (function () {
   if (!new URLSearchParams(location.search).has('play')) return;
+
+  window.__SLOP_PLAY_PAGE = true;
 
   const css = `
     html.slop-play-embed, body.slop-play-embed {
@@ -17,7 +18,9 @@
       align-items: center !important;
       justify-content: center !important;
     }
-    body.slop-play-embed .back-link {
+    body.slop-play-embed .back-link,
+    body.slop-play-embed #rxd,
+    body.slop-play-embed #rxd-toggle {
       display: none !important;
     }
     body.slop-play-embed #shell,
