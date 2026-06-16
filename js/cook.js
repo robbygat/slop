@@ -2,7 +2,7 @@
 // into a kitchen modal, crash-tested in a hidden sandbox, screenshotted for
 // its grid thumbnail, then plated into the games grid.
 
-import { chatStream, extractFence, extractMetaLine, MODELS } from './ai.js';
+import { chatStream, extractFence, extractMetaLine, MODELS, MODEL_CHOICES } from './ai.js';
 import { addCookedGame, rerenderGrid } from './games-grid.js';
 import { testGameHTML } from './sandbox.js';
 import { launchConfetti } from './confetti.js';
@@ -26,6 +26,8 @@ Then exactly one fenced code block:
 ... the complete game ...
 \`\`\`
 No other commentary before or after.`;
+
+const HEAL_PROMPT = `You are debugging a single-file HTML5 canvas game that throws an uncaught error inside a sandboxed iframe (no localStorage/cookies/alert/confirm; all art drawn on canvas; no external resources). You are given the exact console error(s). Find the ROOT CAUSE and fix it. Return ONLY the COMPLETE corrected HTML document inside one \`\`\`html code block — no commentary.`;
 
 const STEPS = [
 ['01', 'reading your prompt'],
@@ -84,6 +86,23 @@ const base = String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|
 return `${base}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+// Hand the model its own crash + ask for the complete corrected document.
+async function healOnce(html, errs, codeEl) {
+let raf = null;
+const full = await chatStream({
+model: localStorage.getItem('slop-model') || MODELS.cook,
+temperature: 0.3,
+messages: [
+{ role: 'system', content: HEAL_PROMPT },
+{ role: 'user', content: `This game throws uncaught error(s) in a sandboxed iframe:\n\n${errs.map((e) => '- ' + e).join('\n')}\n\nFix the root cause and return the COMPLETE corrected HTML document.\n\n\`\`\`html\n${html}\n\`\`\`` },
+],
+onDelta(_, soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; codeEl.textContent = soFar; codeEl.scrollTop = codeEl.scrollHeight; }); },
+});
+let fixed = extractFence(full);
+if (!fixed) { const d = full.indexOf('<!DOCTYPE'); if (d >= 0) fixed = full.slice(d).trim(); }
+return (fixed && /<html/i.test(fixed)) ? fixed : null;
+}
+
 export async function cookGameForReal(prompt) {
 ensureModal();
 modal.classList.remove('hidden');
@@ -135,11 +154,22 @@ if (!html || !/<html/i.test(html)) throw new Error('grok returned something unse
 // inject the live-remix receiver so this game can be hot-patched mid-play
 html = injectModReceiver(html);
 
-// crash-test the build before it touches the grid
+// crash-test the build before it touches the grid — and if it crashes, let the
+// model debug its own game (self-heal) using the exact error, up to MAX_FIX passes.
 setStep(2);
 status.textContent = 'crash-testing the build…';
-const test = await testGameHTML(html);
-if (!test.ok) throw new Error(`the build crashed in testing (${test.error}) — try again`);
+let test = await testGameHTML(html);
+const MAX_FIX = 2;
+for (let fixes = 1; !test.ok && fixes <= MAX_FIX; fixes++) {
+const errs = (test.errors && test.errors.length ? test.errors : [test.error]).filter(Boolean);
+status.textContent = `self-healing: ${errs[0]} (fix ${fixes}/${MAX_FIX})…`;
+const fixed = await healOnce(html, errs, code);
+if (!fixed) break;
+html = injectModReceiver(fixed);
+status.textContent = 'crash-testing the fix…';
+test = await testGameHTML(html);
+}
+if (!test.ok) throw new Error(`the build kept crashing (${test.error}) — try again`);
 
 setStep(3);
 status.textContent = 'plating…';
@@ -155,8 +185,10 @@ createdAt: Date.now(),
 });
 
 setStep(4);
+const mid = localStorage.getItem('slop-model') || MODELS.cook;
+const mlabel = MODEL_CHOICES.find((m) => m.id === mid)?.label.split(' — ')[0] || mid;
 title.textContent = `${game.name} — served!`;
-status.textContent = `${(html.length / 1024).toFixed(1)} KB · crash-tested · live in your grid`;
+status.textContent = `${(html.length / 1024).toFixed(1)} KB · crash-tested · made with ${mlabel}`;
 actions.classList.remove('hidden');
 modal.querySelector('#cook-play').href = `play.html?id=${encodeURIComponent(game.id)}`;
 modal.querySelector('#cook-stay').onclick = () => {

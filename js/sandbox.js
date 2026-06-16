@@ -7,10 +7,19 @@ const TEST_MS = 2600;
 const THUMB_W = 640;
 const THUMB_H = 400;
 
-// injected before any game code so even parse-time crashes are captured
+// injected before any game code so even parse-time crashes are captured.
+// We grab the message + line/col + first stack frames so the studio's self-heal
+// loop can feed the agent a precise, actionable error (not just "runtime error").
 const ERROR_HOOK = '<script>window.__slopErrors=[];'
-+ 'window.addEventListener("error",function(e){window.__slopErrors.push(e.message||"runtime error")});'
-+ 'window.addEventListener("unhandledrejection",function(e){window.__slopErrors.push(String(e.reason||"unhandled rejection"))});'
++ 'window.addEventListener("error",function(e){'
++ 'var loc=e.lineno?(" (line "+e.lineno+(e.colno?":"+e.colno:"")+")"):"";'
++ 'var msg=(e.message||"runtime error")+loc;'
++ 'if(e.error&&e.error.stack){var s=String(e.error.stack).split("\\n").slice(0,3).join(" | ");if(s)msg+=" — "+s;}'
++ 'window.__slopErrors.push(msg);'
++ '});'
++ 'window.addEventListener("unhandledrejection",function(e){'
++ 'var r=e.reason;window.__slopErrors.push("Unhandled promise rejection: "+((r&&r.message)||String(r||"unknown")));'
++ '});'
 + '</' + 'script>';
 
 function injectHook(html) {
@@ -36,14 +45,17 @@ let settled = false;
 const finish = (fatal) => {
 if (settled) return;
 settled = true;
-let errors = fatal ? [fatal] : [];
-try { errors = errors.concat(frame.contentWindow.__slopErrors || []); }
+let raw = fatal ? [fatal] : [];
+try { raw = raw.concat(frame.contentWindow.__slopErrors || []); }
 catch { /* frame already gone */ }
+// dedupe + cap so the heal prompt stays focused on distinct failures
+const errors = [...new Set(raw.filter(Boolean).map(String))].slice(0, 5);
 const thumb = errors.length ? null : captureThumb(frame);
 frame.remove();
 resolve({
 ok: errors.length === 0,
-error: errors[0] || null,
+error: errors[0] || null, // first error (back-compat)
+errors,                   // every distinct error, for self-heal
 thumb,
 });
 };

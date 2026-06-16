@@ -7,7 +7,7 @@
 import { chatStream, extractFence, extractMetaLine, imageGen, MODELS, MODEL_CHOICES, setUserKey } from './ai.js';
 import { testGameHTML } from './sandbox.js';
 import { createSpeech } from './speech.js';
-import { api } from './api.js';
+import { api, escapeHTML } from './api.js';
 import { getCookedGame, addCookedGame, updateCookedGame } from './games-grid.js';
 import { SLOPNET_INLINE } from './netcore.js';
 import { initCollab } from './studio-collab.js';
@@ -138,54 +138,272 @@ Then EITHER one \`\`\`html block (single-file) OR multiple \`=== path ===\` + fe
 (EXCEPTION: a sprite request per SPRITES is line 1 JSON only.)`;
 }
 
-// ---------------------------------------------------------------- agent loop
-async function runPrompt(ask, depth = 0) {
-const isEdit = !!game.srcHtml;
-const status = tlAgent(isEdit ? 'reading the current build…' : 'cooking from scratch…', 'working');
-const messages = [
-{ role: 'system', content: systemPrompt(isEdit) },
-{ role: 'user', content: isEdit ? `Current project:\n${currentSourceForPrompt()}\n\nRequest: ${ask}` : `Build this game: ${ask}` },
-];
+// ---------------------------------------------------------------- the slop agent
+// A real multi-step agent, not a single shot: PLAN → ART → BUILD → TEST & SELF-HEAL → SHIP.
+// The headline feature is self-heal: the build runs in a hidden sandbox, and if it throws,
+// the agent is handed the EXACT console error(s) and asked to fix the offending file — it
+// debugs its own game (up to MAX_FIX passes) until the sandbox is clean. The whole run is
+// streamed to a live "run card" stepper so players watch it think, paint, build, and debug.
+
+const MAX_FIX = 3;
+const STEP_DEFS = [['plan', 'Plan'], ['art', 'Art'], ['build', 'Build'], ['test', 'Test & heal'], ['ship', 'Ship']];
+
+function makeRunCard() {
+const card = document.createElement('div');
+card.className = 'tl-run';
+const steps = document.createElement('div'); steps.className = 'run-steps';
+const nodes = {};
+for (const [key, label] of STEP_DEFS) {
+const s = document.createElement('div'); s.className = 'run-step'; s.dataset.step = key;
+s.innerHTML = `<span class="run-dot"></span><span class="run-label">${label}</span>`;
+steps.appendChild(s); nodes[key] = s;
+}
+const detail = document.createElement('div'); detail.className = 'run-detail';
+const body = document.createElement('div'); body.className = 'run-body';
+card.append(steps, detail, body);
+$('timeline').appendChild(card);
+card.scrollIntoView({ behavior: 'smooth', block: 'end' });
+return {
+el: card, body,
+set(key, state, text) {
+const n = nodes[key];
+if (n) { n.classList.remove('active', 'done', 'bad'); if (state) n.classList.add(state); }
+if (text != null) detail.textContent = text;
+card.scrollIntoView({ behavior: 'smooth', block: 'end' });
+},
+detail(text) { detail.textContent = text; card.scrollIntoView({ behavior: 'smooth', block: 'end' }); },
+};
+}
+
+function renderPlanCard(run, plan) {
+const card = document.createElement('div'); card.className = 'run-plan';
+const mech = (plan.mechanics || []).map((m) => `<li>${escapeHTML(m)}</li>`).join('');
+const files = (plan.files || []).map((f) => `<li><code>${escapeHTML(f.path)}</code>${f.role ? ` — ${escapeHTML(f.role)}` : ''}</li>`).join('');
+card.innerHTML =
+`${plan.pitch ? `<p class="run-pitch">${escapeHTML(plan.pitch)}</p>` : ''}`
++ `${mech ? `<div class="run-plan-col"><h5>core loop</h5><ul>${mech}</ul></div>` : ''}`
++ `${files ? `<div class="run-plan-col"><h5>files</h5><ul class="run-files">${files}</ul></div>` : ''}`;
+run.body.appendChild(card);
+}
+function addErrChip(run, msg) {
+const chip = document.createElement('div'); chip.className = 'run-err'; chip.textContent = msg; run.body.appendChild(chip);
+}
+
+function normSprite(s) {
+return { name: String(s.name || 'sprite').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 24), prompt: String(s.prompt || s.name || '').slice(0, 200) };
+}
+
+// short, human label for the model that built this game ("powered by" disclosure)
+function modelLabel(id) { const m = MODEL_CHOICES.find((x) => x.id === id); return m ? m.label.split(' — ')[0] : id; }
+
+// -------- prompts (planner + debugger; build/edit reuse systemPrompt())
+function planSystemPrompt() {
+return `You are the lead designer of Slop Studio on slop.game. Turn the player's request into a tight BUILD PLAN for ONE browser game (HTML5 canvas/JS, runs in a sandboxed iframe). Think about the core loop, what makes it juicy and fun, the art it needs, and how to structure the files.
+
+Respond with ONLY a single JSON object — no prose, no markdown, no code fences:
+{"name":"Game Name","desc":"one punchy lowercase line, max 90 chars","pitch":"one sentence on why it's fun, max 140 chars","files":[{"path":"index.html","role":"what it holds"}],"sprites":[{"name":"player","prompt":"detailed art prompt, single centered subject, plain white background, no text"}],"mechanics":["core mechanic","how it escalates","win/lose"]}
+
+Rules: keep files minimal — 1 file for small games, split into js/ + css/ only when it genuinely helps; index.html is always the entry. At most 4 sprites, and only art the game truly needs (many great games are pure shapes — use [] then). mechanics: 3-6 short bullets.`;
+}
+function healSystemPrompt() {
+return `You are the debugger inside Slop Studio. You receive a browser game that throws an uncaught runtime error in a sandboxed iframe, plus the exact error message(s). Find the ROOT CAUSE and fix it.
+
+${CREATE_RULES}
+
+${MULTIFILE_RULES}
+
+Return ONLY the corrected project in the OUTPUT FORMAT:
+Line 1: single-line JSON: {"name":"...","desc":"...","summary":"what you fixed, max 60 chars"}
+Then EITHER one \`\`\`html block (single-file) OR multiple \`=== path ===\` + fenced blocks (multi-file). Change only what's needed to stop the crash; keep everything else identical.`;
+}
+
+function parsePlan(text) {
+const tryParse = (s) => { try { return JSON.parse(s); } catch { return null; } };
+let obj = tryParse(text.trim());
+if (!obj) { const f = extractFence(text); if (f) obj = tryParse(f.trim()); }
+if (!obj) { const m = text.match(/\{[\s\S]*\}/); if (m) obj = tryParse(m[0]); }
+if (!obj || typeof obj !== 'object') return null;
+return {
+name: String(obj.name || 'untitled slop').slice(0, 60),
+desc: String(obj.desc || '').slice(0, 90),
+pitch: String(obj.pitch || '').slice(0, 140),
+files: Array.isArray(obj.files) ? obj.files.slice(0, 12).map((f) => ({ path: String(f.path || f.name || '').trim(), role: String(f.role || f.purpose || '').slice(0, 80) })).filter((f) => f.path) : [],
+sprites: Array.isArray(obj.sprites) ? obj.sprites.slice(0, 4).map(normSprite).filter((s) => s.name && s.prompt) : [],
+mechanics: Array.isArray(obj.mechanics) ? obj.mechanics.slice(0, 8).map((m) => String(m).slice(0, 80)) : [],
+};
+}
+
+function sourceForPrompt(built) {
+const fk = Object.keys(built.files || {});
+if (!fk.length) return `\`\`\`html\n${built.entry}\n\`\`\``;
+let s = `=== index.html ===\n\`\`\`html\n${built.entry}\n\`\`\``;
+for (const p of fk) { const lang = p.endsWith('.css') ? 'css' : p.endsWith('.js') ? 'js' : ''; s += `\n\n=== ${p} ===\n\`\`\`${lang}\n${built.files[p]}\n\`\`\``; }
+return s;
+}
+
+// -------- phases
+async function getPlan(ask, run) {
 let raf = null;
 const full = await chatStream({
-model: game.model, messages, temperature: isEdit ? 0.4 : 0.7,
-onDelta(_, soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; status.textContent = `writing… ${(soFar.length / 1024).toFixed(1)} KB`; $('code-view').textContent = soFar; }); },
+model: game.model, temperature: 0.5, maxTokens: 2000,
+messages: [{ role: 'system', content: planSystemPrompt() }, { role: 'user', content: `Game request: ${ask}` }],
+onDelta(_, soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; run.detail(`designing… ${(soFar.length / 1024).toFixed(1)} KB`); }); },
 });
+return parsePlan(full) || { name: 'untitled slop', desc: ask.slice(0, 90), pitch: '', files: [{ path: 'index.html', role: 'the game' }], sprites: [], mechanics: [] };
+}
 
+async function makeSprites(sprites, run) {
+const row = document.createElement('div'); row.className = 'run-sprites'; run.body.appendChild(row);
+for (const s of sprites) {
+const slot = document.createElement('div'); slot.className = 'run-sprite loading'; slot.title = s.name;
+slot.innerHTML = `<span class="run-sprite-name">${escapeHTML(s.name)}</span>`;
+row.appendChild(slot);
+try {
+const url = await imageGen(s.prompt, { maxSize: 192 });
+game.sprites[s.name] = url;
+const img = document.createElement('img'); img.src = url; slot.prepend(img); slot.classList.remove('loading');
+} catch (err) { slot.classList.add('bad'); slot.classList.remove('loading'); slot.title = `${s.name}: ${err.message}`; }
+}
+renderSprites();
+}
+
+async function buildGame(ask, plan, run, depth = 0) {
+let raf = null;
+const full = await chatStream({
+model: game.model, temperature: 0.7, maxTokens: 16384,
+messages: [
+{ role: 'system', content: systemPrompt(false) },
+{ role: 'user', content: `Build this game to the approved plan.\n\nPLAYER REQUEST: ${ask}\n\nPLAN:\n${JSON.stringify(plan)}\n\nBuild the complete project now, exactly per the OUTPUT FORMAT.` },
+],
+onDelta(_, soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; run.detail(`writing… ${(soFar.length / 1024).toFixed(1)} KB`); $('code-view').textContent = soFar; }); },
+});
 const meta = extractMetaLine(full) || {};
+// the build step may still discover it needs art — honor one round of sprite requests
 if (Array.isArray(meta.sprites) && meta.sprites.length && depth < 1) {
-status.textContent = `the agent wants ${meta.sprites.length} sprite${meta.sprites.length > 1 ? 's' : ''} — generating…`;
-const row = document.createElement('div'); row.className = 'tl-sprite-row'; status.appendChild(row);
-for (const s of meta.sprites.slice(0, 4)) {
-const name = String(s.name || 'sprite').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 24);
-try { const url = await imageGen(s.prompt || name, { maxSize: 192 }); game.sprites[name] = url; const img = document.createElement('img'); img.src = url; img.title = name; row.appendChild(img); }
-catch (err) { tlAgent(`sprite "${name}" failed: ${err.message}`, 'bad'); }
+run.set('art', 'active', `the agent needs ${meta.sprites.length} more sprite(s)…`);
+await makeSprites(meta.sprites.slice(0, 4).map(normSprite), run);
+run.set('art', 'done'); run.set('build', 'active', 'writing the game…');
+return buildGame(ask, plan, run, depth + 1);
 }
-renderSprites(); status.textContent = 'sprites ready — continuing…'; return runPrompt(ask, depth + 1);
-}
-
 const built = parseBuild(full);
 if (!built) throw new Error('the agent returned something unservable — try rephrasing');
+built.meta = meta;
+return built;
+}
 
-status.textContent = 'crash-testing the build…';
+async function healBuild(built, errs, run) {
+let raf = null;
+const full = await chatStream({
+model: game.model, temperature: 0.3, maxTokens: 16384,
+messages: [
+{ role: 'system', content: healSystemPrompt() },
+{ role: 'user', content: `This project throws the following uncaught error(s) in a sandboxed iframe (the build is REJECTED if any uncaught error fires):\n\n${errs.map((e) => '- ' + e).join('\n')}\n\nCurrent project:\n${sourceForPrompt(built)}\n\nReturn the COMPLETE corrected project per the OUTPUT FORMAT.` },
+],
+onDelta(_, soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; $('code-view').textContent = soFar; }); },
+});
+const fixed = parseBuild(full);
+if (!fixed) return built; // couldn't parse a fix — keep current; the loop will end
+fixed.meta = built.meta;
+return fixed;
+}
+
+async function healUntilClean(built, run) {
+for (let attempt = 0; attempt <= MAX_FIX; attempt++) {
 const test = await testGameHTML(assemble(bundleFrom(built.entry, built.files)));
-if (!test.ok) throw new Error(`build rejected — it crashed in testing (${test.error}). your last good build is untouched.`);
-if (!isEdit) queueXP({ xp: 50, reason: 'cooked a game in the studio!', unlock: 'first_cook' });
+if (test.ok) {
+built.thumb = test.thumb;
+run.set('test', 'done', attempt ? `crash-tested clean (self-healed ${attempt} bug${attempt > 1 ? 's' : ''})` : 'crash-tested clean');
+return { built, ok: true, fixes: attempt };
+}
+if (attempt === MAX_FIX) { run.set('test', 'bad', `couldn't stabilize after ${MAX_FIX} fixes`); return { built, ok: false, error: test.error }; }
+const errs = (test.errors && test.errors.length ? test.errors : [test.error]).filter(Boolean);
+run.set('test', 'active', `debugging: ${errs[0]} · fix ${attempt + 1}/${MAX_FIX}`);
+addErrChip(run, errs[0]);
+built = await healBuild(built, errs, run);
+}
+return { built, ok: false };
+}
 
+function commitBuild(built, plan, ask, isEdit) {
+if (!isEdit) queueXP({ xp: 50, reason: 'cooked a game in the studio!', unlock: 'first_cook' });
 game.history.push({ srcHtml: game.srcHtml, files: { ...game.files } });
 if (game.history.length > 6) game.history.shift();
 game.srcHtml = built.entry; game.files = built.files || {};
-if (meta.name && !isEdit) game.name = meta.name;
-if (meta.desc) game.desc = meta.desc;
+const meta = built.meta || {};
+if (!isEdit && (plan?.name || meta.name)) game.name = plan?.name || meta.name;
+if (meta.desc || plan?.desc) game.desc = meta.desc || plan.desc;
 if (!game.prompt) game.prompt = ask;
-game.thumb = test.thumb || game.thumb;
-
+if (built.thumb) game.thumb = built.thumb;
+game.lastPlan = plan || game.lastPlan;
+game.lastModel = game.model;
 $('game-title').value = game.name;
 refreshFrame(); persist(); renderFiles();
 collab?.broadcastBuild();
-status.className = 'tl-agent good';
+}
+
+// -------- orchestration
+async function runPrompt(ask) {
+return game.srcHtml ? runEdit(ask) : runCreate(ask);
+}
+
+async function runCreate(ask) {
+const run = makeRunCard();
+run.set('plan', 'active', 'designing your game…');
+const plan = await getPlan(ask, run);
+run.set('plan', 'done', plan.name);
+renderPlanCard(run, plan);
+
+if (plan.sprites?.length) { run.set('art', 'active', `painting ${plan.sprites.length} sprite${plan.sprites.length > 1 ? 's' : ''}…`); await makeSprites(plan.sprites, run); }
+run.set('art', 'done', Object.keys(game.sprites).length ? `${Object.keys(game.sprites).length} sprite(s) ready` : 'pure shapes — no art needed');
+
+run.set('build', 'active', 'writing the game…');
+const built = await buildGame(ask, plan, run);
+run.set('build', 'done');
+
+run.set('test', 'active', 'crash-testing…');
+const res = await healUntilClean(built, run);
+if (!res.ok) { run.el.classList.add('run-failed'); throw new Error(`couldn't get it running cleanly (last error: ${res.error || 'unknown'}) — try rephrasing or simplifying it.`); }
+
+run.set('ship', 'active', 'plating…');
+commitBuild(res.built, plan, ask, false);
+run.set('ship', 'done');
+run.el.classList.add('run-done');
 const nf = Object.keys(game.files).length;
-status.textContent = `OK ${meta.summary || (isEdit ? 'edit applied' : `${game.name} is live`)} — crash-tested · ${nf ? (nf + 1) + ' files · ' : ''}${(built.entry.length / 1024).toFixed(1)} KB`;
+run.detail(`${game.name} is live — ${res.fixes ? `self-healed ${res.fixes} bug${res.fixes > 1 ? 's' : ''}, ` : ''}${nf ? `${nf + 1} files · ` : ''}${(game.srcHtml.length / 1024).toFixed(1)} KB · made with ${modelLabel(game.model)}`);
+}
+
+async function runEdit(ask, depth = 0) {
+const run = makeRunCard();
+run.set('plan', 'done', 'editing the current build'); run.set('art', 'done');
+run.set('build', 'active', 'applying your edit…');
+let raf = null;
+const full = await chatStream({
+model: game.model, temperature: 0.4, maxTokens: 16384,
+messages: [
+{ role: 'system', content: systemPrompt(true) },
+{ role: 'user', content: `Current project:\n${currentSourceForPrompt()}\n\nRequest: ${ask}` },
+],
+onDelta(_, soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; run.detail(`writing… ${(soFar.length / 1024).toFixed(1)} KB`); $('code-view').textContent = soFar; }); },
+});
+const meta = extractMetaLine(full) || {};
+if (Array.isArray(meta.sprites) && meta.sprites.length && depth < 1) {
+run.set('art', 'active', 'generating sprites…');
+await makeSprites(meta.sprites.slice(0, 4).map(normSprite), run);
+run.set('art', 'done');
+return runEdit(ask, depth + 1);
+}
+const built = parseBuild(full);
+if (!built) throw new Error('the agent returned something unservable — try rephrasing');
+built.meta = meta;
+run.set('build', 'done');
+run.set('test', 'active', 'crash-testing…');
+const res = await healUntilClean(built, run);
+if (!res.ok) { run.el.classList.add('run-failed'); throw new Error(`that edit kept crashing (${res.error || 'unknown'}) — your last good build is untouched.`); }
+run.set('ship', 'active', 'saving…');
+commitBuild(res.built, null, ask, true);
+run.set('ship', 'done');
+run.el.classList.add('run-done');
+run.detail(`${meta.summary || 'edit applied'} — ${res.fixes ? `self-healed ${res.fixes} bug${res.fixes > 1 ? 's' : ''}, ` : ''}crash-tested · ${modelLabel(game.model)}`);
 }
 
 // ---------------------------------------------------------------- frame / persist
@@ -201,7 +419,7 @@ $('undo-btn').disabled = !game.history.length;
 $('download-btn').disabled = !game.srcHtml;
 }
 function persist() {
-const record = { name: game.name, desc: game.desc || game.prompt.slice(0, 90), prompt: game.prompt, html: finalHTML(), srcHtml: game.srcHtml, files: game.files, sprites: game.sprites, thumb: game.thumb, multiplayer: game.multiplayer, studio: true };
+const record = { name: game.name, desc: game.desc || game.prompt.slice(0, 90), prompt: game.prompt, html: finalHTML(), srcHtml: game.srcHtml, files: game.files, sprites: game.sprites, thumb: game.thumb, multiplayer: game.multiplayer, model: game.model, studio: true };
 try {
 if (game.id && getCookedGame(game.id)) updateCookedGame(game.id, record);
 else { game.id = game.id || `studio-${Math.random().toString(36).slice(2, 8)}`; addCookedGame({ id: game.id, createdAt: Date.now(), ...record }); }
@@ -442,7 +660,7 @@ tlAgent('on slop.game mobile you need your own xAI key — tap Menu → Settings
 // ---------------------------------------------------------------- settings
 function initSettings() {
 const sel = $('model-select');
-sel.innerHTML = MODEL_CHOICES.map((m) => `<option value="${m.id}">${m.label}</option>`).join('');
+sel.innerHTML = MODEL_CHOICES.map((m) => `<option value="${m.id}">${m.tier === 'pro' ? '🔒 ' : ''}${m.label}</option>`).join('');
 sel.value = game.model;
 $('api-key').value = localStorage.getItem('slop-key') || '';
 setUserKey(localStorage.getItem('slop-key') || '');

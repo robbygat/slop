@@ -10,6 +10,8 @@ import { initXP } from './xp.js';
 import { initDailyDrop, initReveal } from './discover.js';
 import { initFeatureCarousel } from './feature-carousel.js';
 import { initAppStore } from './appstore.js';
+import { initPricing } from './pricing.js';
+import { initAds } from './ads.js';
 import { showToast } from './toast.js';
 
 function init() {
@@ -38,6 +40,10 @@ else openAuthModal();
 
 // global search + mobile nav drawer
 initNav({ filterGrid: true });
+
+// Pro membership pill + credits, and ads (free tier only — off until enabled)
+initPricing();
+initAds();
 }
 
 if (document.readyState === 'loading') {

@@ -68,6 +68,41 @@ border-radius:14px 14px 14px 4px; padding:10px 14px; font-size:13px; font-weight
 .tl-sprite-row { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
 .tl-sprite-row img { width:46px; height:46px; border-radius:10px; border:2.5px solid var(--ink); object-fit:cover; background:var(--cr); }
 
+/* the slop agent's live run card (plan → art → build → heal → ship) */
+.tl-run { align-self:stretch; background:var(--wh); border:2.5px solid var(--ink); border-radius:16px;
+padding:12px 13px; box-shadow:4px 4px 0 var(--ink); display:flex; flex-direction:column; gap:9px; }
+.tl-run.run-done { border-color:var(--mt); }
+.tl-run.run-failed { border-color:var(--red); }
+.run-steps { display:flex; align-items:center; gap:0; }
+.run-step { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; position:relative; }
+.run-step::after { content:''; position:absolute; top:7px; left:50%; width:100%; height:2.5px; background:var(--ink); opacity:.18; z-index:0; }
+.run-step:last-child::after { display:none; }
+.run-dot { width:15px; height:15px; border-radius:50%; border:2.5px solid var(--ink); background:var(--wh); z-index:1; transition:transform .15s; }
+.run-label { font-family:'Space Mono',monospace; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); }
+.run-step.active .run-dot { background:var(--bl); animation:run-pulse 1s ease-in-out infinite; }
+.run-step.active .run-label { color:var(--ink); }
+.run-step.done .run-dot { background:var(--mt); }
+.run-step.bad .run-dot { background:var(--red); }
+@keyframes run-pulse { 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.32); } }
+.run-detail { font-size:12px; font-weight:700; color:var(--soft); line-height:1.45; min-height:1.2em;
+font-family:'Space Mono',monospace; word-break:break-word; }
+.run-body { display:flex; flex-direction:column; gap:8px; }
+.run-body:empty { display:none; }
+.run-plan { background:var(--cr); border:2px solid var(--ink); border-radius:12px; padding:10px 11px; display:flex; flex-direction:column; gap:7px; }
+.run-pitch { margin:0; font-weight:800; color:var(--ink); font-size:12.5px; line-height:1.4; }
+.run-plan-col h5 { margin:0 0 3px; font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--pk); font-weight:900; }
+.run-plan-col ul { margin:0; padding-left:16px; display:flex; flex-direction:column; gap:2px; }
+.run-plan-col li { font-size:11.5px; font-weight:600; color:var(--soft); line-height:1.4; }
+.run-files code { font-family:'Space Mono',monospace; font-size:10.5px; background:var(--y); border:1.5px solid var(--ink); border-radius:5px; padding:0 4px; color:var(--ink); }
+.run-sprites { display:flex; gap:6px; flex-wrap:wrap; }
+.run-sprite { position:relative; width:50px; height:50px; border-radius:10px; border:2.5px solid var(--ink); overflow:hidden; background:var(--cr); display:grid; place-items:center; }
+.run-sprite img { width:100%; height:100%; object-fit:cover; }
+.run-sprite-name { position:absolute; bottom:0; left:0; right:0; font-size:7.5px; font-weight:800; text-align:center; background:rgba(26,26,46,.72); color:#fff; padding:1px 2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.run-sprite.loading { animation:run-pulse 1.2s ease-in-out infinite; }
+.run-sprite.bad { border-color:var(--red); }
+.run-err { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; color:#C0392B;
+background:#FFF0F0; border:2px solid var(--red); border-radius:9px; padding:6px 9px; word-break:break-word; line-height:1.4; }
+
 .prompt-zone { flex:0 0 auto; padding:14px 16px 16px; border-top:var(--bw) solid var(--ink); background:var(--cr); }
 .template-row { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:9px; }
 .template { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; color:var(--ink);

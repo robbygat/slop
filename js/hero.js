@@ -12,14 +12,14 @@ const MODEL_KEY = 'slop-model'; // shared with Slop Studio
 function initModelPicker() {
 const sel = document.getElementById('hero-model');
 if (!sel) return;
-sel.innerHTML = MODEL_CHOICES.map((m) => `<option value="${m.id}">${m.label}</option>`).join('');
+sel.innerHTML = MODEL_CHOICES.map((m) => `<option value="${m.id}">${m.tier === 'pro' ? '🔒 ' : ''}${m.label}</option>`).join('');
 const saved = localStorage.getItem(MODEL_KEY) || MODELS.cook;
 if (MODEL_CHOICES.some((m) => m.id === saved)) sel.value = saved;
 
 const note = document.getElementById('hero-model-note');
 const updateNote = () => {
 const choice = MODEL_CHOICES.find((m) => m.id === sel.value);
-if (note) note.textContent = choice && choice.provider !== 'xai' ? '· needs server key' : '';
+if (note) note.textContent = choice?.tier === 'pro' ? '· Pro' : '';
 };
 updateNote();
 sel.addEventListener('change', () => { localStorage.setItem(MODEL_KEY, sel.value); updateNote(); });

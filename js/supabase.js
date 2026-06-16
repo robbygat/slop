@@ -36,3 +36,4 @@ export function getSupabase() {
 }
 
 export const SUPABASE_URL = cfg.supabaseUrl;
+export const SUPABASE_ANON_KEY = cfg.supabaseAnonKey;

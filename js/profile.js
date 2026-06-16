@@ -5,6 +5,8 @@ import { initAccount } from './account.js';
 import { loadPlays, playCount, fmtPlays } from './plays.js';
 import { initNav } from './nav.js';
 import { initXP, renderProfileXP, getProgress } from './xp.js';
+import { initPricing } from './pricing.js';
+import { initAds } from './ads.js';
 import { showToast } from './toast.js';
 
 const params = new URLSearchParams(location.search);
@@ -329,12 +331,15 @@ function openEdit() {
   bannerCleared = false;
   setBgPicker(profile.bg_color || DEFAULT_BG);
   renderBannerPreview(profile.banner_url);
+  const sv = $('pf-edit-save');
+  sv.disabled = false; sv.textContent = 'Save profile'; sv.classList.remove('saved');
   $('pf-edit').classList.remove('hidden');
 }
 
 function closeEdit() { $('pf-edit').classList.add('hidden'); }
 
 $('pf-edit-cancel').onclick = closeEdit;
+$('pf-edit-cancel-foot').onclick = closeEdit;
 $('pf-edit').addEventListener('click', (e) => { if (e.target.id === 'pf-edit') closeEdit(); });
 $('pf-edit-bg').addEventListener('input', (e) => setBgPicker(e.target.value));
 $('pf-edit-banner-clear').addEventListener('click', () => {
@@ -349,7 +354,8 @@ $('pf-edit-banner-file').addEventListener('change', async (e) => {
   if (!file) return;
   const err = $('pf-edit-error');
   if (file.size > 5 * 1024 * 1024) { err.textContent = 'banner too big — max 5 MB'; return; }
-  err.textContent = 'uploading…';
+  err.textContent = 'uploading banner…';
+  $('pf-edit-save').disabled = true;
   try {
     pendingBannerUrl = await api.uploadBanner(file);
     bannerCleared = false;
@@ -358,6 +364,8 @@ $('pf-edit-banner-file').addEventListener('change', async (e) => {
   } catch (e2) {
     err.textContent = e2.message || 'upload failed';
     pendingBannerUrl = undefined;
+  } finally {
+    $('pf-edit-save').disabled = false;
   }
 });
 
@@ -366,7 +374,8 @@ $('pf-edit-file').addEventListener('change', async (e) => {
   if (!file) return;
   const err = $('pf-edit-error');
   if (file.size > 3 * 1024 * 1024) { err.textContent = 'image too big — max 3 MB'; return; }
-  err.textContent = 'uploading…';
+  err.textContent = 'uploading photo…';
+  $('pf-edit-save').disabled = true;
   try {
     pendingAvatarUrl = await api.uploadAvatar(file);
     $('pf-edit-prev').innerHTML = `<img class="pf-avatar-prev" src="${escapeHTML(pendingAvatarUrl)}" alt="preview">`;
@@ -374,13 +383,18 @@ $('pf-edit-file').addEventListener('change', async (e) => {
   } catch (e2) {
     err.textContent = e2.message || 'upload failed';
     pendingAvatarUrl = undefined;
+  } finally {
+    $('pf-edit-save').disabled = false;
   }
 });
 
 $('pf-edit-save').addEventListener('click', async () => {
   const btn = $('pf-edit-save');
   const err = $('pf-edit-error');
+  err.textContent = '';
   btn.disabled = true;
+  btn.classList.remove('saved');
+  btn.textContent = 'Saving…';
   try {
     const patch = {
       display_name: $('pf-edit-name').value.trim(),
@@ -401,11 +415,13 @@ $('pf-edit-save').addEventListener('click', async () => {
     $('pf-name').textContent = profile.display_name || profile.username;
     $('pf-avatar').innerHTML = avatarMarkup(profile.avatar_url, profile.username, 'pf-avatar-img');
     renderBioLink();
-    closeEdit();
+    btn.textContent = 'Saved ✓';
+    btn.classList.add('saved');
     showToast('profile updated');
+    setTimeout(() => { closeEdit(); btn.textContent = 'Save profile'; btn.classList.remove('saved'); btn.disabled = false; }, 600);
   } catch (e2) {
     err.textContent = e2.message || 'could not save';
-  } finally {
+    btn.textContent = 'Save profile';
     btn.disabled = false;
   }
 });
@@ -413,6 +429,8 @@ $('pf-edit-save').addEventListener('click', async () => {
 initAccount();
 initNav({ filterGrid: false });
 initXP();
+initPricing();
+initAds();
 render().catch((err) => {
   console.error('[profile] render failed', err);
   showMissing('something broke — try refreshing');

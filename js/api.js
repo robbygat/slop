@@ -313,6 +313,43 @@ export const api = {
     return error ? null : data;
   },
 
+  // -------------------------------------------------------------- billing / pro
+  // Pro status + credit balance + referral code in one call (also refreshes the
+  // monthly/daily allowance server-side). Returns null when signed out / offline.
+  async myBilling() {
+    const s = sb();
+    if (!s) return null;
+    const { data: { session } } = await s.auth.getSession();
+    if (!session) return null;
+    const { data, error } = await s.rpc('my_billing');
+    if (error) return null;
+    const row = Array.isArray(data) ? data[0] : data;
+    return row ? { is_pro: !!row.is_pro, credits: row.credits ?? 0, pro_until: row.pro_until || null, referral_code: row.referral_code || null } : null;
+  },
+
+  // Start a Stripe Checkout session. kind: 'pro' | 'topup_small' | 'topup_large'.
+  // Returns the redirect URL, or throws a friendly error.
+  async createCheckout(kind) {
+    const s = sb();
+    if (!s) throw new Error('cannot reach slop.game servers — check your connection');
+    const { data: { session } } = await s.auth.getSession();
+    if (!session) throw new Error('sign in first');
+    const { data, error } = await s.functions.invoke('stripe-checkout', { body: { kind } });
+    if (error) throw new Error('checkout failed — is billing set up yet?');
+    if (!data?.url) throw new Error(data?.error || 'checkout unavailable');
+    return data.url;
+  },
+
+  // Redeem a referral code (both sides get bonus credits). Returns a status string.
+  async applyReferral(code) {
+    const s = sb();
+    if (!s || !code) return 'invalid';
+    const { data: { session } } = await s.auth.getSession();
+    if (!session) return 'signed_out';
+    const { data, error } = await s.rpc('apply_referral', { p_code: code });
+    return error ? 'error' : (data || 'ok');
+  },
+
   // -------------------------------------------------------------- scores / leaderboards
   // Submit a verified score (must be signed in; RLS ties it to the account).
   async submitScore(game, score, meta) {
