@@ -138,10 +138,9 @@ box-shadow: var(--shb);
 hero watercolor + Newgrounds-style arcade + prize ribbon + report
 ========================================================================== */
 
-/* ---- moving watercolor hero ---- */
-.hero { position: relative; overflow: hidden; isolation: isolate; }
-.hero::before, .hero::after {
-content: ''; position: absolute; inset: -35%; z-index: 0; pointer-events: none;
+/* ---- moving watercolor games section (former hero backdrop) ---- */
+.games-sec::before, .games-sec::after {
+content: ''; position: absolute; inset: -35%; z-index: 1; pointer-events: none;
 filter: blur(64px) saturate(1.25);
 background:
 radial-gradient(28% 34% at 18% 28%, rgba(255,225,53,.60), transparent 60%),
@@ -153,7 +152,7 @@ radial-gradient(22% 26% at 48% 12%, rgba(255,122,53,.42), transparent 60%);
 opacity: .32;
 animation: heroWC 26s ease-in-out infinite alternate;
 }
-.hero::after { animation-duration: 34s; animation-direction: alternate-reverse; opacity: .22; }
+.games-sec::after { animation-duration: 34s; animation-direction: alternate-reverse; opacity: .22; }
 @keyframes heroWC {
 0% { transform: translate(0,0) scale(1) rotate(0deg); }
 50% { transform: translate(-5%,3%) scale(1.18) rotate(7deg); }
@@ -161,7 +160,7 @@ animation: heroWC 26s ease-in-out infinite alternate;
 }
 .hero-inner { position: relative; z-index: 2; width: 100%; }
 .hero .fdeco { z-index: 1; }
-@media (prefers-reduced-motion: reduce) { .hero::before, .hero::after { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .games-sec::before, .games-sec::after { animation: none; } }
 
 /* ---- July prize ribbon ---- */
 .prize-ribbon {

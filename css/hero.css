@@ -1,28 +1,30 @@
-/* ============ hero — full-bleed shader stage, premium ============ */
+/* ============ hero — full-bleed video stage, premium ============ */
 .hero {
 position: relative;
-background: var(--cr);
+background: var(--ink);
 min-height: 100svh;
 display: flex;
 flex-direction: column;
 overflow: hidden;
 }
 
-/* full-bleed interactive shader background (Three.js canvas mounts here) */
+/* full-bleed looping video background */
 .hero-bg {
 position: absolute;
 inset: 0;
 z-index: 0;
 pointer-events: none;
-/* fallback gradient (site palette) shown until / unless the shader mounts */
-background: #f9f9f9 linear-gradient(180deg,
-#FFFBF0 0%, #FFE135 16%, #FF7A35 33%, #FF4EB8 50%,
-#4ECAFF 68%, #2B6BFF 84%, #11121A 100%);
+overflow: hidden;
+background: var(--ink);
 }
-.hero-bg canvas {
+.hero-video {
 display: block;
-width: 100% !important;
-height: 100% !important;
+width: 100%;
+height: 100%;
+object-fit: cover;
+}
+@media (prefers-reduced-motion: reduce) {
+.hero-video { display: none; }
 }
 
 .hero-inner {

@@ -64,9 +64,6 @@
 </div>
 
 <div class="nav-right">
-<div class="nav-topcta">
-<a class="nav-ghost" href="studio.html">Open Studio</a>
-</div>
 <label class="nav-search nav-search-bar" for="nav-search-input">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
 <input id="nav-search-input" placeholder="search…" autocomplete="off">
@@ -101,8 +98,10 @@
 
 <!-- ============ HERO ============ -->
 <section class="hero">
-<!-- full-bleed interactive Three.js shader background -->
-<div class="hero-bg" id="hero-shader" aria-hidden="true"></div>
+<!-- full-bleed video background -->
+<div class="hero-bg" aria-hidden="true">
+<video class="hero-video" src="assets/slop.mp4" autoplay muted loop playsinline preload="auto"></video>
+</div>
 
 <!-- in-hero top bar: SLOP.game branding + minimal nav (global nav reveals on scroll) -->
 <div class="hero-topbar">
@@ -118,7 +117,6 @@
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
 <input id="hero-search-input" placeholder="search games &amp; players…" autocomplete="off">
 </label>
-<a class="htb-ghost" href="studio.html">Open Studio</a>
 <span id="hero-auth"><button class="htb-signin" id="hero-signin" type="button">Sign in</button></span>
 </div>
 </div>
@@ -217,6 +215,7 @@
 
 <!-- ============ SLOP GAMES (right after the hero) ============ -->
 <section class="games-sec" id="games">
+<div class="games-sec-bg" id="games-shader" aria-hidden="true"></div>
 <div class="wrap browse-intro">
 <div class="sec-head">
 <h2 class="sec-title">try out what's live.</h2>

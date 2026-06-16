@@ -21,7 +21,7 @@ initHero();
 
 // interactive Three.js shader showpiece — dynamically imported so a CDN/WebGL
 // failure only drops the visual (CSS gradient fallback) instead of the page JS.
-import('./hero-shader.js').then((m) => m.initHeroShader()).catch(() => {});
+import('./hero-shader.js').then((m) => m.initGamesShader()).catch(() => {});
 
 initGamesGrid();
 initUpload();

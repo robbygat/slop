@@ -3,7 +3,7 @@
 // A port of the React Three Fiber "shader card" spec, recolored to SLOP.game's
 // palette: a 7-stop vertical gradient with domain-warped waves, a simplex-noise
 // layer, an overlay-blended grain, and click ripples. Used full-bleed behind the
-// homepage hero and, via mountShader(), behind "cool" surfaces in Slop Studio —
+// homepage games section and, via mountShader(), behind "cool" surfaces in Slop Studio —
 // where setThinking(true) intensifies and speeds up the motion while the agent
 // works. Degrades gracefully: a CSS gradient fallback shows if WebGL/Three.js
 // is unavailable.
@@ -310,9 +310,12 @@ export function mountShader(el, opts = {}) {
   };
 }
 
-/** Homepage hero: full-bleed background, ripples anywhere on the hero. */
-export function initHeroShader() {
-  const el = document.getElementById('hero-shader');
+/** Homepage games section: full-bleed background, ripples anywhere on the section. */
+export function initGamesShader() {
+  const el = document.getElementById('games-shader');
   if (!el) return;
-  mountShader(el, { interactionEl: el.closest('.hero') || el });
+  mountShader(el, { interactionEl: el.closest('.games-sec') || el });
 }
+
+/** @deprecated use initGamesShader — kept for any stale imports */
+export const initHeroShader = initGamesShader;

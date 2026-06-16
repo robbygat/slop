@@ -1,8 +1,50 @@
 /* ============ browse section — widescreen arcade shelf ============ */
 
 .games-sec {
-/* calm, neutral canvas so the borderless gallery is the only thing that pops */
-background: linear-gradient(180deg, #fffaf2 0%, var(--cr) 32%, #f6f8ff 100%);
+position: relative;
+overflow: hidden;
+isolation: isolate;
+background: var(--cr);
+}
+
+/* full-bleed interactive shader background (Three.js canvas mounts here) */
+.games-sec-bg {
+position: absolute;
+inset: 0;
+z-index: 0;
+pointer-events: none;
+background: #f9f9f9 linear-gradient(180deg,
+#FFFBF0 0%, #FFE135 16%, #FF7A35 33%, #FF4EB8 50%,
+#4ECAFF 68%, #2B6BFF 84%, #11121A 100%);
+}
+.games-sec-bg canvas {
+display: block;
+width: 100% !important;
+height: 100% !important;
+}
+
+.games-sec > .wrap,
+.games-sec > .browse-stage {
+position: relative;
+z-index: 2;
+}
+
+.games-sec .browse-intro .sec-title {
+color: var(--ink);
+text-shadow:
+0 1px 0 rgba(255, 255, 255, 0.55),
+0 8px 32px rgba(255, 255, 255, 0.35),
+0 4px 24px rgba(17, 18, 26, 0.25);
+}
+.games-sec .browse-intro .sec-sub {
+color: var(--ink);
+text-shadow:
+0 1px 0 rgba(255, 255, 255, 0.55),
+0 4px 24px rgba(255, 255, 255, 0.35);
+}
+.games-sec .pop-head h3,
+.games-sec .pop-sub {
+text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45), 0 4px 18px rgba(255, 255, 255, 0.28);
 }
 
 .browse-intro {

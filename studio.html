@@ -42,13 +42,19 @@ border:1px solid rgba(255,255,255,.5); box-shadow:inset 0 1px 0 rgba(255,255,255
 .topbar { flex:0 0 auto; display:flex; align-items:center; gap:12px; padding:11px 18px;
 background:rgba(255,251,240,.72); -webkit-backdrop-filter:blur(18px) saturate(160%); backdrop-filter:blur(18px) saturate(160%);
 border-bottom:1px solid rgba(17,18,26,.10); box-shadow:var(--soft1); position:relative; z-index:50; flex-wrap:wrap; }
-.topbar .brand { letter-spacing:-.02em; }
-.topbar .brand .pk { color:var(--el); }
+/* main-website brand + nav links (matches .site-nav on the rest of the site) */
+.brand { display:inline-flex; align-items:center; text-decoration:none; flex-shrink:0; white-space:nowrap; transition:transform .12s ease; }
+.brand:hover { transform:translateY(-1px); }
+.brand .wordmark { font-family:'Space Grotesk', sans-serif; font-weight:800; font-size:22px; letter-spacing:-.03em; color:var(--ink); }
+.brand .dot-pk { color:var(--pk); }
+.studio-nav { display:flex; align-items:center; gap:2px; flex-shrink:0; }
+.studio-nav a { font-family:var(--font-body); font-weight:700; font-size:14px; color:var(--ink); text-decoration:none; padding:8px 14px; border-radius:999px; transition:background .14s ease, color .14s ease; }
+.studio-nav a:hover { color:var(--el); background:rgba(43,107,255,.08); }
+@media (max-width:960px){ .studio-nav { display:none; } }
 .back-link { font-family:'Space Mono',monospace; font-weight:700; font-size:12.5px; color:var(--ink); text-decoration:none;
 background:rgba(255,255,255,.65); border:2px solid rgba(17,18,26,.14); border-radius:100px; padding:8px 14px; white-space:nowrap; transition:transform .12s, background .14s; }
 .back-link:hover { background:#fff; transform:translateY(-1px); }
-.brand { font-family:'Space Grotesk', sans-serif; font-size:18px; white-space:nowrap; }
-.brand .pk { color:var(--pk); }
+/* brand uses the site wordmark style defined above */
 #game-title { flex:1; min-width:120px; font-family:'Space Grotesk', sans-serif; font-size:16px; color:var(--ink);
 background:rgba(255,255,255,.7); border:2.5px solid var(--ink); border-radius:100px; padding:8px 16px; outline:none; }
 #game-title:focus { box-shadow:3px 3px 0 var(--ink); }
@@ -361,7 +367,8 @@ box-shadow:2px 2px 0 var(--ink);
 flex-shrink:0;
 }
 
-.brand { font-size:14px; flex-shrink:0; }
+.brand { flex-shrink:0; }
+.brand .wordmark { font-size:18px; }
 
 #game-title {
 order:0;
@@ -527,8 +534,12 @@ flex-shrink:0;
 <div class="studio-bg" id="studio-shader" aria-hidden="true"></div>
 
 <div class="topbar">
-<a class="back-link" href="index.html">← SLOP.game</a>
-<span class="brand">SLOP<span class="pk">STUDIO</span></span>
+<a class="brand" href="/"><span class="wordmark">slop<span class="dot-pk">.</span>game</span></a>
+<nav class="studio-nav" aria-label="primary">
+<a href="index.html#games">Browse</a>
+<a href="index.html#multiplayer">Multiplayer</a>
+<a href="index.html#publish">Publish</a>
+</nav>
 <input id="game-title" value="untitled slop" maxlength="48" spellcheck="false">
 <button type="button" class="bar-btn bar-menu" id="bar-menu" aria-expanded="false" aria-controls="topbar-actions">Menu</button>
 <button class="bar-btn mt topbar-publish" id="publish-btn">Publish</button>
