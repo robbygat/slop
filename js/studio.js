@@ -6,6 +6,7 @@
 
 import { chatStream, extractFence, extractMetaLine, imageGen, MODELS, MODEL_CHOICES, setUserKey } from './ai.js';
 import { testGameHTML } from './sandbox.js';
+import { attachFrameMonitor, createDebugPanel, injectRuntimeHook, MOD_RX, mountErrorOverlay } from './debug.js';
 import { createSpeech } from './speech.js';
 import { api, escapeHTML } from './api.js';
 import { getCookedGame, addCookedGame, updateCookedGame } from './games-grid.js';
@@ -29,7 +30,7 @@ model: localStorage.getItem('slop-model') || MODELS.studio,
 let busy = false;
 
 // ---------------------------------------------------------------- assembly / bundling
-const MOD_RECEIVER = `<script id="slop-mod-rx">window.addEventListener('message',function(e){if(e&&e.data&&e.data.__slopmod){try{(new Function(e.data.__slopmod))();}catch(err){console.warn('slopmod',err);}}});<\/script>`;
+const MOD_RECEIVER = MOD_RX;
 
 function injectHead(html, tag) {
 if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, (m) => m + '\n' + tag);
@@ -40,6 +41,7 @@ function stripInjected(html) {
 return html
 .replace(/<script id="slop-sprites">[\s\S]*?<\/script>\n?/i, '')
 .replace(/<script id="slop-mod-rx">[\s\S]*?<\/script>\n?/i, '')
+.replace(/<script id="slop-debug">[\s\S]*?<\/script>\n?/i, '')
 .replace(/<!--slopnet-->[\s\S]*?<!--\/slopnet-->\n?/i, '');
 }
 // inline local <script src> / <link href> from the project file map
@@ -62,6 +64,7 @@ return html;
 }
 function assemble(html, { sprites = game.sprites, multiplayer = game.multiplayer } = {}) {
 let out = stripInjected(html);
+out = injectRuntimeHook(out);
 out = injectHead(out, MOD_RECEIVER);
 if (Object.keys(sprites).length) out = injectHead(out, `<script id="slop-sprites">window.SPRITES=${JSON.stringify(sprites)};</scr` + `ipt>`);
 if (multiplayer) out = injectHead(out, `<!--slopnet-->${SLOPNET_INLINE}<!--/slopnet-->`);
@@ -79,6 +82,7 @@ let m;
 while ((m = re.exec(text))) files[m[1].trim()] = m[2].trim();
 const entryKey = Object.keys(files).find((k) => /(^|\/)index\.html?$/i.test(k)) || Object.keys(files).find((k) => /\.html?$/i.test(k));
 if (entryKey) { const entry = files[entryKey]; delete files[entryKey]; return { entry, files }; }
+if (Object.keys(files).length) return { entry: null, files, partial: true };
 }
 let html = extractFence(text);
 if (!html) { const d = text.indexOf('<!DOCTYPE'); if (d >= 0) html = text.slice(d).trim(); }
@@ -104,6 +108,7 @@ const CREATE_RULES = `HARD REQUIREMENTS:
 - The game runs inside a sandboxed iframe: never use localStorage, cookies, alert/prompt/confirm, or top-level navigation. Attach key listeners to window. Canvas scales to fit the viewport. No external resources except (optionally) a CDN <script> when truly needed.
 - It must not throw any runtime errors — the build is rejected if the console sees a single uncaught error. Guard everything.
 - Playable instantly: show controls on screen, start on first input or a big start button, include score and a lose (and/or win) state with instant restart (key R + button).
+- On game over, submit the score: window.dispatchEvent(new CustomEvent('slop:score', { detail: { score: yourScoreNumber } }));
 - Make it FUN and JUICY: screen shake, particles, color pops, escalating difficulty.`;
 
 function spriteRules() {
@@ -145,7 +150,7 @@ Then EITHER one \`\`\`html block (single-file) OR multiple \`=== path ===\` + fe
 // debugs its own game (up to MAX_FIX passes) until the sandbox is clean. The whole run is
 // streamed to a live "run card" stepper so players watch it think, paint, build, and debug.
 
-const MAX_FIX = 3;
+const MAX_FIX = 5;
 const STUDIO_BUILD_MAX = 32768;
 const CONTINUE_MSG = 'Your response was cut off mid-output. Continue EXACTLY where you stopped — no preamble, no repetition. Close every open ``` fence and finish all remaining files in the project.';
 const STEP_DEFS = [['plan', 'Plan'], ['art', 'Art'], ['build', 'Build'], ['test', 'Test & heal'], ['ship', 'Ship']];
@@ -229,15 +234,20 @@ Respond with ONLY a single JSON object — no prose, no markdown, no code fences
 Rules: keep files minimal — 1 file for small games, split into js/ + css/ only when it genuinely helps; index.html is always the entry. At most 4 sprites, and only art the game truly needs (many great games are pure shapes — use [] then). mechanics: 3-6 short bullets.`;
 }
 function healSystemPrompt() {
-return `You are the debugger inside Slop Studio. You receive a browser game that throws an uncaught runtime error in a sandboxed iframe, plus the exact error message(s). Find the ROOT CAUSE and fix it.
+return `You are the debugger inside Slop Studio. A browser game throws uncaught runtime error(s) in a sandboxed iframe. Find the ROOT CAUSE and fix ONLY the broken code — do NOT rewrite unrelated files or restart from scratch.
 
 ${CREATE_RULES}
 
 ${MULTIFILE_RULES}
 
-Return ONLY the corrected project in the OUTPUT FORMAT:
+PATCH MODE (critical):
+- Multi-file project: return ONLY the file(s) that contain the bug, each as === relative/path === + fenced block. Omit every unchanged file.
+- Single-file game: return the complete corrected HTML in one \`\`\`html block.
+- Preserve all working logic, art, and structure. Minimal diff.
+
+Return ONLY the patch per OUTPUT FORMAT:
 Line 1: single-line JSON: {"name":"...","desc":"...","summary":"what you fixed, max 60 chars"}
-Then EITHER one \`\`\`html block (single-file) OR multiple \`=== path ===\` + fenced blocks (multi-file). Change only what's needed to stop the crash; keep everything else identical.`;
+Then the patch file(s) — nothing else.`;
 }
 
 function parsePlan(text) {
@@ -254,6 +264,13 @@ files: Array.isArray(obj.files) ? obj.files.slice(0, 12).map((f) => ({ path: Str
 sprites: Array.isArray(obj.sprites) ? obj.sprites.slice(0, 4).map(normSprite).filter((s) => s.name && s.prompt) : [],
 mechanics: Array.isArray(obj.mechanics) ? obj.mechanics.slice(0, 8).map((m) => String(m).slice(0, 80)) : [],
 };
+}
+
+function mergeBuild(base, patch) {
+const out = { entry: base.entry, files: { ...(base.files || {}) }, meta: patch.meta || base.meta };
+if (patch.entry) out.entry = patch.entry;
+if (patch.files) Object.assign(out.files, patch.files);
+return out;
 }
 
 function sourceForPrompt(built) {
@@ -320,13 +337,14 @@ const full = await agentStream({
 model: game.model, temperature: 0.3,
 messages: [
 { role: 'system', content: healSystemPrompt() },
-{ role: 'user', content: `This project throws the following uncaught error(s) in a sandboxed iframe (the build is REJECTED if any uncaught error fires):\n\n${errs.map((e) => '- ' + e).join('\n')}\n\nCurrent project:\n${sourceForPrompt(built)}\n\nReturn the COMPLETE corrected project per the OUTPUT FORMAT.` },
+{ role: 'user', content: `This project throws the following uncaught error(s) in a sandboxed iframe (the build is REJECTED if any uncaught error fires):\n\n${errs.map((e) => '- ' + e).join('\n')}\n\nCurrent project:\n${sourceForPrompt(built)}\n\nReturn ONLY the file(s) that need fixing — patch in place, do not rewrite the whole project.` },
 ],
 onDelta(soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; $('code-view').textContent = soFar; }); },
 });
 const fixed = parseBuild(full);
-if (!fixed) return built; // couldn't parse a fix — keep current; the loop will end
-fixed.meta = built.meta;
+if (!fixed) return built;
+fixed.meta = { ...built.meta, ...fixed.meta };
+if (fixed.partial || (!fixed.entry && Object.keys(fixed.files || {}).length)) return mergeBuild(built, fixed);
 return fixed;
 }
 
@@ -430,9 +448,20 @@ run.detail(`${meta.summary || 'edit applied'} — ${res.fixes ? `self-healed ${r
 }
 
 // ---------------------------------------------------------------- frame / persist
+let frameMonitor = null;
+let debugPanel = null;
+let errOverlay = null;
+
 function refreshFrame() {
 $('play-empty').style.display = 'none';
 $('play-frame').style.display = '';
+frameMonitor?.destroy();
+frameMonitor = attachFrameMonitor($('play-frame'), {
+onErrors(errs) {
+debugPanel?.setErrors(errs);
+errOverlay?.show(errs);
+},
+});
 $('play-frame').srcdoc = finalHTML();
 $('code-view').textContent = game.srcHtml || '';
 $('restart-btn').disabled = !game.srcHtml;
@@ -440,6 +469,8 @@ if (game.srcHtml && isMobileStudio()) setStudioView('preview');
 $('open-play').disabled = !game.id;
 $('undo-btn').disabled = !game.history.length;
 $('download-btn').disabled = !game.srcHtml;
+debugPanel?.setErrors([]);
+errOverlay?.hide();
 }
 function persist() {
 const record = { name: game.name, desc: game.desc || game.prompt.slice(0, 90), prompt: game.prompt, html: finalHTML(), srcHtml: game.srcHtml, files: game.files, sprites: game.sprites, thumb: game.thumb, multiplayer: game.multiplayer, model: game.model, studio: true };
@@ -726,6 +757,16 @@ toast('settings saved');
 // ---------------------------------------------------------------- boot
 async function boot() {
 initTabs(); initSettings(); initMobileStudio(); renderSprites(); renderFiles();
+const wrap = $('play-frame-wrap');
+debugPanel = createDebugPanel(wrap);
+errOverlay = mountErrorOverlay(wrap, {
+onFix(err) {
+if (!game.srcHtml || busy) return;
+$('prompt').value = `Fix this runtime error:\n${err}`;
+$('prompt').focus();
+toast('error sent to prompt — hit Build It to patch in place');
+},
+});
 tlAgent('welcome to the studio. describe a game — any game — and I\'ll build it. then keep talking: "make it harder", "the hero is a dragon", "generate a sprite for the boss", "split this into files", "add multiplayer". every aspect is promptable.', '');
 warnIfStudioNeedsKey();
 

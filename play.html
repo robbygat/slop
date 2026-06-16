@@ -333,6 +333,28 @@ border-radius: 10px;
 padding: 7px 10px;
 }
 
+/* runtime errors + leaderboard */
+.slop-err-overlay { position:absolute; inset:10px 10px auto 10px; z-index:8; background:rgba(255,240,240,.97); border:2.5px solid var(--red); border-radius:12px; padding:10px 12px; box-shadow:4px 4px 0 var(--ink); max-height:40%; overflow:auto; }
+.slop-err-overlay[hidden] { display:none !important; }
+.slop-err-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.slop-err-icon { width:22px; height:22px; border-radius:50%; background:var(--red); color:#fff; font-weight:900; display:grid; place-items:center; font-size:14px; flex:none; }
+.slop-err-title { font-family:'Fredoka One',cursive; font-size:14px; color:var(--red); flex:1; }
+.slop-err-dismiss { background:transparent; border:none; font-size:20px; cursor:pointer; color:var(--ink); line-height:1; }
+.slop-err-msg { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; color:#8B0000; white-space:pre-wrap; word-break:break-word; margin:0 0 8px; max-height:100px; overflow:auto; }
+.slop-err-fix { font-family:'Fredoka One',cursive; font-size:12px; color:#fff; background:var(--pk); border:2px solid var(--ink); border-radius:100px; padding:6px 14px; cursor:pointer; box-shadow:2px 2px 0 var(--ink); }
+
+.leaderboard-sec { max-width:420px; margin:0 auto 24px; padding:0 16px; }
+.slop-lb { background:var(--wh); border:3px solid var(--ink); border-radius:16px; padding:14px 16px; box-shadow:6px 6px 0 var(--ink); }
+.slop-lb .lb-head { font-family:'Fredoka One',cursive; font-size:17px; color:var(--pk); margin-bottom:10px; text-align:center; letter-spacing:.03em; }
+.slop-lb .lb-row { display:flex; align-items:center; gap:10px; padding:7px 12px; border-radius:10px; background:var(--cr); margin-bottom:6px; }
+.slop-lb .lb-row.me { background:rgba(255,225,53,.35); outline:2px solid var(--y); }
+.slop-lb .lb-rank { width:28px; font-weight:900; color:var(--soft); text-align:center; flex:none; font-family:'Space Mono',monospace; }
+.slop-lb .lb-name { flex:1; font-weight:800; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:14px; }
+.slop-lb .lb-score { font-family:'Space Mono',monospace; font-weight:700; color:var(--mt); flex:none; font-size:13px; }
+.slop-lb .lb-empty { text-align:center; color:var(--soft); font-weight:700; font-size:13px; padding:14px; font-family:'Space Mono',monospace; }
+.slop-lb .lb-foot { text-align:center; margin-top:10px; font-size:12px; color:var(--soft); font-weight:700; font-family:'Space Mono',monospace; }
+.slop-lb .lb-foot a { color:var(--pk); font-weight:900; }
+
 @media (max-width: 760px) {
 .drawer { position: fixed; inset: auto 0 0 0; max-width: none; height: 60vh; border-left: none; border-top: 3px solid var(--ink); z-index: 40; }
 }
@@ -392,6 +414,10 @@ save as a brand-new game (keeps the original)
 <pre class="code-view" id="code-view">// grok's rewrite streams here, live…</pre>
 </aside>
 </div>
+
+<section class="leaderboard-sec" id="leaderboard-sec" hidden>
+<div id="leaderboard-mount"></div>
+</section>
 
 <section class="comments" id="comments-sec" hidden>
 <h2 class="comments-title">Comments <span class="comments-count" id="comments-count">0</span></h2>

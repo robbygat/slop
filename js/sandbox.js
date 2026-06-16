@@ -3,29 +3,14 @@
 // crashes and reject the build, and (b) grab a real gameplay screenshot from
 // its canvas for the grid thumbnail.
 
+import { injectRuntimeHook } from './debug.js';
+
 const TEST_MS = 2600;
 const THUMB_W = 640;
 const THUMB_H = 400;
 
-// injected before any game code so even parse-time crashes are captured.
-// We grab the message + line/col + first stack frames so the studio's self-heal
-// loop can feed the agent a precise, actionable error (not just "runtime error").
-const ERROR_HOOK = '<script>window.__slopErrors=[];'
-+ 'window.addEventListener("error",function(e){'
-+ 'var loc=e.lineno?(" (line "+e.lineno+(e.colno?":"+e.colno:"")+")"):"";'
-+ 'var msg=(e.message||"runtime error")+loc;'
-+ 'if(e.error&&e.error.stack){var s=String(e.error.stack).split("\\n").slice(0,3).join(" | ");if(s)msg+=" — "+s;}'
-+ 'window.__slopErrors.push(msg);'
-+ '});'
-+ 'window.addEventListener("unhandledrejection",function(e){'
-+ 'var r=e.reason;window.__slopErrors.push("Unhandled promise rejection: "+((r&&r.message)||String(r||"unknown")));'
-+ '});'
-+ '</' + 'script>';
-
 function injectHook(html) {
-if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, (m) => m + ERROR_HOOK);
-if (/<html[^>]*>/i.test(html)) return html.replace(/<html[^>]*>/i, (m) => m + ERROR_HOOK);
-return ERROR_HOOK + html;
+  return injectRuntimeHook(html);
 }
 
 /**

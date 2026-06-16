@@ -103,6 +103,30 @@ font-family:'Space Mono',monospace; word-break:break-word; }
 .run-err { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; color:#C0392B;
 background:#FFF0F0; border:2px solid var(--red); border-radius:9px; padding:6px 9px; word-break:break-word; line-height:1.4; }
 
+/* runtime debug console + error overlay */
+.slop-debug-panel { flex:0 0 auto; background:var(--wh); border:2.5px solid var(--ink); border-radius:12px; overflow:hidden; }
+.slop-debug-head { display:flex; align-items:center; gap:10px; padding:7px 12px; background:var(--cr); border-bottom:2px solid var(--ink); flex-wrap:wrap; }
+.slop-debug-toggle { font-family:'Space Mono',monospace; font-size:11px; font-weight:700; color:var(--ink); background:transparent; border:none; cursor:pointer; display:flex; align-items:center; gap:6px; padding:0; }
+.slop-debug-dot { width:8px; height:8px; border-radius:50%; border:2px solid var(--ink); flex:none; }
+.slop-debug-dot.ok { background:var(--mt); }
+.slop-debug-dot.bad { background:var(--red); animation:run-pulse 1s ease-in-out infinite; }
+.slop-debug-tip { font-family:'Space Mono',monospace; font-size:10px; color:var(--soft); flex:1; min-width:120px; }
+.slop-debug-body { padding:8px 12px 10px; max-height:140px; overflow-y:auto; }
+.slop-debug-empty { font-family:'Space Mono',monospace; font-size:11px; color:var(--mt); font-weight:700; }
+.slop-debug-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.slop-debug-list li { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; color:#C0392B; background:#FFF0F0; border:1.5px solid var(--red); border-radius:8px; padding:6px 8px; word-break:break-word; line-height:1.35; }
+.slop-debug-help { margin-top:8px; font-family:'Space Mono',monospace; font-size:10.5px; color:var(--soft); }
+.slop-debug-help summary { cursor:pointer; font-weight:700; color:var(--ink); }
+.slop-debug-help ul { margin:6px 0 0; padding-left:18px; line-height:1.5; }
+.slop-err-overlay { position:absolute; inset:8px 8px auto 8px; z-index:5; background:rgba(255,240,240,.97); border:2.5px solid var(--red); border-radius:12px; padding:10px 12px; box-shadow:4px 4px 0 var(--ink); max-height:45%; overflow:auto; }
+.slop-err-overlay[hidden] { display:none !important; }
+.slop-err-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.slop-err-icon { width:22px; height:22px; border-radius:50%; background:var(--red); color:#fff; font-weight:900; display:grid; place-items:center; font-size:14px; flex:none; }
+.slop-err-title { font-family:'Fredoka One',cursive; font-size:14px; color:var(--red); flex:1; }
+.slop-err-dismiss { background:transparent; border:none; font-size:20px; cursor:pointer; color:var(--ink); line-height:1; }
+.slop-err-msg { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; color:#8B0000; white-space:pre-wrap; word-break:break-word; margin:0 0 8px; max-height:120px; overflow:auto; }
+.slop-err-fix { font-family:'Fredoka One',cursive; font-size:12px; color:#fff; background:var(--pk); border:2px solid var(--ink); border-radius:100px; padding:6px 14px; cursor:pointer; box-shadow:2px 2px 0 var(--ink); }
+
 .prompt-zone { flex:0 0 auto; padding:14px 16px 16px; border-top:var(--bw) solid var(--ink); background:var(--cr); }
 .template-row { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:9px; }
 .template { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; color:var(--ink);
@@ -145,9 +169,9 @@ background:var(--pk); border:var(--bw) solid var(--ink); border-radius:100px; pa
 
 .panel { flex:1; min-height:0; display:none; }
 .panel.active { display:flex; }
-#panel-play { padding:16px; }
-#play-frame-wrap { flex:1; display:flex; min-width:0; }
-#play-frame { flex:1; width:100%; border:var(--bw) solid var(--ink); border-radius:14px; background:var(--wh); box-shadow:var(--shb); }
+#panel-play { padding:16px; flex-direction:column; gap:10px; }
+#play-frame-wrap { flex:1; display:flex; flex-direction:column; min-width:0; min-height:0; position:relative; }
+#play-frame { flex:1; width:100%; min-height:200px; border:var(--bw) solid var(--ink); border-radius:14px; background:var(--wh); box-shadow:var(--shb); }
 #play-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:30px; }
 #play-empty .big { font-family:'Fredoka One',cursive; font-size:26px; }
 #play-empty .hint-mono { font-family:'Space Mono',monospace; font-size:12px; color:var(--soft); line-height:1.8; max-width:430px; }

@@ -9,6 +9,8 @@ import { recordPlay } from './plays.js';
 import { testGameHTML } from './sandbox.js';
 import { createSpeech } from './speech.js';
 import { api, escapeHTML, timeAgo } from './api.js';
+import { attachFrameMonitor, mountErrorOverlay, prepareGameHTML } from './debug.js';
+import { listenForScores, mountLeaderboard } from './leaderboard.js';
 
 const REMIX_SYSTEM = `You are the live remix engine for slop.game. You receive the COMPLETE source of an existing self-contained browser game plus a player's edit request. Apply the edit and return the COMPLETE UPDATED document.
 
@@ -16,6 +18,7 @@ RULES:
 - Keep it ONE self-contained HTML file: inline <style>/<script>, no external resources, no localStorage/alert/prompt, must run in a sandboxed iframe.
 - It must not throw any runtime errors — the rewrite is automatically rejected if a single uncaught error occurs. Guard everything.
 - Change only what the request requires; preserve everything else (controls, scoring, restart, feel).
+- On game over, submit the score: window.dispatchEvent(new CustomEvent('slop:score', { detail: { score: yourScoreNumber } }));
 - Keep it working — broken output is the only failure mode.
 
 OUTPUT FORMAT (STRICT):
@@ -24,6 +27,22 @@ Then exactly one \`\`\`html fenced code block with the full updated document. No
 
 const $ = (id) => document.getElementById(id);
 const frame = $('game-frame');
+let frameMonitor = null;
+let errOverlay = null;
+let scoreKey = null;
+
+function loadHTML(html) {
+  return prepareGameHTML(html || '');
+}
+
+function mountGame(html) {
+  frameMonitor?.destroy();
+  frameMonitor = attachFrameMonitor(frame, {
+    onErrors(errs) { errOverlay?.show(errs); },
+  });
+  frame.srcdoc = loadHTML(html);
+  errOverlay?.hide();
+}
 
 const params = new URLSearchParams(location.search);
 const id = params.get('id');
@@ -57,7 +76,14 @@ $('game-pill').textContent = isCommunity
 ? `by @${game.username}`
 : (game.remixOf ? 'remix' : 'AI-cooked');
 document.title = `${game.name} — slop.game`;
-frame.srcdoc = game.html;
+mountGame(game.html);
+scoreKey = isCommunity ? game.slug : (game.id || id);
+const lbSec = $('leaderboard-sec');
+if (lbSec && scoreKey) {
+  lbSec.hidden = false;
+  mountLeaderboard($('leaderboard-mount'), scoreKey);
+  listenForScores(scoreKey);
+}
 recordPlay(isCommunity ? game.slug : id); // count this as a real play
 
 // hand off to the full studio (cooked games open directly; community games fork)
@@ -326,6 +352,26 @@ try { const q = JSON.parse(localStorage.getItem('slop-xp-queue') || '[]'); q.pus
 return true;
 }
 
+const HEAL_PROMPT = `You are debugging a single-file HTML5 browser game that throws an uncaught error inside a sandboxed iframe. You get the exact error(s). Fix ONLY the broken code — minimal diff, preserve everything that works. Return ONLY the complete corrected HTML in one \`\`\`html block — no commentary.`;
+
+async function healRemix(html, errs, codeView, status) {
+  let raf = null;
+  const full = await chatStream({
+    model: MODELS.remix,
+    temperature: 0.3,
+    messages: [
+      { role: 'system', content: HEAL_PROMPT },
+      { role: 'user', content: `Error(s):\n${errs.map((e) => '- ' + e).join('\n')}\n\nFix in place:\n\`\`\`html\n${html}\n\`\`\`` },
+    ],
+    onDelta(_, soFar) {
+      if (!raf) raf = requestAnimationFrame(() => { raf = null; codeView.textContent = soFar; codeView.scrollTop = codeView.scrollHeight; });
+    },
+  });
+  let fixed = extractFence(full);
+  if (!fixed) { const d = full.indexOf('<!DOCTYPE'); if (d >= 0) fixed = full.slice(d).trim(); }
+  return (fixed && /<html/i.test(fixed)) ? fixed : null;
+}
+
 async function applyRemix() {
 const request = $('remix-input').value.trim();
 if (!request || busy || !game) return;
@@ -384,11 +430,21 @@ if (docStart >= 0) html = full.slice(docStart).trim();
 }
 if (!html || !/<html/i.test(html)) throw new Error('remix came back unservable — try rephrasing');
 
-// crash-test the rewrite before it replaces the running game
+// crash-test the rewrite before it replaces the running game — self-heal on failure
 status.textContent = 'crash-testing the remix…';
-const test = await testGameHTML(html);
+const MAX_FIX = 3;
+let test = await testGameHTML(html);
+for (let fix = 1; !test.ok && fix <= MAX_FIX; fix++) {
+  const errs = (test.errors?.length ? test.errors : [test.error]).filter(Boolean);
+  status.textContent = `self-healing remix: ${errs[0]} (${fix}/${MAX_FIX})…`;
+  const fixed = await healRemix(html, errs, codeView, status);
+  if (!fixed) break;
+  html = fixed;
+  status.textContent = 'crash-testing the fix…';
+  test = await testGameHTML(html);
+}
 if (!test.ok) {
-throw new Error(`remix rejected — it crashed in testing (${test.error}). your game is untouched, try rephrasing`);
+  throw new Error(`remix kept crashing (${test.error}) — your game is untouched, try rephrasing`);
 }
 
 const patch = {
@@ -421,7 +477,7 @@ game = updateCookedGame(game.id, patch) || { ...game, ...patch };
 }
 
 // the visible moment: hot-swap the running game
-frame.srcdoc = game.html;
+mountGame(game.html);
 $('game-name').textContent = game.name;
 status.textContent = `OK ${meta.summary || 'remix applied'} — crash-tested and live`;
 
@@ -444,6 +500,14 @@ btn.textContent = 'Apply Remix';
 $('apply-btn').addEventListener('click', applyRemix);
 $('remix-input').addEventListener('keydown', (e) => {
 if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) applyRemix();
+});
+
+errOverlay = mountErrorOverlay($('frame-wrap'), {
+onFix(err) {
+openDrawer(true);
+$('remix-input').value = `Fix this runtime error:\n${err}`;
+$('remix-input').focus();
+},
 });
 
 boot();

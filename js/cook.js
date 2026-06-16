@@ -5,6 +5,7 @@
 import { chatStream, extractFence, extractMetaLine, MODELS, MODEL_CHOICES } from './ai.js';
 import { addCookedGame, rerenderGrid } from './games-grid.js';
 import { testGameHTML } from './sandbox.js';
+import { prepareGameHTML } from './debug.js';
 import { launchConfetti } from './confetti.js';
 import { showToast } from './toast.js';
 
@@ -15,6 +16,7 @@ HARD REQUIREMENTS:
 - It must run inside a sandboxed iframe: never use localStorage, cookies, alert/prompt/confirm, or top-level navigation. Attach key listeners to window. Canvas should scale to fit the viewport.
 - It must not throw any runtime errors — the build is automatically rejected if the console sees a single uncaught error. Guard everything.
 - Playable instantly: show the controls on screen, start on first input or a big start button, include score and a lose (and/or win) state with instant restart (key R + button).
+- On game over, submit the score: window.dispatchEvent(new CustomEvent('slop:score', { detail: { score: yourScoreNumber } }));
 - Make it FUN and JUICY: screen shake, particles, color pops, escalating difficulty. Cute neo-brutalist palette (#FFE135 #FF4EB8 #4ECAFF #3DFFB0 #FF7A35 #1A1A2E) unless the prompt wants a different vibe.
 - Keep it tight: aim for 200-500 lines. Working and fun beats sprawling and broken. No TODOs, no placeholders.
 
@@ -27,7 +29,7 @@ Then exactly one fenced code block:
 \`\`\`
 No other commentary before or after.`;
 
-const HEAL_PROMPT = `You are debugging a single-file HTML5 canvas game that throws an uncaught error inside a sandboxed iframe (no localStorage/cookies/alert/confirm; all art drawn on canvas; no external resources). You are given the exact console error(s). Find the ROOT CAUSE and fix it. Return ONLY the COMPLETE corrected HTML document inside one \`\`\`html code block — no commentary.`;
+const HEAL_PROMPT = `You are debugging a single-file HTML5 canvas game that throws an uncaught error inside a sandboxed iframe (no localStorage/cookies/alert/confirm; all art drawn on canvas; no external resources). You are given the exact console error(s). Fix ONLY the broken code — minimal diff, preserve everything that works. Return ONLY the COMPLETE corrected HTML document inside one \`\`\`html code block — no commentary.`;
 
 const STEPS = [
 ['01', 'reading your prompt'],
@@ -35,15 +37,6 @@ const STEPS = [
 ['03', 'crash-testing the build'],
 ['04', 'plating your game'],
 ];
-
-// receiver that lets the player hot-patch the running game with no reload
-const MOD_RX = `<script id="slop-mod-rx">window.addEventListener('message',function(e){if(e&&e.data&&e.data.__slopmod){try{(new Function(e.data.__slopmod))();}catch(err){console.warn('slopmod',err);}}});<\/script>`;
-function injectModReceiver(html) {
-if (/slop-mod-rx/.test(html)) return html;
-if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, (m) => m + MOD_RX);
-if (/<body[^>]*>/i.test(html)) return html.replace(/<body[^>]*>/i, (m) => m + MOD_RX);
-return MOD_RX + html;
-}
 
 let modal = null;
 
@@ -152,7 +145,7 @@ if (docStart >= 0) html = full.slice(docStart).trim();
 if (!html || !/<html/i.test(html)) throw new Error('grok returned something unservable — try again');
 
 // inject the live-remix receiver so this game can be hot-patched mid-play
-html = injectModReceiver(html);
+html = prepareGameHTML(html);
 
 // crash-test the build before it touches the grid — and if it crashes, let the
 // model debug its own game (self-heal) using the exact error, up to MAX_FIX passes.
@@ -165,7 +158,7 @@ const errs = (test.errors && test.errors.length ? test.errors : [test.error]).fi
 status.textContent = `self-healing: ${errs[0]} (fix ${fixes}/${MAX_FIX})…`;
 const fixed = await healOnce(html, errs, code);
 if (!fixed) break;
-html = injectModReceiver(fixed);
+html = prepareGameHTML(fixed);
 status.textContent = 'crash-testing the fix…';
 test = await testGameHTML(html);
 }
