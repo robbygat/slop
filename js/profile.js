@@ -435,6 +435,12 @@ $('pf-edit-save').addEventListener('click', async () => {
 });
 
 initAccount();
+
+// colorful shader backdrop — same engine as the play page; glass panels float over it
+import('./hero-shader.js').then(({ mountShader }) => {
+  const el = document.getElementById('pf-shader');
+  if (el) mountShader(el, { interactionEl: document.body, ripples: true });
+}).catch(() => {});
 initNav({ filterGrid: false });
 initXP();
 initPricing();

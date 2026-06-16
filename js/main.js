@@ -31,11 +31,8 @@ initAppStore();
 initReveal();
 initStats();
 
-// hero top-bar "Sign in" → same auth modal as the global nav
-document.getElementById('hero-signin')?.addEventListener('click', () => {
-  if (getUser()) showToast(`you're already signed in as ${getUser().username}`);
-  else openAuthModal();
-});
+// the hero top-bar auth control (#hero-auth) is rendered + wired by account.js,
+// so it reflects sign-in state instead of always showing "Sign in".
 
 document.getElementById('footer-signup')?.addEventListener('click', (e) => {
 e.preventDefault();

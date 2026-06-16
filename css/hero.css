@@ -127,6 +127,40 @@ transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
 .htb-signin:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(17, 18, 26, 0.3); }
 
+/* signed-in pill in the hero bar (avatar + handle, links to profile) */
+#hero-auth { display: inline-flex; align-items: center; }
+.htb-user {
+font-family: var(--font-body);
+font-weight: 800;
+font-size: 14px;
+color: var(--ink);
+text-decoration: none;
+display: inline-flex;
+align-items: center;
+gap: 8px;
+background: #fff;
+border-radius: 999px;
+padding: 5px 16px 5px 5px;
+box-shadow: 0 8px 24px rgba(17, 18, 26, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+.htb-user:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(17, 18, 26, 0.28); }
+.htb-avatar {
+width: 30px;
+height: 30px;
+border-radius: 50%;
+object-fit: cover;
+flex: none;
+display: grid;
+place-items: center;
+background: var(--el);
+color: #fff;
+font-family: var(--font-display);
+font-weight: 700;
+font-size: 13px;
+}
+.htb-user-handle { white-space: nowrap; }
+
 /* search field in the always-visible hero bar */
 .hero-search { flex-shrink: 1; min-width: 0; }
 .hero-search input { width: clamp(120px, 13vw, 180px); }

@@ -304,7 +304,27 @@ function renderNavAuth() {
     slot.innerHTML = `<button class="nav-signin" id="nav-signin">Sign in</button>`;
     slot.querySelector('#nav-signin').addEventListener('click', openAuthModal);
   }
+  renderHeroAuth();
   renderNavDrawer();
+}
+
+// Homepage hero top bar carries its own auth control (#hero-auth) so the in-hero
+// "fake navbar" reflects sign-in state just like the global nav.
+function renderHeroAuth() {
+  const slot = document.getElementById('hero-auth');
+  if (!slot) return;
+  if (currentUser?.username) {
+    const av = currentUser.avatar_url
+      ? `<img class="htb-avatar" src="${escapeHTML(currentUser.avatar_url)}" alt="">`
+      : `<span class="htb-avatar htb-avatar-fb">${escapeHTML((currentUser.username[0] || 'S').toUpperCase())}</span>`;
+    slot.innerHTML = `<a class="htb-user" href="/${escapeHTML(currentUser.username)}" title="your profile">${av}<span class="htb-user-handle">@${escapeHTML(currentUser.username)}</span></a>`;
+  } else if (currentUser) {
+    slot.innerHTML = `<button class="htb-signin" id="hero-finish" type="button">Finish signup</button>`;
+    slot.querySelector('#hero-finish').addEventListener('click', promptUsername);
+  } else {
+    slot.innerHTML = `<button class="htb-signin" id="hero-signin" type="button">Sign in</button>`;
+    slot.querySelector('#hero-signin').addEventListener('click', openAuthModal);
+  }
 }
 
 function renderNavDrawer() {

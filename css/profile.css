@@ -9,24 +9,28 @@
   min-height: 100vh;
 }
 
+/* full-bleed colorful shader backdrop (same engine as the play page) — the
+   profile's glass panels float over it */
+.pf-shader {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: #f9f9f9 linear-gradient(180deg, #FFFBF0 0%, #FFE135 16%, #FF7A35 33%, #FF4EB8 50%, #4ECAFF 68%, #2B6BFF 84%, #11121A 100%);
+}
+.pf-shader canvas { display: block; width: 100% !important; height: 100% !important; }
+
 #pf-shell {
   position: relative;
-  /* explicit stacking context (not z-index:auto) so the animated avatar ring,
-     banner glow, and shimmer never escape their compositor layer and paint over
-     the sticky nav / its dropdown menu */
-  z-index: 0;
+  /* above the fixed shader backdrop, below the sticky nav (z-index:1000) */
+  z-index: 1;
   padding-bottom: 40px;
   overflow: hidden;
 }
 
 /* ambient scene — scoped below nav, never bleeds into sticky header */
-.pf-scene {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
+/* the old ambient aurora is replaced by the live shader backdrop (.pf-shader) */
+.pf-scene { display: none; }
 
 .pf-scene::before,
 .pf-scene::after {
@@ -526,9 +530,9 @@
 /* ---- games (full width, no sidebar) ---- */
 
 .pf-games {
-  margin-top: 28px;
+  margin-top: clamp(16px, 2.2vw, 24px);
   padding-top: 24px;
-  border-top: 2px dashed rgba(26, 26, 46, 0.12);
+  border-top: none;
 }
 
 /* XP card — slim, owner-only, sits under the stats inside the identity block */

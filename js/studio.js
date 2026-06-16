@@ -1062,8 +1062,8 @@ onUser(maybeResumeStudioPrompt);
 // live shader behind the agent header — dynamically imported so a CDN/WebGL
 // failure only drops the visual (CSS gradient fallback) instead of the studio.
 import('./hero-shader.js').then(({ mountShader }) => {
-const el = $('agent-shader');
-if (el) agentShader = mountShader(el, { interactionEl: el });
+const bg = $('studio-shader');
+if (bg) agentShader = mountShader(bg, { interactionEl: document.body, ripples: true });
 }).catch(() => {});
 const wrap = $('play-frame-wrap');
 debugPanel = createDebugPanel(wrap);

@@ -23,6 +23,7 @@
 </head>
 <body class="pf-root">
 
+<div class="pf-shader" id="pf-shader" aria-hidden="true"></div>
 <div id="toast-container"></div>
 
 <nav class="site-nav">
@@ -105,15 +106,15 @@
           <div class="pf-xp-card" id="pf-xp" hidden></div>
         </div>
       </div>
-
-      <section class="pf-games">
-        <div class="pf-games-head">
-          <h2><span class="pf-tab-dot"></span> Published games</h2>
-          <span class="pf-games-count" id="pf-grid-count">0</span>
-        </div>
-        <div class="pf-game-grid" id="pf-grid"></div>
-      </section>
     </div>
+
+    <section class="pf-games pf-card pf-games-card">
+      <div class="pf-games-head">
+        <h2><span class="pf-tab-dot"></span> Published games</h2>
+        <span class="pf-games-count" id="pf-grid-count">0</span>
+      </div>
+      <div class="pf-game-grid" id="pf-grid"></div>
+    </section>
   </div>
 </div>
 
@@ -179,6 +180,9 @@
   </div>
 </div>
 
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
 <script type="module" src="js/profile.js"></script>
 </body>
 </html>
