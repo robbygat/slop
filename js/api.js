@@ -255,6 +255,10 @@ export const api = {
     if (!s) throw new Error('cannot reach slop.game servers — check your connection');
     const { data: { user } } = await s.auth.getUser();
     if (!user) throw new Error('sign in first, then come back to publish');
+    const html = game.html || '';
+    if (html.length > 51200) {
+      throw new Error(`game is too big to publish (${(html.length / 1024).toFixed(1)} KB) — max is 50 KB`);
+    }
 
     const base = slugify(game.name);
     for (let attempt = 0; attempt < 5; attempt++) {
@@ -324,7 +328,14 @@ export const api = {
     const { data, error } = await s.rpc('my_billing');
     if (error) return null;
     const row = Array.isArray(data) ? data[0] : data;
-    return row ? { is_pro: !!row.is_pro, credits: row.credits ?? 0, pro_until: row.pro_until || null, referral_code: row.referral_code || null } : null;
+    return row ? {
+      is_pro: !!row.is_pro,
+      credits: row.credits ?? 0,
+      pro_until: row.pro_until || null,
+      referral_code: row.referral_code || null,
+      is_moderator: !!row.is_moderator,
+      unlimited: !!row.is_moderator,
+    } : null;
   },
 
   // Start a Stripe Checkout session. kind: 'pro' | 'topup_small' | 'topup_large'.

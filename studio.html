@@ -102,6 +102,10 @@ font-family:'Space Mono',monospace; word-break:break-word; }
 .run-sprite.bad { border-color:var(--red); }
 .run-err { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; color:#C0392B;
 background:#FFF0F0; border:2px solid var(--red); border-radius:9px; padding:6px 9px; word-break:break-word; line-height:1.4; }
+.run-suggest { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.run-suggest-chip { font-family:'Space Mono',monospace; font-size:10px; font-weight:700; color:var(--ink); background:var(--y); border:2px solid var(--ink); border-radius:100px; padding:5px 10px; cursor:pointer; }
+.run-suggest-chip:hover { color:var(--pk); transform:translate(-1px,-1px); }
+.run-thought { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:600; color:var(--soft); font-style:italic; padding:4px 0; }
 
 /* runtime debug console + error overlay */
 .slop-debug-panel { flex:0 0 auto; background:var(--wh); border:2.5px solid var(--ink); border-radius:12px; overflow:hidden; }
@@ -136,18 +140,17 @@ background:var(--y); border:2px solid var(--ink); border-radius:100px; padding:5
 .chip { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; color:var(--soft);
 background:var(--wh); border:2px solid var(--ink); border-radius:100px; padding:5px 11px; cursor:pointer; transition:transform .12s,color .12s; }
 .chip:hover { transform:translate(-1px,-1px); color:var(--pk); }
-/* prompt console — echoes the homepage hero's macOS window */
-.pconsole { background:var(--wh); border:var(--bw) solid var(--ink); border-radius:16px; box-shadow:var(--sh); overflow:hidden; transition:box-shadow .15s; }
-.pconsole:focus-within { box-shadow:var(--shb); }
-.pconsole-head { display:flex; align-items:center; gap:7px; padding:9px 13px; background:linear-gradient(180deg, rgba(78,202,255,.9), rgba(78,202,255,.65)); border-bottom:2.5px solid var(--ink); flex-wrap:wrap; }
-.pconsole-head .d { width:11px; height:11px; border-radius:50%; border:2px solid var(--ink); }
-.pconsole-head .d.r{background:#FF6B6B} .pconsole-head .d.y{background:var(--y)} .pconsole-head .d.g{background:var(--mt)}
-.pconsole-head .pconsole-label { margin-left:6px; font-family:'Space Mono',monospace; font-weight:700; font-size:12px; color:var(--ink); flex:1; min-width:0; }
-.studio-model-pick { margin-left:auto; font-family:'Nunito',sans-serif; font-weight:700; font-size:11px; color:var(--ink); background:var(--wh); border:2px solid var(--ink); border-radius:100px; padding:4px 10px; outline:none; max-width:100%; cursor:pointer; }
-.prompt-row { display:flex; gap:0; align-items:stretch; }
-#prompt { flex:1; min-height:66px; max-height:160px; resize:vertical; font-family:'Nunito',sans-serif; font-weight:700; font-size:14.5px; color:var(--ink);
-background:var(--wh); border:none; padding:13px 14px; outline:none; }
-.mic-btn { flex:0 0 50px; display:grid; place-items:center; color:var(--soft); background:var(--cr);
+
+/* prompt — plain text box */
+.prompt-box { background:var(--wh); border:var(--bw) solid var(--ink); border-radius:14px; box-shadow:var(--sh); overflow:hidden; }
+.prompt-box:focus-within { box-shadow:var(--shb); }
+.prompt-toolbar { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:2.5px solid var(--ink); background:var(--cr); flex-wrap:wrap; }
+.prompt-toolbar label { font-family:'Space Mono',monospace; font-size:11px; font-weight:700; color:var(--soft); }
+.studio-model-pick { font-family:'Nunito',sans-serif; font-weight:700; font-size:12px; color:var(--ink); background:var(--wh); border:2px solid var(--ink); border-radius:100px; padding:5px 10px; outline:none; flex:1; min-width:140px; cursor:pointer; }
+.prompt-input-row { display:flex; align-items:stretch; }
+#prompt { flex:1; min-height:88px; max-height:220px; resize:vertical; font-family:'Nunito',sans-serif; font-weight:700; font-size:15px; color:var(--ink);
+background:var(--wh); border:none; padding:14px 16px; outline:none; line-height:1.45; }
+.mic-btn { flex:0 0 48px; display:grid; place-items:center; color:var(--soft); background:var(--cr);
 border:none; border-left:2.5px solid var(--ink); cursor:pointer; }
 .mic-btn:hover { color:var(--pk); }
 .mic-btn.listening { color:var(--red); animation:micp 1s ease-in-out infinite; }
@@ -454,7 +457,8 @@ flex-shrink:0;
 <div class="prompt-zone">
 <div class="template-row">
 <button class="template" data-prompt="a fully 3D-feeling kart racer on a neon track with drift boosts, item boxes, and 3 AI racers">kart racer</button>
-<button class="template" data-prompt="a co-op wave survival shooter, top-down, with upgrades between rounds">co-op shooter</button>
+<button class="template" data-prompt="a 4-player online co-op arena brawler with host/join rooms, AI bots filling empty slots, and escalating waves">multiplayer brawler</button>
+<button class="template" data-prompt="a co-op wave survival shooter, top-down, with upgrades between rounds and online multiplayer">co-op shooter</button>
 <button class="template" data-prompt="a cozy match-3 puzzle with juicy combos and a relaxing palette">match-3</button>
 <button class="template" data-prompt="an 8-player .io arena where blobs eat each other to grow, last blob wins">.io arena</button>
 <button class="template" data-prompt="a tower defense where the towers are angry cats and the creeps are roombas">tower defense</button>
@@ -465,16 +469,19 @@ flex-shrink:0;
 <button class="chip">generate a sprite for the player</button>
 <button class="chip">add chiptune music</button>
 </div>
-<div class="pconsole">
-<div class="pconsole-head"><span class="d r"></span><span class="d y"></span><span class="d g"></span><span class="pconsole-label">describe your game</span><select id="studio-model" class="studio-model-pick" aria-label="choose build model"></select></div>
-<div class="prompt-row">
-<textarea id="prompt" placeholder="a four-player kart racer with drift boosts and a neon track… (every aspect is promptable: rules, art, sprites, sound, difficulty, multiplayer)"></textarea>
-<button class="mic-btn" id="mic-btn" title="speak it">
+<div class="prompt-box">
+<div class="prompt-toolbar">
+<label for="studio-model">model</label>
+<select id="studio-model" class="studio-model-pick" aria-label="choose build model"></select>
+</div>
+<div class="prompt-input-row">
+<textarea id="prompt" placeholder="describe your game or edit — e.g. a 4-player kart racer with drift boosts, or &quot;make the enemies faster&quot;"></textarea>
+<button class="mic-btn" id="mic-btn" type="button" title="speak it" aria-label="speak your prompt">
 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="21"/></svg>
 </button>
 </div>
 </div>
-<button id="build-btn">Build It</button>
+<button id="build-btn" type="button">Build It</button>
 </div>
 </aside>
 

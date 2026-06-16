@@ -219,7 +219,7 @@ if (!Array.isArray(messages) || !model) return json(res, 400, { error: 'bad AI r
 const provider = providerFor(model);
 if (provider === 'anthropic') return aiChatAnthropic(res, { model, messages, max_tokens, temperature });
 
-const maxOut = Math.min(Number(max_tokens) || 16384, 32768);
+const maxOut = Math.min(Number(max_tokens) || 16384, 49152);
 const reasoning = provider === 'openai' && /^(gpt-5|o[0-9])/.test(String(model));
 const cfg = provider === 'openai'
 ? { url: `${OPENAI_BASE}/chat/completions`, key: OPENAI_API_KEY, name: 'OpenAI', env: 'OPENAI_API_KEY' }

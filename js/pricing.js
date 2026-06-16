@@ -68,9 +68,10 @@ function renderNav() {
   const slot = document.getElementById('nav-pro-slot');
   if (!slot) return;
   const u = getUser();
-  const chip = (u && billing) ? `<button class="nav-credits" id="nav-credits" title="your slop credits — click for more">⚡ ${billing.credits}</button>` : '';
+  const creditLabel = billing?.unlimited ? '∞' : billing?.credits;
+  const chip = (u && billing) ? `<button class="nav-credits" id="nav-credits" title="${billing.unlimited ? 'moderator — unlimited credits' : 'your slop credits — click for more'}">⚡ ${creditLabel}</button>` : '';
   if (billing?.is_pro) {
-    slot.innerHTML = `${chip}<span class="nav-pro-badge" id="nav-pro-badge" title="Pro member — thank you!">PRO</span>`;
+    slot.innerHTML = `${chip}<span class="nav-pro-badge" id="nav-pro-badge" title="${billing.unlimited ? 'moderator' : 'Pro member — thank you!'}">${billing.unlimited ? 'ADMIN' : 'PRO'}</span>`;
   } else {
     slot.innerHTML = `${chip}<button class="nav-pro" id="nav-pro"><s>$8</s> Go Pro · $5/mo <span class="nav-pro-tag">launch</span></button>`;
   }
@@ -110,7 +111,7 @@ function buildModal() {
 function renderModal() {
   const body = modal.querySelector('#pr-body');
   const u = getUser();
-  const bal = billing ? `<div class="pr-balance">⚡ <b>${billing.credits}</b> credits</div>` : '';
+  const bal = billing ? `<div class="pr-balance">⚡ <b>${billing.unlimited ? '∞ unlimited' : billing.credits}</b> credits</div>` : '';
 
   if (!u) {
     body.innerHTML = `${bal}<button class="pr-cta" id="pr-signin">Sign in to go Pro</button>

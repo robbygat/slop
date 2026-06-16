@@ -28,6 +28,42 @@ multiplayer: false,
 model: localStorage.getItem('slop-model') || MODELS.studio,
 };
 let busy = false;
+const PUBLISH_MAX_BYTES = 50 * 1024;
+const MP_RE = /\b(multiplayer|multi-player|co-?op|cooperative|online|pvp|versus|with friends|play with friends|real-?time|(?:2|4|8)[\s-]?player|party game|lobby|host a room|join room|slopnet)\b/i;
+
+function syncMP() { $('mp-toggle')?.classList.toggle('on', game.multiplayer); }
+function detectMultiplayer(ask) { return MP_RE.test(ask || ''); }
+function projectBytes() { return new Blob([finalHTML()]).size; }
+function projectSizeLabel() { return `${(projectBytes() / 1024).toFixed(1)} KB`; }
+function enableMultiplayerFromPrompt(ask, run) {
+if (!detectMultiplayer(ask)) return;
+if (!game.multiplayer) {
+game.multiplayer = true;
+syncMP();
+run?.detail?.('multiplayer detected — SlopNet room scaffolding enabled');
+toast('multiplayer ON — your game gets host/join rooms');
+}
+}
+function normalizeBuilt(built, meta) {
+if (!built) return null;
+built.meta = { ...built.meta, ...meta };
+if (built.partial || (!built.entry && Object.keys(built.files || {}).length)) {
+return mergeBuild({ entry: game.srcHtml, files: { ...game.files } }, built);
+}
+return built;
+}
+function addRunThought(run, text) {
+const el = document.createElement('div'); el.className = 'run-thought'; el.textContent = text; run.body.appendChild(el);
+}
+function addSuggestChips(run, texts) {
+const row = document.createElement('div'); row.className = 'run-suggest';
+for (const t of texts) {
+const b = document.createElement('button'); b.type = 'button'; b.className = 'run-suggest-chip'; b.textContent = t;
+b.addEventListener('click', () => { $('prompt').value = t; $('prompt').focus(); });
+row.appendChild(b);
+}
+run.body.appendChild(row);
+}
 
 // ---------------------------------------------------------------- assembly / bundling
 const MOD_RECEIVER = MOD_RX;
@@ -109,7 +145,8 @@ const CREATE_RULES = `HARD REQUIREMENTS:
 - It must not throw any runtime errors — the build is rejected if the console sees a single uncaught error. Guard everything.
 - Playable instantly: show controls on screen, start on first input or a big start button, include score and a lose (and/or win) state with instant restart (key R + button).
 - On game over, submit the score: window.dispatchEvent(new CustomEvent('slop:score', { detail: { score: yourScoreNumber } }));
-- Make it FUN and JUICY: screen shake, particles, color pops, escalating difficulty.`;
+- SIZE BUDGET: published games can be up to 50 KB bundled. Build substantial, feature-rich games — aim for 800–2500 lines split across files when the idea warrants it. Small arcade games can be one file; bigger games MUST split into index.html + js/game.js (+ css/style.css).
+- QUALITY BAR: juicy feedback (particles, screen shake, hit-stop, escalating difficulty), readable HUD, on-screen tutorial, multiple enemy types / levels / upgrades where it fits the prompt.`;
 
 function spriteRules() {
 const names = Object.keys(game.sprites);
@@ -118,12 +155,19 @@ return `SPRITES (images the game can draw): the shell injects window.SPRITES = {
 - If the request needs NEW art that doesn't exist, respond with ONLY this line (no code): {"sprites":[{"name":"short","prompt":"detailed, single centered subject, plain white background, no text"}]} (max 4). The shell generates them and re-invokes you.`;
 }
 const LIVE_MOD_RULES = `LIVE REMIX: expose the game's live state + tunables on window.GAME (e.g. window.GAME={state,player,config,...}) and keep difficulty/speed numbers in window.GAME.config, so a one-line patch like GAME.config.speed*=2 takes effect with no reload.`;
-const MULTIFILE_RULES = `PROJECT STRUCTURE: small games = a single \`\`\`html block. For bigger games you MAY split into multiple files and folders. To do that, output one fenced block per file, each immediately preceded by a line: === relative/path.ext === (e.g. === index.html ===, === js/game.js ===, === css/style.css ===). index.html is the entry and must reference the others with relative <script src="js/game.js"> / <link href="css/style.css"> (the shell bundles them for play). Use folders (js/, css/) when it helps.`;
+const MULTIFILE_RULES = `PROJECT STRUCTURE: games under ~12 KB = one \`\`\`html block. Bigger games MUST split: === index.html === (shell + canvas) + === js/game.js === (logic) + optional === css/style.css ===. index.html references others with relative <script src="js/game.js"> / <link href="css/style.css"> (the shell bundles them). Use folders (js/, css/) for anything substantial.`;
 function multiplayerRules() {
-return `MULTIPLAYER (REQUIRED): the shell injects window.SlopNet (host-authoritative WebRTC). Build with it: SlopNet.available(); SlopNet.host(code=>{}); SlopNet.join(roomCode,()=>{}); SlopNet.on('join'|'leave'|'input'|'state'|'init'|'connected'|'disconnected'|'error',fn); SlopNet.assignId(conn,id); SlopNet.broadcastState(obj); SlopNet.sendInput(obj); SlopNet.isHost; SlopNet.shareLink(). HOST simulates + broadcastState ~20Hz; CLIENTS sendInput ~30Hz and render received 'state'. Title screen with Single Player + Host buttons; show shareLink() to copy; auto-join from ?room=CODE; fill empty slots with AI; fall back to single-player if unavailable.`;
+return `MULTIPLAYER (REQUIRED — SlopNet is injected by the shell):
+The page already has window.SlopNet (WebRTC host-authoritative). You MUST wire:
+- Title screen: "Single Player" + "Host Game" + "Join" (input for room code). Auto-join from ?room=CODE in URL.
+- SlopNet.available() check; fall back to solo if false.
+- HOST: runs simulation, SlopNet.broadcastState(stateObj) ~20Hz, SlopNet.on('input', (peerId, input) => ...) for client inputs, SlopNet.assignId(conn, slotId), fill empty slots with simple AI bots.
+- CLIENT: SlopNet.sendInput({...}) ~30Hz, SlopNet.on('state', snap => render snap), never simulate locally.
+- SlopNet.on('join'|'leave'|'init'|'connected'|'disconnected'|'error', fn); SlopNet.isHost; SlopNet.shareLink() to copy invite link.
+- Keep window.GAME exposed for live tuning.`;
 }
 function systemPrompt(isEdit) {
-return `You are the build agent inside Slop Studio on slop.game — you turn plain-english prompts into complete, genuinely playable browser games and edit them on request. The player prompts EVERY aspect: rules, art, sprites, sound, difficulty, levels.
+return `You are the build agent inside Slop Studio on slop.game — you turn plain-english prompts into complete, genuinely playable browser games. Default model reasoning: plan carefully, then output complete working code with no placeholders.
 
 ${CREATE_RULES}
 
@@ -135,13 +179,40 @@ ${LIVE_MOD_RULES}
 
 ${game.multiplayer ? multiplayerRules() : ''}
 
-${isEdit ? `EDIT MODE: you receive the project's current files. Apply the request, change only what it needs, preserve everything else, and return the COMPLETE UPDATED project (same file layout, or refactor into files if asked).` : `CREATE MODE: build from scratch.`}
+${isEdit ? `EDIT MODE: the game ALREADY WORKS. Apply the request with a SURGICAL PATCH — change only what the request needs.` : `CREATE MODE: build a complete, polished game from scratch. Think through the core loop before coding.`}
 
 OUTPUT FORMAT (STRICT):
 Line 1: single-line JSON: {"name":"Game Name","desc":"one punchy lowercase line, max 90 chars","summary":"what you did, max 60 chars"}
 Then EITHER one \`\`\`html block (single-file) OR multiple \`=== path ===\` + fenced blocks (multi-file). Nothing else.
 (EXCEPTION: a sprite request per SPRITES is line 1 JSON only.)`;
 }
+function editSystemPrompt() {
+return `You are the LIVE EDIT agent in Slop Studio. The player has a WORKING game and wants a targeted change. PATCH IN PLACE — do NOT rewrite the whole project from scratch.
+
+${CREATE_RULES}
+
+${MULTIFILE_RULES}
+
+${spriteRules()}
+
+${LIVE_MOD_RULES}
+
+${game.multiplayer ? multiplayerRules() : ''}
+
+PATCH MODE (critical):
+- Multi-file: return ONLY the file(s) that must change (=== path === + fenced block). Omit every unchanged file.
+- Single-file: return the full HTML only if necessary; prefer minimal edits.
+- Preserve all working logic, art, controls, scoring, multiplayer wiring, and feel.
+
+OUTPUT FORMAT:
+Line 1: JSON {"name":"...","desc":"...","summary":"what changed, max 60 chars"}
+Then ONLY changed file block(s). Nothing else.`;
+}
+const LIVE_PATCH_SYSTEM = `You patch a RUNNING browser game with a tiny JavaScript snippet executed via new Function inside the game iframe — NO reload.
+- Prefer mutating window.GAME (state, config, player) e.g. GAME.config.enemySpeed *= 1.5.
+- Wrap risky work in try/catch. Keep it short.
+- If the change needs new HTML/assets/full rewrite, respond with exactly: FULL
+OUTPUT: either FULL, or one \`\`\`js fenced block. Nothing else.`;
 
 // ---------------------------------------------------------------- the slop agent
 // A real multi-step agent, not a single shot: PLAN → ART → BUILD → TEST & SELF-HEAL → SHIP.
@@ -151,16 +222,15 @@ Then EITHER one \`\`\`html block (single-file) OR multiple \`=== path ===\` + fe
 // streamed to a live "run card" stepper so players watch it think, paint, build, and debug.
 
 const MAX_FIX = 5;
-const STUDIO_BUILD_MAX = 32768;
-const CONTINUE_MSG = 'Your response was cut off mid-output. Continue EXACTLY where you stopped — no preamble, no repetition. Close every open ``` fence and finish all remaining files in the project.';
+const STUDIO_BUILD_MAX = 49152;
+const MAX_CONTINUE_PARTS = 8;
+const CONTINUE_MSG = 'Your response was cut off mid-output. Continue EXACTLY where you stopped — no preamble, no repetition. Close every open ``` fence and finish ALL remaining files. Do not restart files you already completed.';
 const STEP_DEFS = [['plan', 'Plan'], ['art', 'Art'], ['build', 'Build'], ['test', 'Test & heal'], ['ship', 'Ship']];
 
-// Reasoning models (gpt-5.5) can burn the output budget on hidden thinking tokens.
-// Auto-continue up to 3 parts when the stream hits max_completion_tokens.
 async function agentStream({ model, messages, temperature, maxTokens = STUDIO_BUILD_MAX, onDelta }) {
 let full = '';
 let convo = messages;
-for (let part = 0; part < 3; part++) {
+for (let part = 0; part < MAX_CONTINUE_PARTS; part++) {
 const chunk = await chatStream({
 model, messages: convo, temperature, maxTokens,
 onDelta: (_, soFar) => onDelta?.(full + soFar),
@@ -226,12 +296,13 @@ function modelLabel(id) { const m = MODEL_CHOICES.find((x) => x.id === id); retu
 
 // -------- prompts (planner + debugger; build/edit reuse systemPrompt())
 function planSystemPrompt() {
-return `You are the lead designer of Slop Studio on slop.game. Turn the player's request into a tight BUILD PLAN for ONE browser game (HTML5 canvas/JS, runs in a sandboxed iframe). Think about the core loop, what makes it juicy and fun, the art it needs, and how to structure the files.
+const mp = game.multiplayer ? ' This game MUST include online multiplayer (SlopNet host/join rooms, host-authoritative sync).' : '';
+return `You are the lead designer of Slop Studio on slop.game. Turn the player's request into a BUILD PLAN for ONE polished browser game (HTML5 canvas/JS, sandboxed iframe).${mp} Think deep: core loop, juice, progression, file layout for a substantial build (up to 50 KB published).
 
 Respond with ONLY a single JSON object — no prose, no markdown, no code fences:
-{"name":"Game Name","desc":"one punchy lowercase line, max 90 chars","pitch":"one sentence on why it's fun, max 140 chars","files":[{"path":"index.html","role":"what it holds"}],"sprites":[{"name":"player","prompt":"detailed art prompt, single centered subject, plain white background, no text"}],"mechanics":["core mechanic","how it escalates","win/lose"]}
+{"name":"Game Name","desc":"one punchy lowercase line, max 90 chars","pitch":"one sentence on why it's fun, max 140 chars","files":[{"path":"index.html","role":"what it holds"},{"path":"js/game.js","role":"main logic"}],"sprites":[{"name":"player","prompt":"detailed art prompt, single centered subject, plain white background, no text"}],"mechanics":["core mechanic","progression","juice/feedback","win/lose","multiplayer flow if applicable"]}
 
-Rules: keep files minimal — 1 file for small games, split into js/ + css/ only when it genuinely helps; index.html is always the entry. At most 4 sprites, and only art the game truly needs (many great games are pure shapes — use [] then). mechanics: 3-6 short bullets.`;
+Rules: prefer multi-file (index.html + js/game.js + optional css/) for anything beyond a tiny arcade game. index.html is always the entry. At most 4 sprites. mechanics: 4-8 bullets covering loop, escalation, and feel.`;
 }
 function healSystemPrompt() {
 return `You are the debugger inside Slop Studio. A browser game throws uncaught runtime error(s) in a sandboxed iframe. Find the ROOT CAUSE and fix ONLY the broken code — do NOT rewrite unrelated files or restart from scratch.
@@ -308,6 +379,7 @@ renderSprites();
 }
 
 async function buildGame(ask, plan, run, depth = 0) {
+addRunThought(run, `using ${modelLabel(game.model)} — planning output across ${(plan.files || []).length || 1} file(s)…`);
 let raf = null;
 const full = await agentStream({
 model: game.model, temperature: 0.7,
@@ -387,8 +459,34 @@ async function runPrompt(ask) {
 return game.srcHtml ? runEdit(ask) : runCreate(ask);
 }
 
+async function tryStudioLivePatch(ask, run) {
+if (!game.srcHtml || !/slop-mod-rx/.test(finalHTML())) return false;
+run.set('build', 'active', 'trying a live patch (no rebuild)…');
+try {
+const full = await chatStream({
+model: MODELS.remix, temperature: 0.25, maxTokens: 900,
+messages: [
+{ role: 'system', content: LIVE_PATCH_SYSTEM },
+{ role: 'user', content: `Game source:\n\`\`\`html\n${game.srcHtml}\n\`\`\`\n\nChange (apply live, no reload): ${ask}` },
+],
+});
+if (/^\s*FULL\s*$/i.test(full.trim())) return false;
+const code = extractFence(full);
+if (!code) return false;
+$('play-frame').contentWindow?.postMessage({ __slopmod: code }, '*');
+run.set('build', 'done', 'live patch applied');
+run.set('test', 'done', 'skipped — runtime patch only');
+run.set('ship', 'done', 'game updated in place');
+run.el.classList.add('run-done');
+run.detail(`live patch: ${ask} — no full rebuild needed`);
+addSuggestChips(run, ['sync this change into the source code', 'make it harder', 'add screen shake']);
+return true;
+} catch { return false; }
+}
+
 async function runCreate(ask) {
 const run = makeRunCard();
+enableMultiplayerFromPrompt(ask, run);
 run.set('plan', 'active', 'designing your game…');
 const plan = await getPlan(ask, run);
 run.set('plan', 'done', plan.name);
@@ -410,21 +508,33 @@ commitBuild(res.built, plan, ask, false);
 run.set('ship', 'done');
 run.el.classList.add('run-done');
 const nf = Object.keys(game.files).length;
-run.detail(`${game.name} is live — ${res.fixes ? `self-healed ${res.fixes} bug${res.fixes > 1 ? 's' : ''}, ` : ''}${nf ? `${nf + 1} files · ` : ''}${(game.srcHtml.length / 1024).toFixed(1)} KB · made with ${modelLabel(game.model)}`);
+run.detail(`${game.name} is live — ${projectSizeLabel()}${res.fixes ? ` · self-healed ${res.fixes} bug${res.fixes > 1 ? 's' : ''}` : ''}${nf ? ` · ${nf + 1} files` : ''} · ${modelLabel(game.model)}`);
+addSuggestChips(run, ['make it harder and faster', 'add a boss every 5 waves', 'add screen shake and particles', game.multiplayer ? 'add more AI bots in empty slots' : 'add multiplayer co-op']);
 }
 
 async function runEdit(ask, depth = 0) {
 const run = makeRunCard();
-run.set('plan', 'done', 'editing the current build'); run.set('art', 'done');
-run.set('build', 'active', 'applying your edit…');
+enableMultiplayerFromPrompt(ask, run);
+if (depth === 0 && await tryStudioLivePatch(ask, run)) return;
+
+run.set('plan', 'done', 'patching the current build'); run.set('art', 'done');
+run.set('build', 'active', 'applying a surgical edit…');
+addRunThought(run, 'only changed files will be rewritten — the rest stays intact');
 let raf = null;
 const full = await agentStream({
-model: game.model, temperature: 0.4,
+model: game.model, temperature: 0.35,
 messages: [
-{ role: 'system', content: systemPrompt(true) },
-{ role: 'user', content: `Current project:\n${currentSourceForPrompt()}\n\nRequest: ${ask}` },
+{ role: 'system', content: editSystemPrompt() },
+{ role: 'user', content: `Current project (${projectSizeLabel()}):\n${currentSourceForPrompt()}\n\nEdit request: ${ask}\n\nReturn ONLY the file(s) that need to change.` },
 ],
-onDelta(soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; run.detail(`writing… ${(soFar.length / 1024).toFixed(1)} KB`); $('code-view').textContent = soFar; }); },
+onDelta(soFar) {
+if (!raf) raf = requestAnimationFrame(() => {
+raf = null;
+const kb = (soFar.length / 1024).toFixed(1);
+run.detail(`patching… ${kb} KB streamed`);
+$('code-view').textContent = soFar;
+});
+},
 });
 const meta = extractMetaLine(full) || {};
 if (Array.isArray(meta.sprites) && meta.sprites.length && depth < 1) {
@@ -433,18 +543,19 @@ await makeSprites(meta.sprites.slice(0, 4).map(normSprite), run);
 run.set('art', 'done');
 return runEdit(ask, depth + 1);
 }
-const built = parseBuild(full);
+let built = parseBuild(full);
 if (!built) throw new Error('the agent returned something unservable — try rephrasing');
-built.meta = meta;
-run.set('build', 'done');
-run.set('test', 'active', 'crash-testing…');
+built = normalizeBuilt(built, meta);
+run.set('build', 'done', `patched ${Object.keys(built.files || {}).length ? 'file(s)' : 'build'}`);
+run.set('test', 'active', 'crash-testing the patch…');
 const res = await healUntilClean(built, run);
 if (!res.ok) { run.el.classList.add('run-failed'); throw new Error(`that edit kept crashing (${res.error || 'unknown'}) — your last good build is untouched.`); }
 run.set('ship', 'active', 'saving…');
 commitBuild(res.built, null, ask, true);
 run.set('ship', 'done');
 run.el.classList.add('run-done');
-run.detail(`${meta.summary || 'edit applied'} — ${res.fixes ? `self-healed ${res.fixes} bug${res.fixes > 1 ? 's' : ''}, ` : ''}crash-tested · ${modelLabel(game.model)}`);
+run.detail(`${meta.summary || 'edit applied'} — ${projectSizeLabel()}${res.fixes ? ` · self-healed ${res.fixes} bug${res.fixes > 1 ? 's' : ''}` : ''} · ${modelLabel(game.model)}`);
+addSuggestChips(run, ['make it harder', 'add more juice', 'generate a sprite for the boss']);
 }
 
 // ---------------------------------------------------------------- frame / persist
@@ -578,6 +689,11 @@ toast(`exported ${slug}.zip (${files.length} files)`);
 // ---------------------------------------------------------------- publish & invites
 async function publish() {
 if (!game.srcHtml) { toast('build something first'); return null; }
+const bytes = projectBytes();
+if (bytes > PUBLISH_MAX_BYTES) {
+toast(`too big to publish (${(bytes / 1024).toFixed(1)} KB) — max is 50 KB. ask the agent to trim or split files.`);
+return null;
+}
 const me = await api.me();
 if (me === null) { toast('sign in on the homepage first, then come back'); return null; }
 if (!me.username) { toast('finish setup — pick a username on the homepage first'); return null; }
@@ -725,8 +841,9 @@ $('model-select') && ($('model-select').value = id);
 }
 
 function initModelPickers() {
-const saved = localStorage.getItem('slop-model') || MODELS.studio;
-setBuildModel(MODEL_CHOICES.some((m) => m.id === saved) ? saved : MODELS.studio);
+const saved = localStorage.getItem('slop-model');
+const pick = MODEL_CHOICES.some((m) => m.id === saved) ? saved : 'gpt-5.5';
+setBuildModel(pick);
 const html = modelOptionsHTML();
 for (const id of ['studio-model', 'model-select']) {
 const sel = $(id);
@@ -793,8 +910,8 @@ $('sprite-upload-btn').addEventListener('click', () => $('sprite-file').click())
 $('sprite-file').addEventListener('change', (e) => { if (e.target.files.length) handleSpriteUpload(e.target.files); e.target.value = ''; });
 $('sprite-use').addEventListener('click', () => { const n = $('sprite-select').value; if (n) addSpriteToPrompt(n); });
 
-const mpToggle = $('mp-toggle'); const syncMP = () => mpToggle.classList.toggle('on', game.multiplayer);
-mpToggle.addEventListener('click', () => { game.multiplayer = !game.multiplayer; syncMP(); if (game.srcHtml) { refreshFrame(); persist(); } toast(game.multiplayer ? 'multiplayer ON — your next build gets a shareable room' : 'multiplayer off'); });
+const mpToggle = $('mp-toggle');
+mpToggle.addEventListener('click', () => { game.multiplayer = !game.multiplayer; syncMP(); if (game.srcHtml) { refreshFrame(); persist(); } toast(game.multiplayer ? 'multiplayer ON — SlopNet rooms injected on next build/edit' : 'multiplayer off'); });
 syncMP();
 
 $('game-title').addEventListener('change', () => { game.name = $('game-title').value.trim() || 'untitled slop'; if (game.srcHtml) persist(); });
