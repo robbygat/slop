@@ -6,7 +6,7 @@
 
 import { chatStream, extractFence, extractMetaLine, imageGen, MODELS, MODEL_CHOICES, setUserKey } from './ai.js';
 import { testGameHTML } from './sandbox.js';
-import { attachFrameMonitor, createDebugPanel, injectRuntimeHook, MOD_RX, mountErrorOverlay } from './debug.js';
+import { attachFrameMonitor, createDebugPanel, injectRuntimeHook, injectPlayContext, MOD_RX, mountErrorOverlay } from './debug.js';
 import { createSpeech } from './speech.js';
 import { api, escapeHTML } from './api.js';
 import { getCookedGame, addCookedGame, updateCookedGame } from './games-grid.js';
@@ -29,10 +29,10 @@ model: localStorage.getItem('slop-model') || MODELS.studio,
 };
 let busy = false;
 const PUBLISH_MAX_BYTES = 50 * 1024;
-const MP_RE = /\b(multiplayer|multi-player|co-?op|cooperative|online|pvp|versus|with friends|play with friends|real-?time|(?:2|4|8)[\s-]?player|party game|lobby|host a room|join room|slopnet)\b/i;
-
+const MP_RE = /\b(multiplayer|multi-player|co-?op|cooperative|online|pvp|versus|vs\.?|with friends|play with friends|play against|real-?time|(?:2|4|8)[\s-]?player|party game|lobby|host a room|join room|slopnet|hotseat|take turns|over the internet)\b/i;
+const MP_GAME_RE = /\b(chess|checkers|connect\s?four|battleship|card game|board game)\b.*\b(online|multiplayer|2[\s-]?player|friend|versus|pvp)\b|\b(online|multiplayer|2[\s-]?player)\b.*\b(chess|checkers)\b/i;
+function detectMultiplayer(ask) { return MP_RE.test(ask || '') || MP_GAME_RE.test(ask || ''); }
 function syncMP() { $('mp-toggle')?.classList.toggle('on', game.multiplayer); }
-function detectMultiplayer(ask) { return MP_RE.test(ask || ''); }
 function projectBytes() { return new Blob([finalHTML()]).size; }
 function projectSizeLabel() { return `${(projectBytes() / 1024).toFixed(1)} KB`; }
 function enableMultiplayerFromPrompt(ask, run) {
@@ -78,6 +78,7 @@ return html
 .replace(/<script id="slop-sprites">[\s\S]*?<\/script>\n?/i, '')
 .replace(/<script id="slop-mod-rx">[\s\S]*?<\/script>\n?/i, '')
 .replace(/<script id="slop-debug">[\s\S]*?<\/script>\n?/i, '')
+.replace(/<script id="slop-play-ctx">[\s\S]*?<\/script>\n?/i, '')
 .replace(/<!--slopnet-->[\s\S]*?<!--\/slopnet-->\n?/i, '');
 }
 // inline local <script src> / <link href> from the project file map
@@ -102,6 +103,13 @@ function assemble(html, { sprites = game.sprites, multiplayer = game.multiplayer
 let out = stripInjected(html);
 out = injectRuntimeHook(out);
 out = injectHead(out, MOD_RECEIVER);
+const shareBase = game.publishedAs
+  ? `${location.origin}/play/${game.publishedAs}`
+  : game.id ? `${location.origin}/play.html?id=${encodeURIComponent(game.id)}` : `${location.origin}${location.pathname}`;
+out = injectPlayContext(out, {
+  shareBase,
+  room: new URLSearchParams(location.search).get('room'),
+});
 if (Object.keys(sprites).length) out = injectHead(out, `<script id="slop-sprites">window.SPRITES=${JSON.stringify(sprites)};</scr` + `ipt>`);
 if (multiplayer) out = injectHead(out, `<!--slopnet-->${SLOPNET_INLINE}<!--/slopnet-->`);
 return out;
@@ -157,14 +165,20 @@ return `SPRITES (images the game can draw): the shell injects window.SPRITES = {
 const LIVE_MOD_RULES = `LIVE REMIX: expose the game's live state + tunables on window.GAME (e.g. window.GAME={state,player,config,...}) and keep difficulty/speed numbers in window.GAME.config, so a one-line patch like GAME.config.speed*=2 takes effect with no reload.`;
 const MULTIFILE_RULES = `PROJECT STRUCTURE: games under ~12 KB = one \`\`\`html block. Bigger games MUST split: === index.html === (shell + canvas) + === js/game.js === (logic) + optional === css/style.css ===. index.html references others with relative <script src="js/game.js"> / <link href="css/style.css"> (the shell bundles them). Use folders (js/, css/) for anything substantial.`;
 function multiplayerRules() {
-return `MULTIPLAYER (REQUIRED — SlopNet is injected by the shell):
-The page already has window.SlopNet (WebRTC host-authoritative). You MUST wire:
-- Title screen: "Single Player" + "Host Game" + "Join" (input for room code). Auto-join from ?room=CODE in URL.
-- SlopNet.available() check; fall back to solo if false.
-- HOST: runs simulation, SlopNet.broadcastState(stateObj) ~20Hz, SlopNet.on('input', (peerId, input) => ...) for client inputs, SlopNet.assignId(conn, slotId), fill empty slots with simple AI bots.
-- CLIENT: SlopNet.sendInput({...}) ~30Hz, SlopNet.on('state', snap => render snap), never simulate locally.
-- SlopNet.on('join'|'leave'|'init'|'connected'|'disconnected'|'error', fn); SlopNet.isHost; SlopNet.shareLink() to copy invite link.
-- Keep window.GAME exposed for live tuning.`;
+return `MULTIPLAYER (REQUIRED — SlopNet + PeerJS are injected by the shell):
+window.SlopNet is already on the page. window.__SLOP_ROOM holds ?room= from the URL (auto-join). window.slopShareUrl(code) builds the correct invite link for published games.
+
+YOU MUST implement this exact lobby flow:
+1. Title screen with three buttons: "Single Player", "Host Online Game", "Join Game" (+ text input for room code).
+2. On load: if (window.__SLOP_ROOM) call your joinRoom(window.__SLOP_ROOM) automatically.
+3. Host: SlopNet.host(function(code){ show code; copy SlopNet.shareLink() or slopShareUrl(code) to a share input; });
+4. Join: SlopNet.join(code, function(){ /* wait for state */ });
+5. HOST simulates the full game (including turn order for chess). SlopNet.broadcastState(state) ~10-20Hz (turn-based can be on each move).
+6. CLIENT sends moves/inputs via SlopNet.sendInput({...}); SlopNet.on('state', renderState); SlopNet.on('input', hostHandlesInput);
+7. SlopNet.on('join'|'leave'|'init'|'connected'|'error', fn); SlopNet.assignId(conn, playerId);
+8. Fall back to solo if !SlopNet.available().
+
+For turn-based games (chess, checkers): host validates moves, broadcasts board after each turn, clients never simulate locally.`;
 }
 function systemPrompt(isEdit) {
 return `You are the build agent inside Slop Studio on slop.game — you turn plain-english prompts into complete, genuinely playable browser games. Default model reasoning: plan carefully, then output complete working code with no placeholders.

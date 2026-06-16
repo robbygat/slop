@@ -101,7 +101,7 @@ sendInput(input) { if (this.conn?.open) this.conn.send({ t: 'input', i: input })
 send(msg) { if (this.conn?.open) this.conn.send(msg); }
 
 get peerCount() { return this.isHost ? this.conns.length : (this.conn ? 1 : 0); }
-shareLink() { return `${location.origin}${location.pathname}?room=${this.roomCode}`; }
+shareLink() { return (typeof window !== 'undefined' && window.slopShareUrl) ? window.slopShareUrl(this.roomCode) : `${location.origin}${location.pathname}?room=${this.roomCode}`; }
 destroy() { try { this.peer?.destroy(); } catch { /* gone */ } this.peer = null; this.conn = null; this.conns = []; }
 }
 
@@ -137,7 +137,7 @@ broadcastState:function(s){conns.forEach(function(c){if(c.open)try{c.send({t:'st
 broadcastMod:function(code,summary){mods.push({t:'mod',code:code,summary:summary});conns.forEach(function(c){if(c.open)c.send({t:'mod',code:code,summary:summary})});},
 sendInput:function(i){if(conn&&conn.open)conn.send({t:'input',i:i});},
 get isHost(){return isHost;}, get peerCount(){return isHost?conns.length:(conn?1:0);},
-shareLink:function(){return location.origin+location.pathname+'?room='+code;}, roomCode:function(){return code;}
+shareLink:function(){return window.slopShareUrl?window.slopShareUrl(code):(location.origin+location.pathname+'?room='+code);}, roomCode:function(){return code;}
 };
 })();
 </scr`+`ipt>`;

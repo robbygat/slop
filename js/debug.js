@@ -31,9 +31,40 @@ export function injectModReceiver(html) {
   return MOD_RX + html;
 }
 
+/** Parent page context for multiplayer share links + ?room= auto-join (iframe-safe). */
+export const PLAY_CTX_HOOK = '<script id="slop-play-ctx">'
++ '(function(){'
++ 'try{window.__SLOP_SHARE_BASE=window.__SLOP_SHARE_BASE||parent.location.origin+parent.location.pathname;}catch(e){window.__SLOP_SHARE_BASE=window.__SLOP_SHARE_BASE||location.href.split("?")[0];}'
++ 'try{var r=new URL(parent.location.href).searchParams.get("room");if(r)window.__SLOP_ROOM=r;}catch(e){}'
++ 'if(!window.__SLOP_ROOM){try{window.__SLOP_ROOM=new URL(location.href).searchParams.get("room");}catch(e){}}'
++ 'window.slopShareUrl=function(code){return(window.__SLOP_SHARE_BASE||location.href.split("?")[0])+"?room="+encodeURIComponent(code);};'
++ '})();'
++ '</' + 'script>';
+
+export function injectPlayContext(html, { shareBase, room } = {}) {
+  if (!shareBase && !room) return html;
+  let tag = PLAY_CTX_HOOK;
+  if (shareBase || room) {
+    tag = '<script id="slop-play-ctx">'
+      + `(function(){window.__SLOP_SHARE_BASE=${JSON.stringify(shareBase || '')};`
+      + `window.__SLOP_ROOM=${JSON.stringify(room || '')};`
+      + 'window.slopShareUrl=function(code){return(window.__SLOP_SHARE_BASE||location.href.split("?")[0])+"?room="+encodeURIComponent(code);};'
+      + '})();</' + 'script>';
+  }
+  if (/id="slop-play-ctx"/.test(html)) return html;
+  if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, (m) => m + tag);
+  if (/<html[^>]*>/i.test(html)) return html.replace(/<html[^>]*>/i, (m) => m + tag);
+  return tag + html;
+}
+
 /** Wrap game HTML for playtest / publish — runtime errors + live remix receiver. */
-export function prepareGameHTML(html) {
-  return injectModReceiver(injectRuntimeHook(html));
+export function prepareGameHTML(html, opts = {}) {
+  let out = String(html || '')
+    .replace(/<script id="slop-play-ctx">[\s\S]*?<\/script>\n?/i, '');
+  out = injectModReceiver(injectRuntimeHook(out));
+  if (opts.shareBase || opts.room) out = injectPlayContext(out, opts);
+  else out = injectPlayContext(out, {});
+  return out;
 }
 
 /** Attach postMessage listener for runtime errors from a visible iframe. */

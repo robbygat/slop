@@ -32,7 +32,9 @@ let errOverlay = null;
 let scoreKey = null;
 
 function loadHTML(html) {
-  return prepareGameHTML(html || '');
+  const shareBase = `${location.origin}${location.pathname}`;
+  const room = params.get('room');
+  return prepareGameHTML(html || '', { shareBase, room });
 }
 
 function mountGame(html) {
