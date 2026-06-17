@@ -158,6 +158,38 @@ background:#FFF0F0; border:2px solid var(--red); border-radius:9px; padding:6px 
 .run-suggest-chip:hover { color:var(--pk); transform:translate(-1px,-1px); }
 .run-thought { font-family:'Space Mono',monospace; font-size:10.5px; font-weight:600; color:var(--soft); font-style:italic; padding:4px 0; }
 
+/* live file-build ticker — each file fills in as the engine authors it */
+.run-build-files { display:flex; flex-direction:column; gap:5px; background:var(--ink); border-radius:13px; padding:9px 10px; }
+.rbf-row { display:flex; align-items:center; gap:9px; font-family:'Space Mono',monospace; font-size:11px; font-weight:700; color:rgba(255,255,255,.62); padding:3px 2px; transition:color .2s ease, opacity .2s; }
+.rbf-row.queued { opacity:.5; }
+.rbf-dot { width:9px; height:9px; border-radius:50%; flex:none; background:rgba(255,255,255,.28); box-shadow:0 0 0 0 rgba(78,202,255,0); }
+.rbf-row.writing { color:#fff; }
+.rbf-row.writing .rbf-dot { background:var(--bl); animation:rbf-pulse 1s ease-in-out infinite; }
+.rbf-row.retry { color:var(--y); }
+.rbf-row.retry .rbf-dot { background:var(--or); animation:rbf-pulse .7s ease-in-out infinite; }
+.rbf-row.done { color:rgba(255,255,255,.9); }
+.rbf-row.done .rbf-dot { background:var(--mt); box-shadow:0 0 10px rgba(61,255,176,.6); }
+.rbf-row.bad { color:var(--red); }
+.rbf-row.bad .rbf-dot { background:var(--red); }
+.rbf-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; letter-spacing:-.01em; }
+.rbf-meta { font-size:9.5px; font-weight:600; color:rgba(255,255,255,.5); white-space:nowrap; }
+.rbf-row.done .rbf-meta { color:var(--mt); }
+@keyframes rbf-pulse { 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(1.4); opacity:.7; } }
+
+/* verify panel — functional checks light up as the probe reports */
+.run-verify { display:flex; flex-direction:column; gap:5px; background:var(--cr); border:2px solid var(--ink); border-radius:13px; padding:9px 10px; }
+.rv-check { display:flex; align-items:center; gap:8px; font-size:11.5px; font-weight:800; color:var(--soft); flex-wrap:wrap; }
+.rv-ic { width:16px; height:16px; border-radius:50%; flex:none; border:2px solid var(--ink); display:inline-block; position:relative; background:var(--wh); }
+.rv-check.ok { color:var(--ink); }
+.rv-check.ok .rv-ic { background:var(--mt); }
+.rv-check.ok .rv-ic::after { content:''; position:absolute; left:4px; top:1px; width:4px; height:8px; border:solid var(--ink); border-width:0 2px 2px 0; transform:rotate(43deg); }
+.rv-check.warn .rv-ic { background:var(--y); }
+.rv-check.warn .rv-ic::after { content:'!'; position:absolute; inset:0; display:grid; place-items:center; font-size:10px; font-weight:900; color:var(--ink); }
+.rv-check.bad { color:var(--red); }
+.rv-check.bad .rv-ic { background:var(--red); border-color:var(--red); }
+.rv-check.bad .rv-ic::after { content:'\00d7'; position:absolute; inset:0; display:grid; place-items:center; font-size:12px; font-weight:900; color:#fff; line-height:1; }
+.rv-detail { flex-basis:100%; font-family:'Space Mono',monospace; font-size:9.5px; font-weight:600; color:var(--soft); line-height:1.4; padding-left:24px; font-style:italic; }
+
 /* interactive planning Q&A */
 .plan-qa { background:linear-gradient(145deg, rgba(78,202,255,.14), rgba(255,225,53,.12)); border:2.5px solid var(--ink);
 border-radius:16px; padding:14px 14px 12px; display:flex; flex-direction:column; gap:12px; box-shadow:3px 3px 0 var(--ink); }
@@ -575,8 +607,8 @@ flex-shrink:0;
 <aside class="agent">
 <div class="agent-head">
 <div class="agent-head-text">
-<h2>slop agent</h2>
-<p>Claude · GPT · Grok — plans, asks, builds, debugs</p>
+<h2>slop engine</h2>
+<p>plans · designs · writes each file · verifies it plays</p>
 </div>
 </div>
 <div class="agent-scroll">
@@ -637,7 +669,7 @@ flex-shrink:0;
 <div id="play-empty">
 <div class="ic">🎮</div>
 <div class="big">your game appears here</div>
-<p class="hint-mono">describe a game and hit Generate. the agent plans it, writes the code, crash-tests it, and boots it right here — then keep prompting to change anything.</p>
+<p class="hint-mono">describe a game in plain words. the engine designs it, writes each file one by one, then actually plays it to make sure it works — and boots it right here. keep prompting to change anything.</p>
 </div>
 <iframe id="play-frame" sandbox="allow-scripts allow-pointer-lock" title="playtest"></iframe>
 </div>

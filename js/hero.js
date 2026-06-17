@@ -1,14 +1,8 @@
-// Hero: hint-chip typewriter, the model picker, the cook-game flow, and the waitlist.
+// Hero: hint-chip typewriter, the model picker, the hand-off into Slop Studio, and the waitlist.
 
 import { showToast } from './toast.js';
 import { MODELS, MODEL_CHOICES } from './models.js';
 import { getUser, onUser, openAuthModal, promptUsername } from './account.js';
-
-let cookModule = null;
-async function getCookModule() {
-  cookModule ??= import('./cook.js');
-  return cookModule;
-}
 
 let typeTimer = null;
 
@@ -140,21 +134,12 @@ export async function cookGame() {
     return;
   }
 
+  // Hand off to Slop Studio — the real engine — and have it start building
+  // immediately. The studio reads ?prompt + ?auto=1 on boot, and the chosen
+  // model rides along via the shared localStorage['slop-model'].
   btn.disabled = true;
-  btn.textContent = 'Cooking…';
-
-  const { cookGameForReal } = await getCookModule();
-  const game = await cookGameForReal(textarea.value.trim());
-
-  if (game) {
-    btn.textContent = 'OK Published!';
-    btn.classList.add('done');
-  }
-  setTimeout(() => {
-    btn.disabled = false;
-    btn.classList.remove('done');
-    btn.textContent = 'Generate';
-  }, 1200);
+  btn.textContent = 'Opening studio…';
+  window.location.href = `studio.html?prompt=${encodeURIComponent(prompt)}&auto=1`;
 }
 
 // Once the user is signed in with a username, pick up a prompt they tried to

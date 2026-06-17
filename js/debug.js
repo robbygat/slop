@@ -17,6 +17,46 @@ export const RUNTIME_HOOK = '<script id="slop-debug">window.__slopErrors=[];'
 
 export const MOD_RX = `<script id="slop-mod-rx">window.addEventListener('message',function(e){if(e&&e.data&&e.data.__slopmod){try{(new Function(e.data.__slopmod))();}catch(err){console.warn('slopmod',err);}}});<\/script>`;
 
+// ---------------------------------------------------------------------------
+// FUNCTIONAL PROBE — injected ONLY into the hidden sandbox test-bench (never in
+// shipped games). Crash-free is not the same as alive: a blank canvas or a dead
+// loop throws nothing. This watches the running game and reports whether it is
+// actually playable, exposed on window.__slopProbe for the parent to read.
+//   rendered     — the canvas/DOM is drawing something (not a blank screen)
+//   animated     — its picture changes over time (a real frame loop is painting)
+//   loop         — requestAnimationFrame is firing repeatedly
+//   inputWired   — the game registered key/pointer listeners
+//   reactedToInput — synthetic input visibly changed the screen or window.GAME
+//   scoreWired   — it listens for / dispatches slop:score
+// All sampling is wrapped in try/catch so the probe can never break the game.
+const PROBE_BODY = `(function(){
+var P=window.__slopProbe={frames:0,rendered:false,animated:false,inputWired:false,reactedToInput:false,scoreWired:false,ready:false};
+var oraf=window.requestAnimationFrame;
+if(oraf){window.requestAnimationFrame=function(cb){return oraf.call(window,function(t){P.frames++;return cb(t);});};}
+var INPUT={keydown:1,keyup:1,keypress:1,pointerdown:1,pointerup:1,pointermove:1,mousedown:1,mouseup:1,mousemove:1,click:1,touchstart:1,touchmove:1,wheel:1};
+try{var ET=window.EventTarget&&window.EventTarget.prototype;if(ET&&!ET.__slopWrapped){var oa=ET.addEventListener;ET.addEventListener=function(t){try{if(INPUT[t])P.inputWired=true;}catch(e){}return oa.apply(this,arguments);};ET.__slopWrapped=true;}}catch(e){}
+function largest(){try{var cs=document.querySelectorAll('canvas'),b=null;for(var i=0;i<cs.length;i++){if(!b||cs[i].width*cs[i].height>b.width*b.height)b=cs[i];}return b;}catch(e){return null;}}
+function grab(){var c=largest();if(c&&c.width&&c.height){try{var o=document.createElement('canvas');o.width=32;o.height=24;var x=o.getContext('2d');x.drawImage(c,0,0,32,24);var d=x.getImageData(0,0,32,24).data,s='',mn=765,mx=0;for(var i=0;i<d.length;i+=4){var l=d[i]+d[i+1]+d[i+2];if(i%48===0)s+=(l>>6)+(d[i+3]>127?'#':'.');if(l<mn)mn=l;if(l>mx)mx=l;}return{k:'c',s:s,r:mx-mn};}catch(e){}}try{var b=document.body;return{k:'d',s:(b?(b.innerText||''):'').slice(0,300)+'#'+(b?b.querySelectorAll('*').length:0),r:0};}catch(e){return{k:'n',s:'',r:0};}}
+function alive(g){if(!g)return false;if(g.k==='c')return g.r>40;if(g.k==='d')return g.s.replace(/[^a-z0-9]/gi,'').length>8;return false;}
+function gstate(){try{var G=window.GAME;if(!G)return '';return JSON.stringify([G.state,G.score,G.player&&G.player.x,G.player&&G.player.y]).slice(0,240);}catch(e){return '';}}
+function fire(){try{var keys=['ArrowRight','ArrowLeft','ArrowUp','ArrowDown',' ','Enter','w','a','d'];for(var i=0;i<keys.length;i++){var k=keys[i],code=k===' '?'Space':k.length===1?'Key'+k.toUpperCase():k;window.dispatchEvent(new KeyboardEvent('keydown',{key:k,code:code,bubbles:true}));window.dispatchEvent(new KeyboardEvent('keyup',{key:k,code:code,bubbles:true}));}var c=largest();var t=c||document.body;if(t){var rc=t.getBoundingClientRect?t.getBoundingClientRect():{left:0,top:0,width:300,height:200};var cx=rc.left+rc.width/2,cy=rc.top+rc.height/2;['pointermove','pointerdown','mousedown','pointerup','mouseup','click'].forEach(function(ty){try{t.dispatchEvent(new MouseEvent(ty,{clientX:cx,clientY:cy,bubbles:true}));}catch(e){}});}}catch(e){}}
+var a=null,pre=null,preState='';
+setTimeout(function(){a=grab();P.rendered=alive(a);},700);
+setTimeout(function(){var b=grab();if(a&&b.s!==a.s)P.animated=true;if(!P.rendered)P.rendered=alive(b);},1500);
+setTimeout(function(){pre=grab();preState=gstate();fire();},1750);
+setTimeout(function(){var c=grab();if(!P.rendered)P.rendered=alive(c);if(pre&&c.s!==pre.s)P.reactedToInput=true;var ps=gstate();if(ps&&ps!==preState)P.reactedToInput=true;P.ready=true;},2450);
+})();`;
+
+export const PROBE_HOOK = '<script id="slop-probe">' + PROBE_BODY + '</' + 'script>';
+
+/** Inject the functional probe — sandbox test-bench only, after the runtime hook. */
+export function injectProbe(html) {
+  if (/id="slop-probe"/.test(html)) return html;
+  if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, (m) => m + PROBE_HOOK);
+  if (/<html[^>]*>/i.test(html)) return html.replace(/<html[^>]*>/i, (m) => m + PROBE_HOOK);
+  return PROBE_HOOK + html;
+}
+
 export function injectRuntimeHook(html) {
   if (/id="slop-debug"/.test(html)) return html;
   if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, (m) => m + RUNTIME_HOOK);

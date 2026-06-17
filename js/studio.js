@@ -205,26 +205,52 @@ const MULTIFILE_RULES = `PROJECT STRUCTURE: games under ~12 KB = one \`\`\`html 
 function multiplayerRules() {
 return SLOP_MP_RULES;
 }
-function systemPrompt(isEdit) {
-return `You are the build agent inside Slop Studio on SLOP.game — you turn plain-english prompts into complete, genuinely playable browser games. Default model reasoning: plan carefully, then output complete working code with no placeholders.
 
-${CREATE_RULES}
-
-${MULTIFILE_RULES}
-
-${spriteRules()}
+// ---------------------------------------------------------------- engine contract (file-by-file build)
+// The shared interface every file in a multi-file build must respect, so files
+// authored in separate passes still cohere into one working game.
+const ENGINE_CONTRACT = `${CREATE_RULES}
 
 ${LIVE_MOD_RULES}
 
+ENGINE INTERFACE (the project is assembled from multiple files — respect this shared contract so they fit together):
+- index.html is the ENTRY: it mounts the canvas/DOM and pulls in the other files with relative tags (<script src="js/game.js"></script>, <link href="css/style.css">). The engine inlines them at runtime, so every path must match the manifest EXACTLY.
+- Scripts are PLAIN (non-module) and run in document order — never use import/export or type="module". Code in a later <script> can call functions and read globals defined by an earlier one (hang shared things off window).
+- Keep difficulty/speed/state on window.GAME (window.GAME={state,config,player,...}) so live remixing works.
+- On game over: window.dispatchEvent(new CustomEvent('slop:score',{detail:{score:n}})).`;
+
+function langForPath(p) { return p.endsWith('.css') ? 'css' : p.endsWith('.js') ? 'js' : p.endsWith('.json') ? 'json' : 'html'; }
+function isIndexPath(p) { return /(^|\/)index\.html?$/i.test(p); }
+
+function fileAuthorSystem() {
+return `You are the build agent inside Slop Studio on SLOP.game, authoring ONE file at a time of a polished, genuinely playable browser game that the engine is assembling. Write COMPLETE, production-quality code for the requested file — no placeholders, no TODOs, no "// rest of code", no truncation.
+
+${ENGINE_CONTRACT}
+
+${spriteRules()}
+
 ${game.multiplayer ? multiplayerRules() : ''}
 
-${isEdit ? `EDIT MODE: the game ALREADY WORKS. Apply the request with a SURGICAL PATCH — change only what the request needs.` : `CREATE MODE: build a complete, polished game from scratch. Think through the core loop before coding.`}
-
-OUTPUT FORMAT (STRICT):
-Line 1: single-line JSON: {"name":"Game Name","desc":"one punchy lowercase line, max 90 chars","summary":"what you did, max 60 chars"}
-Then EITHER one \`\`\`html block (single-file) OR multiple \`=== path ===\` + fenced blocks (multi-file). Nothing else.
-(EXCEPTION: a sprite request per SPRITES is line 1 JSON only.)`;
+OUTPUT: ONLY the full contents of the requested file, inside a single fenced code block (\`\`\`html / \`\`\`js / \`\`\`css). No JSON line, no commentary — nothing before or after the block.`;
 }
+
+function fileAuthorUser(ask, spec, file, prior) {
+const written = Object.entries(prior)
+.map(([p, c]) => `=== ${p} (ALREADY WRITTEN — match its names/ids/function & variable names exactly; do not repeat it) ===\n\`\`\`${langForPath(p)}\n${c}\n\`\`\``)
+.join('\n\n');
+const manifest = (spec.files || []).map((f) => `- ${f.path}${f.role ? ` — ${f.role}` : ''}${f.exposes ? ` [exposes: ${f.exposes}]` : ''}${f.needs ? ` [needs: ${f.needs}]` : ''}`).join('\n');
+return `PLAYER REQUEST: ${ask}
+
+GAME SPEC:
+${JSON.stringify({ name: spec.name, desc: spec.desc, pitch: spec.pitch, mechanics: spec.mechanics })}
+
+PROJECT MANIFEST (all files in this game):
+${manifest}
+
+${written ? `THE PROJECT SO FAR:\n${written}\n\n` : ''}Now write the COMPLETE file: ${file.path}${file.role ? ` — ${file.role}` : ''}.${file.exposes ? `\nThis file must expose: ${file.exposes}.` : ''}${file.needs ? `\nThis file relies on: ${file.needs}.` : ''}
+Output ONLY that one file's contents in a single fenced block.`;
+}
+
 function editSystemPrompt() {
 return `You are the LIVE EDIT agent in Slop Studio. The player has a WORKING game and wants a targeted change. PATCH IN PLACE — do NOT rewrite the whole project from scratch.
 
@@ -321,6 +347,42 @@ card.innerHTML =
 + `${mech ? `<div class="run-plan-col"><h5>core loop</h5><ul>${mech}</ul></div>` : ''}`
 + `${files ? `<div class="run-plan-col"><h5>files</h5><ul class="run-files">${files}</ul></div>` : ''}`;
 run.body.appendChild(card);
+}
+
+// Live file-build ticker: one row per file, queued → writing → done (with size).
+function renderBuildFiles(run, manifest) {
+const wrap = document.createElement('div'); wrap.className = 'run-build-files';
+const rows = {};
+for (const f of manifest) {
+const row = document.createElement('div'); row.className = 'rbf-row queued'; row.dataset.path = f.path;
+row.innerHTML = `<span class="rbf-dot"></span><span class="rbf-name">${escapeHTML(f.path)}</span><span class="rbf-meta">queued</span>`;
+wrap.appendChild(row); rows[f.path] = row;
+}
+run.body.appendChild(wrap);
+run.el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+const META = { queued: 'queued', writing: 'writing…', retry: 'fixing…', bad: 'failed' };
+return {
+set(path, state, content) {
+const r = rows[path]; if (!r) return;
+r.className = `rbf-row ${state}`;
+const m = r.querySelector('.rbf-meta');
+if (state === 'done' && content != null) m.textContent = `${content.split('\n').length} lines · ${(content.length / 1024).toFixed(1)} KB`;
+else m.textContent = META[state] || state;
+run.el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+},
+size(path, bytes) { const r = rows[path]; if (r && r.classList.contains('writing')) r.querySelector('.rbf-meta').textContent = `${(bytes / 1024).toFixed(1)} KB…`; },
+};
+}
+
+// Verify panel: the functional checks light up green/amber/red as the probe reports.
+function renderVerify(run, checks, prev) {
+const panel = prev || (() => { const p = document.createElement('div'); p.className = 'run-verify'; run.body.appendChild(p); return p; })();
+panel.innerHTML = (checks || []).map((c) => {
+const state = c.ok ? 'ok' : (c.hard ? 'bad' : 'warn');
+return `<div class="rv-check ${state}"><span class="rv-ic" aria-hidden="true"></span><span class="rv-label">${escapeHTML(c.label)}</span>${(!c.ok && c.detail) ? `<span class="rv-detail">${escapeHTML(c.detail)}</span>` : ''}</div>`;
+}).join('');
+run.el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+return panel;
 }
 
 function parseDiscuss(text) {
@@ -444,15 +506,15 @@ return { name: String(s.name || 'sprite').replace(/[^a-zA-Z0-9_]/g, '_').slice(0
 // short, human label for the model that built this game ("powered by" disclosure)
 function modelLabel(id) { const m = MODEL_CHOICES.find((x) => x.id === id); return m ? m.label.split(' — ')[0] : id; }
 
-// -------- prompts (planner + debugger; build/edit reuse systemPrompt())
+// -------- prompts (planner + debugger; create build uses fileAuthorSystem(), edits use editSystemPrompt())
 function planSystemPrompt() {
 const mp = game.multiplayer ? ' This game MUST include online multiplayer (SlopNet host/join rooms, host-authoritative sync).' : '';
 return `You are the lead designer of Slop Studio on SLOP.game. Turn the player's request into a BUILD PLAN for ONE polished browser game (HTML5 canvas/JS, sandboxed iframe).${mp} Think deep: core loop, juice, progression, file layout for a substantial build (up to 50 KB published).
 
 Respond with ONLY a single JSON object — no prose, no markdown, no code fences:
-{"name":"Game Name","desc":"one punchy lowercase line, max 90 chars","pitch":"one sentence on why it's fun, max 140 chars","files":[{"path":"index.html","role":"what it holds"},{"path":"js/game.js","role":"main logic"}],"sprites":[{"name":"player","prompt":"detailed art prompt, single centered subject, plain white background, no text"}],"mechanics":["core mechanic","progression","juice/feedback","win/lose","multiplayer flow if applicable"]}
+{"name":"Game Name","desc":"one punchy lowercase line, max 90 chars","pitch":"one sentence on why it's fun, max 140 chars","files":[{"path":"index.html","role":"what it holds","exposes":"the canvas + which scripts it loads","needs":""},{"path":"js/game.js","role":"main logic","exposes":"startGame(), window.GAME","needs":"the #game canvas, window.SPRITES"}],"sprites":[{"name":"player","prompt":"detailed art prompt, single centered subject, plain white background, no text"}],"mechanics":["core mechanic","progression","juice/feedback","win/lose","multiplayer flow if applicable"]}
 
-Rules: prefer multi-file (index.html + js/game.js + optional css/) for anything beyond a tiny arcade game. index.html is always the entry. At most 4 sprites. mechanics: 4-8 bullets covering loop, escalation, and feel.`;
+Rules: the engine builds each file in its OWN focused pass, so every file must declare what it "exposes" (functions/globals/ids other files can use) and what it "needs" (from other files). prefer multi-file (index.html + js/game.js + optional css/style.css, split logic into js/engine.js + js/game.js for bigger games) for anything beyond a tiny arcade game; a tiny game can be index.html only. index.html is ALWAYS the entry. At most 4-5 files, at most 4 sprites. mechanics: 4-8 bullets covering loop, escalation, and feel.`;
 }
 function healSystemPrompt() {
 return `You are the debugger inside Slop Studio. A browser game throws uncaught runtime error(s) in a sandboxed iframe. Find the ROOT CAUSE and fix ONLY the broken code — do NOT rewrite unrelated files or restart from scratch.
@@ -481,7 +543,7 @@ return {
 name: String(obj.name || 'untitled slop').slice(0, 60),
 desc: String(obj.desc || '').slice(0, 90),
 pitch: String(obj.pitch || '').slice(0, 140),
-files: Array.isArray(obj.files) ? obj.files.slice(0, 12).map((f) => ({ path: String(f.path || f.name || '').trim(), role: String(f.role || f.purpose || '').slice(0, 80) })).filter((f) => f.path) : [],
+files: Array.isArray(obj.files) ? obj.files.slice(0, 12).map((f) => ({ path: String(f.path || f.name || '').trim().replace(/^\.?\//, ''), role: String(f.role || f.purpose || '').slice(0, 80), exposes: String(f.exposes || '').slice(0, 120), needs: String(f.needs || '').slice(0, 120) })).filter((f) => f.path) : [],
 sprites: Array.isArray(obj.sprites) ? obj.sprites.slice(0, 4).map(normSprite).filter((s) => s.name && s.prompt) : [],
 mechanics: Array.isArray(obj.mechanics) ? obj.mechanics.slice(0, 8).map((m) => String(m).slice(0, 80)) : [],
 };
@@ -528,38 +590,81 @@ const img = document.createElement('img'); img.src = url; slot.prepend(img); slo
 renderSprites();
 }
 
-async function buildGame(ask, plan, run, depth = 0) {
-addRunThought(run, `using ${modelLabel(game.model)} — planning output across ${(plan.files || []).length || 1} file(s)…`);
-let raf = null;
-const full = await agentStream({
-model: game.model, temperature: 0.7,
-messages: [
-{ role: 'system', content: systemPrompt(false) },
-{ role: 'user', content: `Build this game to the approved plan.\n\nPLAYER REQUEST: ${ask}\n\nPLAN:\n${JSON.stringify(plan)}\n\nBuild the complete project now, exactly per the OUTPUT FORMAT.` },
-],
-onDelta(soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; run.detail(`writing… ${(soFar.length / 1024).toFixed(1)} KB`); $('code-view').textContent = soFar; }); },
-});
-const meta = extractMetaLine(full) || {};
-// the build step may still discover it needs art — honor one round of sprite requests
-if (Array.isArray(meta.sprites) && meta.sprites.length && depth < 1) {
-run.set('art', 'active', `the agent needs ${meta.sprites.length} more sprite(s)…`);
-await makeSprites(meta.sprites.slice(0, 4).map(normSprite), run);
-run.set('art', 'done'); run.set('build', 'active', 'writing the game…');
-return buildGame(ask, plan, run, depth + 1);
-}
-const built = parseBuild(full);
-if (!built) throw new Error('the agent returned something unservable — try rephrasing');
-built.meta = meta;
-return built;
+// ---- file-by-file build: author each manifest file in its own focused pass ----
+function buildManifest(spec) {
+let files = (spec.files || []).map((f) => ({ ...f, path: String(f.path || '').trim().replace(/^\.?\//, '') })).filter((f) => f.path);
+// de-dupe by path, keeping the first role/exposes/needs seen
+const seen = new Set(); files = files.filter((f) => (seen.has(f.path) ? false : seen.add(f.path)));
+if (!files.some((f) => isIndexPath(f.path))) files.unshift({ path: 'index.html', role: 'shell, canvas, loads the scripts' });
+if (!files.length) files = [{ path: 'index.html', role: 'the whole game' }];
+// build order: index.html → css → js → everything else
+const rank = (p) => isIndexPath(p) ? 0 : p.endsWith('.css') ? 1 : p.endsWith('.js') ? 2 : 3;
+return files.sort((a, b) => rank(a.path) - rank(b.path)).slice(0, 8);
 }
 
-async function healBuild(built, errs, run) {
+function jsSyntaxError(code) {
+try { new Function(code); return null; } catch (e) { return (e && e.name === 'SyntaxError') ? e.message : null; }
+}
+
+// Author one file. Streams into the ticker + code-view; retries once on a clear JS syntax error.
+async function authorFile(ask, spec, file, prior, ticker) {
+for (let attempt = 0; attempt < 2; attempt++) {
+let raf = null;
+const full = await agentStream({
+model: game.model, temperature: 0.65,
+messages: [
+{ role: 'system', content: fileAuthorSystem() },
+{ role: 'user', content: fileAuthorUser(ask, spec, file, prior) },
+],
+onDelta(soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; ticker.size(file.path, soFar.length); $('code-view').textContent = soFar; }); },
+});
+let code = extractFence(full);
+if (!code) { code = full.replace(/^\s*```[a-z]*\s*/i, '').replace(/```\s*$/i, '').trim(); }
+code = code.trim();
+if (!code) { ticker.set(file.path, 'retry'); continue; }
+if (/\.js$/i.test(file.path) && attempt === 0) {
+const syn = jsSyntaxError(code);
+if (syn) { ticker.set(file.path, 'retry'); continue; }
+}
+return code;
+}
+return ''; // exhausted retries — caller treats empty as a failure to surface
+}
+
+async function buildProject(ask, spec, run) {
+const manifest = buildManifest(spec);
+addRunThought(run, `${modelLabel(game.model)} is authoring ${manifest.length} file${manifest.length > 1 ? 's' : ''} — one focused pass each, building on the last.`);
+const ticker = renderBuildFiles(run, manifest);
+const all = {}; // path → content (index.html lives here too)
+for (let i = 0; i < manifest.length; i++) {
+const file = manifest[i];
+ticker.set(file.path, 'writing');
+run.detail(`writing ${file.path}  ·  file ${i + 1}/${manifest.length}`);
+const prior = { ...all };
+const code = await authorFile(ask, spec, file, prior, ticker);
+if (!code) { ticker.set(file.path, 'bad'); throw new Error(`couldn't write ${file.path} cleanly — try rephrasing or simplifying`); }
+const key = isIndexPath(file.path) ? 'index.html' : file.path;
+all[key] = code;
+ticker.set(file.path, 'done', code);
+}
+const entry = all['index.html'] || '';
+const files = { ...all }; delete files['index.html'];
+if (!entry || !/<html|<!doctype|<canvas|<body/i.test(entry)) throw new Error('the entry file came back unservable — try rephrasing');
+return { entry, files, meta: { name: spec.name, desc: spec.desc, summary: `built ${manifest.length} file${manifest.length > 1 ? 's' : ''}` } };
+}
+
+// Self-heal: hand the agent the EXACT failures (crashes + failed functional checks)
+// plus the whole project, get back a surgical patch of just the broken file(s).
+async function healBuild(built, failures, run) {
+const errLines = (failures.errors || []).filter(Boolean).map((e) => `- CRASH: ${e}`);
+const checkLines = (failures.checks || []).map((c) => `- NOT WORKING — ${c.label}: ${c.detail}`);
+const diag = [...errLines, ...checkLines].join('\n') || '- the game does not appear to be interactive/playable';
 let raf = null;
 const full = await agentStream({
 model: game.model, temperature: 0.3,
 messages: [
 { role: 'system', content: healSystemPrompt() },
-{ role: 'user', content: `This project throws the following uncaught error(s) in a sandboxed iframe (the build is REJECTED if any uncaught error fires):\n\n${errs.map((e) => '- ' + e).join('\n')}\n\nCurrent project:\n${sourceForPrompt(built)}\n\nReturn ONLY the file(s) that need fixing — patch in place, do not rewrite the whole project.` },
+{ role: 'user', content: `The game was test-run in a sandboxed iframe and FAILED these checks (a build is rejected unless it boots clean AND actually draws to the screen):\n\n${diag}\n\nCurrent project:\n${sourceForPrompt(built)}\n\nDiagnose the ROOT CAUSE and return ONLY the file(s) that must change — patch in place, keep everything that works.` },
 ],
 onDelta(soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; $('code-view').textContent = soFar; }); },
 });
@@ -570,21 +675,42 @@ if (fixed.partial || (!fixed.entry && Object.keys(fixed.files || {}).length)) re
 return fixed;
 }
 
-async function healUntilClean(built, run) {
+// Run the functional probe, paint the verify panel, and self-heal on any HARD
+// failure (crash / blank screen). Soft checks (loop/input/reacts/score) only
+// advise — a build that boots and draws is never rejected for them — except a
+// game that looks totally dead (no loop AND no input AND no reaction) gets ONE
+// playability polish pass before shipping.
+async function verifyAndHeal(built, run) {
+let panel = null;
+let softTried = false;
 for (let attempt = 0; attempt <= MAX_FIX; attempt++) {
 const test = await testGameHTML(assemble(bundleFrom(built.entry, built.files)));
-if (test.ok) {
-built.thumb = test.thumb;
-run.set('test', 'done', attempt ? `crash-tested clean (self-healed ${attempt} bug${attempt > 1 ? 's' : ''})` : 'crash-tested clean');
-return { built, ok: true, fixes: attempt };
+panel = renderVerify(run, test.checks, panel);
+const hardFails = test.checks.filter((c) => c.hard && !c.ok);
+const passed = test.errors.length === 0 && hardFails.length === 0;
+if (passed) {
+built.thumb = test.thumb || built.thumb;
+const deadish = ['loop', 'input', 'reacts'].every((id) => { const c = test.checks.find((x) => x.id === id); return c && !c.ok; });
+if (deadish && !softTried && attempt < MAX_FIX) {
+softTried = true;
+run.set('test', 'active', 'it boots but feels static — sharpening the controls + game loop…');
+built = await healBuild(built, { errors: [], checks: test.checks.filter((c) => !c.ok && !c.advisory) }, run);
+continue;
 }
-if (attempt === MAX_FIX) { run.set('test', 'bad', `couldn't stabilize after ${MAX_FIX} fixes`); return { built, ok: false, error: test.error }; }
-const errs = (test.errors && test.errors.length ? test.errors : [test.error]).filter(Boolean);
-run.set('test', 'active', `debugging: ${errs[0]} · fix ${attempt + 1}/${MAX_FIX}`);
-addErrChip(run, errs[0]);
-built = await healBuild(built, errs, run);
+run.set('test', 'done', attempt ? `verified playable — self-healed ${attempt} issue${attempt > 1 ? 's' : ''}` : 'verified — it actually plays');
+return { built, ok: true, fixes: attempt, checks: test.checks };
 }
-return { built, ok: false };
+if (attempt === MAX_FIX) {
+run.set('test', 'bad', `couldn't get it playable after ${MAX_FIX} tries`);
+return { built, ok: false, error: test.error, checks: test.checks };
+}
+const fails = [...hardFails, ...test.checks.filter((c) => !c.ok && !c.hard && !c.advisory)];
+const headline = test.errors[0] || (hardFails[0] && `${hardFails[0].label}`) || 'fixing playability';
+run.set('test', 'active', `fixing: ${headline}  ·  ${attempt + 1}/${MAX_FIX}`);
+addErrChip(run, test.errors[0] || `${hardFails[0]?.label}: ${hardFails[0]?.detail}`);
+built = await healBuild(built, { errors: test.errors, checks: fails }, run);
+}
+return { built, ok: false, checks: [] };
 }
 
 function commitBuild(built, plan, ask, isEdit) {
@@ -646,13 +772,13 @@ renderPlanCard(run, plan);
 if (plan.sprites?.length) { run.set('art', 'active', `painting ${plan.sprites.length} sprite${plan.sprites.length > 1 ? 's' : ''}…`); await makeSprites(plan.sprites, run); }
 run.set('art', 'done', Object.keys(game.sprites).length ? `${Object.keys(game.sprites).length} sprite(s) ready` : 'pure shapes — no art needed');
 
-run.set('build', 'active', 'writing the game…');
-const built = await buildGame(enriched, plan, run);
-run.set('build', 'done');
+run.set('build', 'active', 'writing the game, file by file…');
+const built = await buildProject(enriched, plan, run);
+run.set('build', 'done', `${Object.keys(built.files).length + 1} file${Object.keys(built.files).length ? 's' : ''} written`);
 
-run.set('test', 'active', 'crash-testing…');
-const res = await healUntilClean(built, run);
-if (!res.ok) { run.el.classList.add('run-failed'); throw new Error(`couldn't get it running cleanly (last error: ${res.error || 'unknown'}) — try rephrasing or simplifying it.`); }
+run.set('test', 'active', 'verifying it actually plays…');
+const res = await verifyAndHeal(built, run);
+if (!res.ok) { run.el.classList.add('run-failed'); throw new Error(`couldn't get it playable (${res.error || 'unknown'}) — try rephrasing or simplifying it.`); }
 
 run.set('ship', 'active', 'plating…');
 commitBuild(res.built, plan, enriched, false);
@@ -699,9 +825,9 @@ let built = parseBuild(full);
 if (!built) throw new Error('the agent returned something unservable — try rephrasing');
 built = normalizeBuilt(built, meta);
 run.set('build', 'done', `patched ${Object.keys(built.files || {}).length ? 'file(s)' : 'build'}`);
-run.set('test', 'active', 'crash-testing the patch…');
-const res = await healUntilClean(built, run);
-if (!res.ok) { run.el.classList.add('run-failed'); throw new Error(`that edit kept crashing (${res.error || 'unknown'}) — your last good build is untouched.`); }
+run.set('test', 'active', 'verifying the patch still plays…');
+const res = await verifyAndHeal(built, run);
+if (!res.ok) { run.el.classList.add('run-failed'); throw new Error(`that edit broke the game (${res.error || 'unknown'}) — your last good build is untouched.`); }
 run.set('ship', 'active', 'saving…');
 commitBuild(res.built, null, ask, true);
 run.set('ship', 'done');
@@ -925,6 +1051,19 @@ return;
 if (collab?.isClient) { collab.postToBoard(ask); tlUser(ask); tlAgent('posted to the host\'s prompt board — they can click it to build it in.', 'good'); $('prompt').value = ''; return; }
 if (!ensureAccount(ask)) return;
 await runHostPrompt(ask, true);
+}
+
+// Auto-build from a ?prompt=…&auto=1 hand-off (e.g. the homepage). A user who
+// just landed here may not have their session resolved yet, so wait for the
+// account to be known before firing — otherwise the gate trips for signed-in
+// users. Falls back to firing anyway (which routes through the normal gate).
+function autoBuildWhenReady() {
+let fired = false;
+const go = () => { if (fired || busy) return; fired = true; submitPrompt(); };
+const u = getUser();
+if (u && u.username) { go(); return; }
+onUser((user) => { if (user && user.username) go(); });
+setTimeout(go, 3000);
 }
 async function runHostPrompt(ask, fromInput) {
 if (busy) { toast('still building the last one…'); return; }
@@ -1151,7 +1290,7 @@ $('prompt').focus();
 toast('error sent to prompt — hit Generate to patch in place');
 },
 });
-tlAgent('hey — I\'m your game agent. describe anything and I\'ll ask a few planning questions, then build it live. edits patch in place; say "online multiplayer" for shareable rooms.', 'good');
+tlAgent('hey — I\'m the slop engine. describe a game in plain words; I\'ll ask a couple of design questions, then write it file by file and playtest it before it lands. keep prompting to change anything — edits patch in place. say "online multiplayer" for shareable rooms.', 'good');
 
 const params = new URLSearchParams(location.search);
 const id = params.get('id');
@@ -1161,7 +1300,7 @@ const remix = params.get('remix');
 if (remix) { tlAgent('pulling that game from the community…', 'working'); const cg = await api.communityGame(remix); if (cg) { Object.assign(game, { id: `studio-${Math.random().toString(36).slice(2, 8)}`, name: `${cg.name} (remix)`, desc: cg.desc, prompt: cg.prompt || '', srcHtml: cg.html, files: {}, sprites: {} }); $('game-title').value = game.name; refreshFrame(); persist(); renderFiles(); tlAgent(`forked "${cg.name}" by @${cg.username} — remix away.`, 'good'); } else tlAgent('couldn\'t fetch that game — is the backend running?', 'bad'); }
 
 const seed = params.get('prompt');
-if (seed) { $('prompt').value = seed; autoGrowPrompt(); if (params.get('auto') === '1') submitPrompt(); }
+if (seed) { $('prompt').value = seed; autoGrowPrompt(); if (params.get('auto') === '1') autoBuildWhenReady(); }
 
 $('build-btn').addEventListener('click', submitPrompt);
 const promptEl = $('prompt');
