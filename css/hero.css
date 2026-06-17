@@ -61,7 +61,7 @@ transition: transform 0.14s ease;
 }
 .hero-brand:hover { transform: translateY(-1px); }
 
-/* mint pill — SVG mask cuts real holes in the letters (video shows through) */
+/* white pill — SVG mask cuts real holes in the letters (video shows through) */
 .brand-knockout {
 display: inline-block;
 line-height: 0;
@@ -327,7 +327,7 @@ animation: hePulse 1.8s ease-out infinite;
 }
 @media (prefers-reduced-motion: reduce) { .he-dot { animation: none; } }
 
-/* slogan = main hero headline (mint pill, video through letter cut-outs) */
+/* slogan = main hero headline (white pill, video through letter cut-outs) */
 .hero-slogan {
 margin: 0;
 width: 100%;
