@@ -141,9 +141,18 @@ box-shadow: none;
 
 /* ---- misc sections ---- */
 .meme-banner {
+padding: 20px 12px 28px;
+}
+
+.meme-banner-text {
 font-size: 13px;
-padding: 11px 14px;
-line-height: 1.45;
+padding: 12px 16px;
+line-height: 1.5;
+border-radius: 18px;
+}
+
+.meme-hl {
+padding: 2px 8px;
 }
 
 .footer-grid { gap: 24px; }

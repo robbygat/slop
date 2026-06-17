@@ -1,9 +1,9 @@
 /* ============ all keyframes live here ============ */
 
-/* marquee strip */
+/* marquee strip — scrolls right (content is duplicated in HTML for seamless loop) */
 @keyframes mq {
-from { transform: translateX(0); }
-to { transform: translateX(-50%); }
+from { transform: translateX(-50%); }
+to { transform: translateX(0); }
 }
 
 /* live dot in nav */
