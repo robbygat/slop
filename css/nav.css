@@ -56,16 +56,10 @@
   background: rgba(255, 255, 255, 0.75);
 }
 
-/* Revealed homepage nav = exact hero top bar: liquid-glass bar, ink wordmark,
-   frosted link pill, ghost Open Studio, white Sign in. Other pages keep frosted nav. */
-.site-nav.nav--hideable .brand .wordmark {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(25px, 2.9vw, 32px);
-  letter-spacing: -0.03em;
-  color: var(--ink);
+/* Revealed homepage nav — match hero top bar knock-out wordmark */
+.site-nav.nav--hideable .brand-knockout-svg {
+  height: clamp(40px, 4.8vw, 50px);
 }
-.site-nav.nav--hideable .brand .wordmark .dot-pk { color: var(--ink); }
 
 .site-nav.nav--hideable .nav-links {
   gap: clamp(4px, 1vw, 10px);

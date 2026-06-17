@@ -60,17 +60,17 @@ flex-shrink: 0;
 transition: transform 0.14s ease;
 }
 .hero-brand:hover { transform: translateY(-1px); }
-.hero-brand .wordmark {
-font-family: var(--font-display);
-font-weight: 800;
-font-size: clamp(25px, 2.9vw, 32px);
-letter-spacing: -0.03em;
-}
 
-.hero-brand .wordmark,
-.hero-brand .wordmark .dot-pk {
-color: #fff;
-text-shadow: 0 2px 16px rgba(17, 18, 26, 0.45), 0 1px 4px rgba(17, 18, 26, 0.35);
+/* mint pill — SVG mask cuts real holes in the letters (video shows through) */
+.brand-knockout {
+display: inline-block;
+line-height: 0;
+vertical-align: middle;
+}
+.brand-knockout-svg {
+display: block;
+width: auto;
+height: clamp(40px, 4.8vw, 50px);
 }
 
 .hero-topnav {
@@ -173,23 +173,17 @@ font-size: 13px;
 .hero-search { display: none; }
 }
 
-/* ---- head: headline sits on the shader (above the glass prompt) ---- */
+/* ---- head: headline aligned to prompt box width ---- */
 .hero-head {
 width: 100%;
-max-width: 920px;
+max-width: 720px;
 margin: 0 auto;
 display: flex;
 flex-direction: column;
-align-items: center;
+align-items: stretch;
 gap: 0;
-padding: 0 clamp(8px, 2vw, 16px);
-}
-
-.hero-brand {
-display: block;
-margin: 0;
-padding: 0;
-line-height: 0;
+padding: 0 clamp(14px, 2.2vw, 20px);
+box-sizing: border-box;
 }
 
 /* ---- liquid-glass panel (floats over the live shader background) ---- */
@@ -333,18 +327,24 @@ animation: hePulse 1.8s ease-out infinite;
 }
 @media (prefers-reduced-motion: reduce) { .he-dot { animation: none; } }
 
-/* slogan = main hero headline */
+/* slogan = main hero headline (mint pill, video through letter cut-outs) */
 .hero-slogan {
 margin: 0;
-font-family: var(--font-display);
-font-weight: 800;
-font-size: clamp(48px, 10vw, 112px);
-line-height: 0.95;
-letter-spacing: -0.045em;
-color: #fff;
-text-shadow:
-0 2px 28px rgba(17, 18, 26, 0.55),
-0 1px 6px rgba(17, 18, 26, 0.4);
+width: 100%;
+font-size: inherit;
+line-height: 0;
+}
+
+.hero-slogan-knockout {
+display: block;
+width: 100%;
+line-height: 0;
+}
+
+.hero-slogan-knockout-svg {
+display: block;
+width: 100%;
+height: auto;
 }
 
 .hero-sub {
@@ -752,7 +752,6 @@ color: #c7c7df;
 /* ============ responsive ============ */
 @media (max-width: 600px) {
 .hero { padding: 22px 14px 36px; }
-.hero-slogan { font-size: clamp(36px, 11vw, 52px); }
 .hero-sub { font-size: 15px; font-weight: 800; }
 
 .pbar {

@@ -18,6 +18,10 @@ gap: 8px;
 }
 .brand { flex-shrink: 0; }
 
+.brand-knockout-svg {
+height: clamp(36px, 8vw, 42px);
+}
+
 .nav-burger {
   width: 36px;
   height: 36px;

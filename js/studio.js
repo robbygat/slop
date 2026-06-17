@@ -4,7 +4,7 @@
 // Generate or upload sprites, flip on multiplayer, run a live collaborative
 // jam, bring your own API key/model, and export the whole folder as a .zip.
 
-import { chatStream, extractFence, extractMetaLine, imageGen, MODELS, MODEL_CHOICES, setUserKey } from './ai.js';
+import { chatStream, extractFence, extractMetaLine, MODELS, MODEL_CHOICES, setUserKey } from './ai.js';
 import { testGameHTML } from './sandbox.js';
 import { attachFrameMonitor, createDebugPanel, injectRuntimeHook, injectPlayContext, MOD_RX, mountErrorOverlay } from './debug.js';
 import { createSpeech } from './speech.js';
@@ -158,12 +158,32 @@ return s;
 }
 
 // ---------------------------------------------------------------- timeline UI
+// Auto-scroll the transcript to the newest content. Streaming updates call this
+// many times per second; routing every one through a smooth scrollIntoView made
+// the browser restart its scroll animation each frame, which read as the whole
+// panel violently shaking. Instead we coalesce all calls in a frame into a
+// single instant scrollTop write on the scroll container, and only follow when
+// the user is already near the bottom (force=true for brand-new messages).
+let _agentScrollRAF = 0;
+let _agentScrollForce = false;
+function scrollAgentToEnd(force = false) {
+const sc = document.querySelector('.agent-scroll');
+if (!sc) return;
+if (force) _agentScrollForce = true;
+if (_agentScrollRAF) return;
+_agentScrollRAF = requestAnimationFrame(() => {
+_agentScrollRAF = 0;
+const forced = _agentScrollForce; _agentScrollForce = false;
+const nearBottom = sc.scrollHeight - sc.scrollTop - sc.clientHeight < 140;
+if (forced || nearBottom) sc.scrollTop = sc.scrollHeight;
+});
+}
 function tlAgent(text, cls = '') {
 const wrap = document.createElement('div'); wrap.className = 'tl-agent-wrap';
 const el = document.createElement('div'); el.className = `tl-agent ${cls}`; el.textContent = text;
 wrap.appendChild(el);
 $('timeline').appendChild(wrap);
-wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+scrollAgentToEnd(true);
 return el;
 }
 function tlUser(text) {
@@ -171,7 +191,7 @@ const wrap = document.createElement('div'); wrap.className = 'tl-user-wrap';
 const el = document.createElement('div'); el.className = 'tl-user'; el.textContent = text;
 wrap.appendChild(el);
 $('timeline').appendChild(wrap);
-wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+scrollAgentToEnd(true);
 }
 function showTyping(on) {
 let el = document.getElementById('tl-typing');
@@ -180,28 +200,27 @@ if (el) return;
 el = document.createElement('div'); el.id = 'tl-typing'; el.className = 'tl-typing';
 el.innerHTML = '<span class="tl-think-orb" aria-hidden="true"></span><span class="tl-think-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span>thinking…</span>';
 $('timeline').appendChild(el);
-el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+scrollAgentToEnd(true);
 }
 function toast(text) { const el = $('studio-toast'); el.textContent = text; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2800); }
 function queueXP(e) { try { const q = JSON.parse(localStorage.getItem('slop-xp-queue') || '[]'); q.push(e); localStorage.setItem('slop-xp-queue', JSON.stringify(q)); } catch { /* */ } }
 
 // ---------------------------------------------------------------- prompts
 const CREATE_RULES = `HARD REQUIREMENTS:
-- The game runs inside a sandboxed iframe: never use localStorage, cookies, alert/prompt/confirm, or top-level navigation. Attach key listeners to window. Canvas scales to fit the viewport. No external resources except (optionally) a CDN <script> when truly needed.
+- SINGLE FILE: the ENTIRE game is ONE self-contained index.html — all CSS in an inline <style> and all JS in inline <script> tags. NEVER split into other files (no js/game.js, no css/style.css), and NEVER reference external files.
+- NO IMAGES — EVER: never load, request, or reference any image, sprite sheet, dataURL, <img>, or window.SPRITES. Draw 100% of the visuals in code with the canvas 2D API (paths, arcs, gradients, fillRect) and/or CSS. No external resources of any kind except (optionally) a single CDN <script> when truly needed.
+- The game runs inside a sandboxed iframe: never use localStorage, cookies, alert/prompt/confirm, or top-level navigation. Attach key listeners to window. Canvas scales to fit the viewport.
 - It must not throw any runtime errors — the build is rejected if the console sees a single uncaught error. Guard everything.
 - Playable instantly: show controls on screen, start on first input or a big start button, include score and a lose (and/or win) state with instant restart (key R + button).
 - On game over, submit the score: window.dispatchEvent(new CustomEvent('slop:score', { detail: { score: yourScoreNumber } }));
-- SIZE BUDGET: published games can be up to 50 KB bundled. Build substantial, feature-rich games — aim for 800–2500 lines split across files when the idea warrants it. Small arcade games can be one file; bigger games MUST split into index.html + js/game.js (+ css/style.css).
-- QUALITY BAR: juicy feedback (particles, screen shake, hit-stop, escalating difficulty), readable HUD, on-screen tutorial, multiple enemy types / levels / upgrades where it fits the prompt.`;
+- SIZE BUDGET: published games can be up to 50 KB. Still build substantial, feature-rich games — aim for 600–2000 lines of well-organized code in that one file.
+- QUALITY BAR: juicy feedback (particles, screen shake, hit-stop, escalating difficulty), readable HUD, on-screen tutorial, multiple enemy types / levels / upgrades where it fits the prompt. Keep games genuinely complex and fun even though everything is drawn in code.`;
 
 function spriteRules() {
-const names = Object.keys(game.sprites);
-return `SPRITES (images the game can draw): the shell injects window.SPRITES = { name: dataURL }. Available now: ${names.length ? names.join(', ') : '(none yet)'}.
-- To USE sprites: at boot do — const SPR={}; for(const k in (window.SPRITES||{})){const i=new Image();i.src=window.SPRITES[k];SPR[k]=i;} — then ctx.drawImage(SPR.player,x-w/2,y-h/2,w,h). ALWAYS keep a shape fallback so a missing sprite never breaks the game.
-- If the request needs NEW art that doesn't exist, respond with ONLY this line (no code): {"sprites":[{"name":"short","prompt":"detailed, single centered subject, plain white background, no text"}]} (max 4). The shell generates them and re-invokes you.`;
+return `ART — DRAW EVERYTHING IN CODE: this game uses NO images at all. Do NOT use <img>, image dataURLs, window.SPRITES, new Image(), ctx.drawImage with an image, or any external/loaded art. Render every character, enemy, effect and background procedurally with the canvas 2D API (ctx.fillRect / arc / paths / gradients / shadows) and/or CSS. Make code-drawn art expressive — layered shapes, gradients, particles. NEVER emit a {"sprites":[...]} request line.`;
 }
 const LIVE_MOD_RULES = `LIVE REMIX: expose the game's live state + tunables on window.GAME (e.g. window.GAME={state,player,config,...}) and keep difficulty/speed numbers in window.GAME.config, so a one-line patch like GAME.config.speed*=2 takes effect with no reload.`;
-const MULTIFILE_RULES = `PROJECT STRUCTURE: games under ~12 KB = one \`\`\`html block. Bigger games MUST split: === index.html === (shell + canvas) + === js/game.js === (logic) + optional === css/style.css ===. index.html references others with relative <script src="js/game.js"> / <link href="css/style.css"> (the shell bundles them). Use folders (js/, css/) for anything substantial.`;
+const MULTIFILE_RULES = `PROJECT STRUCTURE: the whole game is ONE self-contained index.html — inline <style> + inline <script>, nothing external. Never split into separate js/css files and never use === path === multi-file blocks. Return a single \`\`\`html block.`;
 function multiplayerRules() {
 return SLOP_MP_RULES;
 }
@@ -213,10 +232,11 @@ const ENGINE_CONTRACT = `${CREATE_RULES}
 
 ${LIVE_MOD_RULES}
 
-ENGINE INTERFACE (the project is assembled from multiple files — respect this shared contract so they fit together):
-- index.html is the ENTRY: it mounts the canvas/DOM and pulls in the other files with relative tags (<script src="js/game.js"></script>, <link href="css/style.css">). The engine inlines them at runtime, so every path must match the manifest EXACTLY.
-- Scripts are PLAIN (non-module) and run in document order — never use import/export or type="module". Code in a later <script> can call functions and read globals defined by an earlier one (hang shared things off window).
+ENGINE INTERFACE (everything lives in one index.html):
+- index.html is the WHOLE game: canvas/DOM, an inline <style>, and inline <script>(s). No external files, no relative <script src>/<link href>, no import/export, no type="module".
+- Inline scripts run in document order — define shared things on window so later code can use them.
 - Keep difficulty/speed/state on window.GAME (window.GAME={state,config,player,...}) so live remixing works.
+- All art is drawn in code (canvas/CSS) — no images.
 - On game over: window.dispatchEvent(new CustomEvent('slop:score',{detail:{score:n}})).`;
 
 function langForPath(p) { return p.endsWith('.css') ? 'css' : p.endsWith('.js') ? 'js' : p.endsWith('.json') ? 'json' : 'html'; }
@@ -265,13 +285,13 @@ ${LIVE_MOD_RULES}
 ${game.multiplayer ? multiplayerRules() : ''}
 
 PATCH MODE (critical):
-- Multi-file: return ONLY the file(s) that must change (=== path === + fenced block). Omit every unchanged file.
-- Single-file: return the full HTML only if necessary; prefer minimal edits.
-- Preserve all working logic, art, controls, scoring, multiplayer wiring, and feel.
+- The game is ONE self-contained index.html. Return the COMPLETE updated index.html in a single \`\`\`html block.
+- Preserve all working logic, art, controls, scoring, multiplayer wiring, and feel — change only what the request needs.
+- Keep all art drawn in code; never add images or extra files.
 
 OUTPUT FORMAT:
 Line 1: JSON {"name":"...","desc":"...","summary":"what changed, max 60 chars"}
-Then ONLY changed file block(s). Nothing else.`;
+Then the full updated index.html in one \`\`\`html block. Nothing else.`;
 }
 const LIVE_PATCH_SYSTEM = `You patch a RUNNING browser game with a tiny JavaScript snippet executed via new Function inside the game iframe — NO reload.
 - Prefer mutating window.GAME (state, config, player) e.g. GAME.config.enemySpeed *= 1.5.
@@ -325,16 +345,16 @@ const detail = document.createElement('div'); detail.className = 'run-detail';
 const body = document.createElement('div'); body.className = 'run-body';
 card.append(steps, detail, body);
 $('timeline').appendChild(card);
-card.scrollIntoView({ behavior: 'smooth', block: 'end' });
+scrollAgentToEnd(true);
 return {
 el: card, body,
 set(key, state, text) {
 const n = nodes[key];
 if (n) { n.classList.remove('active', 'done', 'bad'); if (state) n.classList.add(state); }
 if (text != null) detail.textContent = text;
-card.scrollIntoView({ behavior: 'smooth', block: 'end' });
+scrollAgentToEnd();
 },
-detail(text) { detail.textContent = text; card.scrollIntoView({ behavior: 'smooth', block: 'end' }); },
+detail(text) { detail.textContent = text; scrollAgentToEnd(); },
 };
 }
 
@@ -359,7 +379,7 @@ row.innerHTML = `<span class="rbf-dot"></span><span class="rbf-name">${escapeHTM
 wrap.appendChild(row); rows[f.path] = row;
 }
 run.body.appendChild(wrap);
-run.el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+scrollAgentToEnd();
 const META = { queued: 'queued', writing: 'writing…', retry: 'fixing…', bad: 'failed' };
 return {
 set(path, state, content) {
@@ -368,7 +388,7 @@ r.className = `rbf-row ${state}`;
 const m = r.querySelector('.rbf-meta');
 if (state === 'done' && content != null) m.textContent = `${content.split('\n').length} lines · ${(content.length / 1024).toFixed(1)} KB`;
 else m.textContent = META[state] || state;
-run.el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+scrollAgentToEnd();
 },
 size(path, bytes) { const r = rows[path]; if (r && r.classList.contains('writing')) r.querySelector('.rbf-meta').textContent = `${(bytes / 1024).toFixed(1)} KB…`; },
 };
@@ -381,7 +401,7 @@ panel.innerHTML = (checks || []).map((c) => {
 const state = c.ok ? 'ok' : (c.hard ? 'bad' : 'warn');
 return `<div class="rv-check ${state}"><span class="rv-ic" aria-hidden="true"></span><span class="rv-label">${escapeHTML(c.label)}</span>${(!c.ok && c.detail) ? `<span class="rv-detail">${escapeHTML(c.detail)}</span>` : ''}</div>`;
 }).join('');
-run.el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+scrollAgentToEnd();
 return panel;
 }
 
@@ -432,7 +452,7 @@ html += `<div class="plan-qa-actions">`
 + `</div>`;
 card.innerHTML = html;
 run.body.appendChild(card);
-card.scrollIntoView({ behavior: 'smooth', block: 'end' });
+scrollAgentToEnd(true);
 
 const pick = (qid, val) => {
 answers[qid] = val;
@@ -509,12 +529,12 @@ function modelLabel(id) { const m = MODEL_CHOICES.find((x) => x.id === id); retu
 // -------- prompts (planner + debugger; create build uses fileAuthorSystem(), edits use editSystemPrompt())
 function planSystemPrompt() {
 const mp = game.multiplayer ? ' This game MUST include online multiplayer (SlopNet host/join rooms, host-authoritative sync).' : '';
-return `You are the lead designer of Slop Studio on SLOP.game. Turn the player's request into a BUILD PLAN for ONE polished browser game (HTML5 canvas/JS, sandboxed iframe).${mp} Think deep: core loop, juice, progression, file layout for a substantial build (up to 50 KB published).
+return `You are the lead designer of Slop Studio on SLOP.game. Turn the player's request into a BUILD PLAN for ONE polished browser game (HTML5 canvas/JS, sandboxed iframe).${mp} Think deep: core loop, juice, progression, and how to make it substantial (up to 50 KB) inside a SINGLE self-contained index.html with ALL art drawn in code (no images).
 
 Respond with ONLY a single JSON object — no prose, no markdown, no code fences:
-{"name":"Game Name","desc":"one punchy lowercase line, max 90 chars","pitch":"one sentence on why it's fun, max 140 chars","files":[{"path":"index.html","role":"what it holds","exposes":"the canvas + which scripts it loads","needs":""},{"path":"js/game.js","role":"main logic","exposes":"startGame(), window.GAME","needs":"the #game canvas, window.SPRITES"}],"sprites":[{"name":"player","prompt":"detailed art prompt, single centered subject, plain white background, no text"}],"mechanics":["core mechanic","progression","juice/feedback","win/lose","multiplayer flow if applicable"]}
+{"name":"Game Name","desc":"one punchy lowercase line, max 90 chars","pitch":"one sentence on why it's fun, max 140 chars","mechanics":["core mechanic","progression","juice/feedback","win/lose","multiplayer flow if applicable"]}
 
-Rules: the engine builds each file in its OWN focused pass, so every file must declare what it "exposes" (functions/globals/ids other files can use) and what it "needs" (from other files). prefer multi-file (index.html + js/game.js + optional css/style.css, split logic into js/engine.js + js/game.js for bigger games) for anything beyond a tiny arcade game; a tiny game can be index.html only. index.html is ALWAYS the entry. At most 4-5 files, at most 4 sprites. mechanics: 4-8 bullets covering loop, escalation, and feel.`;
+Rules: the game ships as ONE index.html (inline CSS + JS). Do NOT plan multiple files and do NOT plan any sprites/images — every visual is rendered procedurally in code. mechanics: 4-8 bullets covering loop, escalation, and feel.`;
 }
 function healSystemPrompt() {
 return `You are the debugger inside Slop Studio. A browser game throws uncaught runtime error(s) in a sandboxed iframe. Find the ROOT CAUSE and fix ONLY the broken code — do NOT rewrite unrelated files or restart from scratch.
@@ -523,14 +543,13 @@ ${CREATE_RULES}
 
 ${MULTIFILE_RULES}
 
-PATCH MODE (critical):
-- Multi-file project: return ONLY the file(s) that contain the bug, each as === relative/path === + fenced block. Omit every unchanged file.
-- Single-file game: return the complete corrected HTML in one \`\`\`html block.
-- Preserve all working logic, art, and structure. Minimal diff.
+FIX MODE (critical):
+- The game is ONE self-contained index.html. Return the COMPLETE corrected index.html in one \`\`\`html block.
+- Preserve all working logic, art, and structure. Keep art drawn in code; never add images or extra files.
 
 Return ONLY the patch per OUTPUT FORMAT:
 Line 1: single-line JSON: {"name":"...","desc":"...","summary":"what you fixed, max 60 chars"}
-Then the patch file(s) — nothing else.`;
+Then the full corrected index.html in one \`\`\`html block — nothing else.`;
 }
 
 function parsePlan(text) {
@@ -575,31 +594,19 @@ onDelta(_, soFar) { if (!raf) raf = requestAnimationFrame(() => { raf = null; ru
 return parsePlan(full) || { name: 'untitled slop', desc: ask.slice(0, 90), pitch: '', files: [{ path: 'index.html', role: 'the game' }], sprites: [], mechanics: [] };
 }
 
-async function makeSprites(sprites, run) {
-const row = document.createElement('div'); row.className = 'run-sprites'; run.body.appendChild(row);
-for (const s of sprites) {
-const slot = document.createElement('div'); slot.className = 'run-sprite loading'; slot.title = s.name;
-slot.innerHTML = `<span class="run-sprite-name">${escapeHTML(s.name)}</span>`;
-row.appendChild(slot);
-try {
-const url = await imageGen(s.prompt, { maxSize: 192 });
-game.sprites[s.name] = url;
-const img = document.createElement('img'); img.src = url; slot.prepend(img); slot.classList.remove('loading');
-} catch (err) { slot.classList.add('bad'); slot.classList.remove('loading'); slot.title = `${s.name}: ${err.message}`; }
-}
-renderSprites();
-}
+// Image generation is intentionally disabled: every game draws ALL of its art in
+// code (canvas paths, gradients, CSS), so builds never depend on AI image gen
+// (which is slow, costs credits, and leaves broken/blank sprites in the playtest).
+// Kept as a no-op so any lingering caller can't crash a build.
+async function makeSprites() { /* no images — sprites are drawn in code */ }
 
-// ---- file-by-file build: author each manifest file in its own focused pass ----
+// ---- single-file build: the whole game is authored as one self-contained index.html ----
+// Games are intentionally bundled into ONE index.html (inline <style> + <script>,
+// art drawn entirely in code) so every build is trivial to run, share, and verify
+// — no multi-file bundling step that can silently break the playtest.
 function buildManifest(spec) {
-let files = (spec.files || []).map((f) => ({ ...f, path: String(f.path || '').trim().replace(/^\.?\//, '') })).filter((f) => f.path);
-// de-dupe by path, keeping the first role/exposes/needs seen
-const seen = new Set(); files = files.filter((f) => (seen.has(f.path) ? false : seen.add(f.path)));
-if (!files.some((f) => isIndexPath(f.path))) files.unshift({ path: 'index.html', role: 'shell, canvas, loads the scripts' });
-if (!files.length) files = [{ path: 'index.html', role: 'the whole game' }];
-// build order: index.html → css → js → everything else
-const rank = (p) => isIndexPath(p) ? 0 : p.endsWith('.css') ? 1 : p.endsWith('.js') ? 2 : 3;
-return files.sort((a, b) => rank(a.path) - rank(b.path)).slice(0, 8);
+const role = spec?.pitch || spec?.desc || 'the entire self-contained game — inline CSS + JS, all art drawn in code';
+return [{ path: 'index.html', role: String(role).slice(0, 80) }];
 }
 
 function jsSyntaxError(code) {
@@ -769,12 +776,11 @@ const plan = await getPlan(enriched, run);
 run.set('plan', 'done', plan.name);
 renderPlanCard(run, plan);
 
-if (plan.sprites?.length) { run.set('art', 'active', `painting ${plan.sprites.length} sprite${plan.sprites.length > 1 ? 's' : ''}…`); await makeSprites(plan.sprites, run); }
-run.set('art', 'done', Object.keys(game.sprites).length ? `${Object.keys(game.sprites).length} sprite(s) ready` : 'pure shapes — no art needed');
+run.set('art', 'done', 'all art drawn in code — no images');
 
-run.set('build', 'active', 'writing the game, file by file…');
+run.set('build', 'active', 'writing the game as a single index.html…');
 const built = await buildProject(enriched, plan, run);
-run.set('build', 'done', `${Object.keys(built.files).length + 1} file${Object.keys(built.files).length ? 's' : ''} written`);
+run.set('build', 'done', 'one self-contained index.html written');
 
 run.set('test', 'active', 'verifying it actually plays…');
 const res = await verifyAndHeal(built, run);
@@ -815,12 +821,6 @@ $('code-view').textContent = soFar;
 },
 });
 const meta = extractMetaLine(full) || {};
-if (Array.isArray(meta.sprites) && meta.sprites.length && depth < 1) {
-run.set('art', 'active', 'generating sprites…');
-await makeSprites(meta.sprites.slice(0, 4).map(normSprite), run);
-run.set('art', 'done');
-return runEdit(ask, depth + 1);
-}
 let built = parseBuild(full);
 if (!built) throw new Error('the agent returned something unservable — try rephrasing');
 built = normalizeBuilt(built, meta);
@@ -833,7 +833,7 @@ commitBuild(res.built, null, ask, true);
 run.set('ship', 'done');
 run.el.classList.add('run-done');
 run.detail(`${meta.summary || 'edit applied'} — ${projectSizeLabel()}${res.fixes ? ` · self-healed ${res.fixes} bug${res.fixes > 1 ? 's' : ''}` : ''} · ${modelLabel(game.model)}`);
-addSuggestChips(run, ['make it harder', 'add more juice', 'generate a sprite for the boss']);
+addSuggestChips(run, ['make it harder', 'add more juice', 'add a boss with a new attack']);
 }
 
 // ---------------------------------------------------------------- frame / persist
@@ -842,8 +842,12 @@ let debugPanel = null;
 let errOverlay = null;
 
 function refreshFrame() {
-$('play-empty').style.display = 'none';
-$('play-frame').style.display = 'block';
+// No game yet (fresh studio, or Undo rolled back to the empty initial state):
+// show the "your game appears here" panel rather than a blank white iframe
+// covering the playtest pane.
+const hasGame = !!game.srcHtml;
+$('play-empty').style.display = hasGame ? 'none' : 'flex';
+$('play-frame').style.display = hasGame ? 'block' : 'none';
 frameMonitor?.destroy();
 frameMonitor = attachFrameMonitor($('play-frame'), {
 onErrors(errs) {
@@ -851,7 +855,8 @@ debugPanel?.setErrors(errs);
 errOverlay?.show(errs);
 },
 });
-$('play-frame').srcdoc = finalHTML();
+if (hasGame) $('play-frame').srcdoc = finalHTML();
+else { $('play-frame').removeAttribute('srcdoc'); errOverlay?.hide(); }
 $('code-view').textContent = game.srcHtml || '';
 $('restart-btn').disabled = !game.srcHtml;
 if (game.srcHtml && isMobileStudio()) setStudioView('preview');
@@ -917,7 +922,7 @@ card.innerHTML = `<img alt="${name}"><span class="sname">${name}</span><div clas
 card.querySelector('img').src = game.sprites[name];
 card.querySelector('[data-act="del"]').addEventListener('click', () => { delete game.sprites[name]; renderSprites(); if (game.srcHtml) { refreshFrame(); persist(); } });
 card.querySelector('[data-act="use"]').addEventListener('click', () => { addSpriteToPrompt(name); });
-card.querySelector('[data-act="regen"]').addEventListener('click', async (e) => { const b = e.target; b.textContent = '…'; try { game.sprites[name] = await imageGen(`game sprite: ${name}, single centered subject, plain white background, no text`, { maxSize: 192 }); renderSprites(); if (game.srcHtml) { refreshFrame(); persist(); } toast(`"${name}" regenerated`); } catch (err) { toast(err.message); b.textContent = ''; } });
+card.querySelector('[data-act="regen"]').addEventListener('click', () => { toast('art is drawn in code now — ask the agent in the prompt to change the look'); });
 grid.appendChild(card);
 }
 }
@@ -926,18 +931,9 @@ const p = $('prompt'); p.value = (p.value ? p.value.trim() + ' ' : '') + `use th
 document.querySelector('.tab[data-panel="play"]')?.click();
 }
 async function generateSpriteFromForm() {
-const name = $('sprite-name').value.trim().replace(/[^a-zA-Z0-9_]/g, '_');
-const prompt = $('sprite-prompt').value.trim();
-if (!name || !prompt) { toast('give the sprite a name and a description'); return; }
-const btn = $('sprite-gen'); btn.disabled = true; btn.textContent = 'painting…';
-try {
-game.sprites[name] = await imageGen(`${prompt} — single game sprite, centered, plain white background, no text`, { maxSize: 192 });
-queueXP({ xp: 40, reason: 'generated a sprite!', unlock: 'studio_rat' });
-renderSprites();
-if (game.srcHtml) { refreshFrame(); persist(); toast(`"${name}" is live — tell the agent to use it`); } else toast(`"${name}" saved — it'll wire in when you build`);
-$('sprite-prompt').value = '';
-} catch (err) { toast(err.message); }
-btn.disabled = false; btn.textContent = 'Generate';
+// Image generation is disabled — games draw all art in code. Point the player
+// at the prompt instead of producing an image.
+toast('art is drawn in code now — describe the look in the prompt and the agent draws it');
 }
 async function handleSpriteUpload(fileList) {
 for (const f of [...fileList].slice(0, 8)) {
