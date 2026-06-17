@@ -61,7 +61,7 @@ transition: transform 0.14s ease;
 }
 .hero-brand:hover { transform: translateY(-1px); }
 
-/* white pill — SVG mask cuts real holes in the letters (video shows through) */
+/* blue pill — SVG mask cuts real holes in the letters (video shows through) */
 .brand-knockout {
 display: inline-block;
 line-height: 0;
@@ -71,6 +71,9 @@ vertical-align: middle;
 display: block;
 width: auto;
 height: clamp(40px, 4.8vw, 50px);
+}
+.brand-knockout-svg > rect[mask] {
+fill: var(--el);
 }
 
 .hero-topnav {
