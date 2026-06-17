@@ -280,22 +280,34 @@ background: var(--y);
 color: var(--ink);
 }
 
-.hero-glass .hint-lead { color: rgba(255, 255, 255, 0.72); opacity: 1; }
-.hero-glass .hint-chip {
-color: #fff;
-background: rgba(255, 255, 255, 0.13);
-border-color: rgba(255, 255, 255, 0.3);
-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
-backdrop-filter: blur(8px);
--webkit-backdrop-filter: blur(8px);
-}
-.hero-glass .hint-chip:hover { background: var(--el); border-color: var(--el); box-shadow: 0 4px 16px rgba(43,107,255,.5); }
-.hero-glass .hero-studio-cta a { color: rgba(255, 255, 255, 0.82); }
-.hero-glass .hero-studio-cta a:hover { color: #fff; }
-.hero-glass .hero-studio-cta a b { color: #fff; }
-
 @media (max-width: 600px) {
 .hero-glass { border-radius: 28px; padding: 22px 16px; }
+}
+
+/* ---- quiet panel — hint chips + studio link (solid, not glass) ---- */
+.hero-quiet {
+width: 100%;
+max-width: 720px;
+margin: 0 auto;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: clamp(8px, 1.5vw, 12px);
+padding: clamp(12px, 2vw, 16px) clamp(14px, 2.2vw, 20px);
+border-radius: 20px;
+background: rgba(255, 251, 240, 0.88);
+border: 1px solid rgba(26, 26, 46, 0.1);
+box-shadow: 0 8px 28px rgba(17, 18, 26, 0.12);
+}
+
+.hero-quiet .prompt-kbd {
+color: var(--soft);
+background: rgba(26, 26, 46, 0.06);
+border-color: rgba(26, 26, 46, 0.12);
+}
+
+@media (max-width: 600px) {
+.hero-quiet { border-radius: 18px; padding: 14px 12px; }
 }
 
 /* ---- eyebrow ---- */
