@@ -21,8 +21,10 @@ export function initPricing() {
   captureReferral();
   handleCheckoutReturn();
   injectNav();
-  // re-pull billing whenever auth state changes (sign in/out, token refresh)
-  onUser(() => { refreshBilling(); });
+  onUser(() => {
+    if ('requestIdleCallback' in window) requestIdleCallback(() => { refreshBilling(); }, { timeout: 2000 });
+    else setTimeout(refreshBilling, 600);
+  });
 }
 
 // -------------------------------------------------------------- referral capture

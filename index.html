@@ -15,16 +15,12 @@
 <link rel="stylesheet" href="css/nav.css">
 <link rel="stylesheet" href="css/hero.css">
 <link rel="stylesheet" href="css/sections.css">
-<link rel="stylesheet" href="css/publish.css">
-<link rel="stylesheet" href="css/multiplayer.css">
 <link rel="stylesheet" href="css/footer.css">
 <link rel="stylesheet" href="css/ai.css">
 <link rel="stylesheet" href="css/auth.css">
 <link rel="stylesheet" href="css/v2.css">
 <link rel="stylesheet" href="css/brand.css">
 <link rel="stylesheet" href="css/browse.css">
-<link rel="stylesheet" href="css/appstore.css">
-<link rel="stylesheet" href="css/carousel.css">
 <link rel="stylesheet" href="css/search.css">
 <link rel="stylesheet" href="css/mobile.css">
 <link rel="stylesheet" href="css/pricing.css">
@@ -57,8 +53,8 @@
 </div>
 <a href="#games">Browse</a>
 <a href="studio.html" class="nav-studio">Studio</a>
-<a href="#multiplayer">Multiplayer</a>
-<a href="#publish">Publish</a>
+<a href="studio.html">Multiplayer</a>
+<a href="studio.html">Publish</a>
 <button class="cook-btn nav-drawer-cook" id="nav-cook" type="button">Cook a Game</button>
 <div class="nav-drawer-account" id="nav-drawer-account" hidden></div>
 </div>
@@ -100,7 +96,7 @@
 <section class="hero">
 <!-- full-bleed video background -->
 <div class="hero-bg" aria-hidden="true">
-<video class="hero-video" src="assets/slop.mp4" autoplay muted loop playsinline preload="auto"></video>
+<video class="hero-video" src="assets/slop.mp4" autoplay muted loop playsinline preload="metadata"></video>
 </div>
 
 <!-- in-hero top bar: SLOP.game branding + minimal nav (global nav reveals on scroll) -->
@@ -109,8 +105,8 @@
 <nav class="hero-topnav" aria-label="primary">
 <a href="#games">Browse</a>
 <a href="studio.html">Studio</a>
-<a href="#multiplayer">Multiplayer</a>
-<a href="#publish">Publish</a>
+<a href="studio.html">Multiplayer</a>
+<a href="studio.html">Publish</a>
 </nav>
 <div class="hero-topcta">
 <label class="nav-search hero-search" for="hero-search-input">
@@ -124,14 +120,13 @@
 <div class="hero-inner">
 <header class="hero-head">
 <h1 class="hero-slogan">Prompt, Publish, Play.</h1>
-<p class="hero-sub">describe any game in plain english — our AI builds it, gives it a page, and lets anyone remix it live.</p>
 </header>
 
 <div class="hero-glass">
 <div class="hero-console">
 <div class="prompt-shell">
 <div class="pbar" id="pwin">
-<textarea id="prompt-input" rows="1" placeholder="describe your game here"></textarea>
+<textarea id="prompt-input" rows="1" placeholder="Build your dream game in seconds, using just words."></textarea>
 <div class="pbar-actions">
 <div class="model-switch model-switch--compact" id="hero-model-wrap">
 <button type="button" class="model-more-btn" id="hero-model-btn" aria-label="Choose AI model" aria-expanded="false" aria-controls="hero-model-menu" aria-haspopup="listbox">+</button>
@@ -162,22 +157,6 @@
 </div>
 </div>
 </section>
-
-<!-- creator rewards promo / advertisement (sits just below the hero) -->
-<aside class="hero-promo" aria-label="creator rewards">
-<div class="hp-prize">
-<span class="hp-badge"><span class="hp-badge-dot"></span>JULY · PAID</span>
-<div class="hp-copy">
-<h2 class="hp-head"><span class="hp-amount">$100</span> every Friday in July</h2>
-<p class="hp-sub">paid to the highest-played creator on SLOP.game each week. publish games, rack up plays, get paid.</p>
-</div>
-<a class="hp-cta" href="studio.html">Start creating →</a>
-</div>
-<div class="hp-partner">
-<span class="hp-partner-tag">PARTNER PROGRAM</span>
-<p>Hit <b>10,000 plays</b> on a game and <b>500 followers</b>? Apply to become a <b>slop Partner</b> — get paid to post games.</p>
-</div>
-</aside>
 
 <!-- ============ MARQUEE ============ -->
 <div class="mq-wrap">
@@ -215,7 +194,7 @@
 
 <!-- ============ SLOP GAMES (right after the hero) ============ -->
 <section class="games-sec" id="games">
-<div class="games-sec-bg" id="games-shader" aria-hidden="true"></div>
+<div class="games-sec-bg shader-bg" id="games-shader" aria-hidden="true"></div>
 <div class="wrap browse-intro">
 <div class="sec-head">
 <h2 class="sec-title">try out what's live.</h2>
@@ -229,12 +208,32 @@
 <div class="pstat"><span class="pstat-num" id="pstat-games">0</span><span class="pstat-label">published</span></div>
 </div>
 
-<!-- most played podium -->
+<!-- most played podium + creator promo (one connected card) -->
+<div class="podium-block" id="podium-block">
+<div class="podium-stack">
+<div class="podium-gold">
 <div class="pop-head">
 <h3>Most played right now</h3>
 <span class="pop-sub">the top 3 games on SLOP.game — live</span>
 </div>
 <div class="podium" id="popular-grid"></div>
+</div>
+<aside class="hero-promo" id="creator-promo" aria-label="creator rewards">
+<div class="hp-prize">
+<span class="hp-badge"><span class="hp-badge-dot"></span>JULY · PAID</span>
+<div class="hp-copy">
+<h2 class="hp-head"><span class="hp-amount">$100</span> every Friday in July</h2>
+<p class="hp-sub">paid to the highest-played creator on SLOP.game each week. publish games, rack up plays, get paid.</p>
+</div>
+<a class="hp-cta" href="studio.html">Start creating →</a>
+</div>
+<div class="hp-partner">
+<span class="hp-partner-tag">PARTNER PROGRAM</span>
+<p>Hit <b>10,000 plays</b> on a game and <b>500 followers</b>? Apply to become a <b>slop Partner</b> — get paid to post games.</p>
+</div>
+</aside>
+</div>
+</div>
 </div>
 
 <div class="browse-stage">
@@ -251,216 +250,12 @@
 an experiment in prompt-to-game. <span class="pk">no code needed.</span> just vibes.
 </div>
 
-<!-- ============ FEATURE CAROUSEL ============ -->
-<section class="feature-carousel" id="feature-carousel" aria-roledescription="carousel">
-<div class="fc-head wrap">
-<div class="fc-tabs" role="tablist" aria-label="Feature slides">
-<button type="button" class="fc-tab active" role="tab" id="fc-tab-how" data-index="0" aria-selected="true" aria-label="#how-it-works"><span class="fc-tab-full">#how-it-works</span><span class="fc-tab-short">#how</span></button>
-<button type="button" class="fc-tab" role="tab" id="fc-tab-studio" data-index="1" aria-selected="false" aria-label="#slop-studio"><span class="fc-tab-full">#slop-studio</span><span class="fc-tab-short">#studio</span></button>
-<button type="button" class="fc-tab" role="tab" id="fc-tab-publish" data-index="2" aria-selected="false" aria-label="#ship-it"><span class="fc-tab-full">#ship-it</span><span class="fc-tab-short">#ship</span></button>
-<button type="button" class="fc-tab" role="tab" id="fc-tab-mp" data-index="3" aria-selected="false" aria-label="#play-together"><span class="fc-tab-full">#play-together</span><span class="fc-tab-short">#play</span></button>
-<button type="button" class="fc-tab" role="tab" id="fc-tab-remix" data-index="4" aria-selected="false" aria-label="#remix-engine"><span class="fc-tab-full">#remix-engine</span><span class="fc-tab-short">#remix</span></button>
-</div>
-<div class="fc-controls">
-<button type="button" class="fc-arrow" id="fc-prev" aria-label="Previous slide">←</button>
-<button type="button" class="fc-arrow" id="fc-next" aria-label="Next slide">→</button>
-</div>
-</div>
-<div class="fc-progress" aria-hidden="true"><div class="fc-progress-bar"></div></div>
-<div class="fc-viewport">
-<div class="fc-track" id="fc-track">
-
-<article class="fc-slide fc-compact" id="how-it-works" data-theme="how" role="tabpanel" aria-labelledby="fc-tab-how">
-<section class="how-sec fc-sec">
-<div class="wrap fc-panel">
-<header class="fc-compact-head">
-<span class="fc-tag">#how-it-works</span>
-<h2 class="fc-compact-title">the AI-exclusive game website.</h2>
-<p class="fc-compact-lead">describe → build → patch → publish → remix. no engine downloads.</p>
-</header>
-<ol class="fc-steps" aria-label="How it works">
-<li><span class="fc-step-n">1</span> Prompt</li>
-<li><span class="fc-step-n">2</span> Build</li>
-<li><span class="fc-step-n">3</span> Patch</li>
-<li><span class="fc-step-n">4</span> Publish</li>
-<li><span class="fc-step-n">5</span> Remix</li>
-</ol>
-</div>
-</section>
-</article>
-
-<article class="fc-slide fc-compact" id="studio" data-theme="studio" role="tabpanel" aria-labelledby="fc-tab-studio">
-<section class="studio-sec fc-sec">
-<div class="wrap fc-panel">
-<header class="fc-compact-head">
-<span class="fc-tag">#slop-studio</span>
-<h2 class="fc-compact-title">talk to the agent. watch it ship.</h2>
-<p class="fc-compact-lead">Discuss → Plan → Build on GPT-5.5 — surgical edits, SlopMP, publish in one tab.</p>
-</header>
-<ul class="fc-facts">
-<li>Planning Q&amp;A before code</li>
-<li>Live patches, no full regen</li>
-<li>Co-op when you ask for multiplayer</li>
-</ul>
-</div>
-</section>
-</article>
-
-<article class="fc-slide fc-compact" id="publish" data-theme="ship" role="tabpanel" aria-labelledby="fc-tab-publish">
-<section class="publish-sec fc-sec">
-<div class="wrap fc-panel">
-<header class="fc-compact-head">
-<span class="fc-tag">#ship-it</span>
-<h2 class="fc-compact-title">from prompt to public page.</h2>
-<p class="fc-compact-lead">homepage cook, Studio publish, or HTML upload — clean builds get a grid URL.</p>
-</header>
-<div class="fc-compact-upload">
-<div class="upload-zone" id="upload-zone">
-<input type="file" id="upload-input" multiple accept=".html,.htm,.js,.css,.json,.txt" hidden>
-<span class="uz-icon">Upload</span>
-<span class="uz-text">drop game files <em>or click to pick</em></span>
-</div>
-<div class="upload-status" id="upload-status"></div>
-</div>
-</div>
-</section>
-</article>
-
-<article class="fc-slide fc-compact" id="multiplayer" data-theme="play" role="tabpanel" aria-labelledby="fc-tab-mp">
-<section class="multiplayer-sec fc-sec">
-<div class="wrap fc-panel">
-<header class="fc-compact-head">
-<span class="fc-tag">#play-together</span>
-<h2 class="fc-compact-title">multiplayer from a sentence.</h2>
-<p class="fc-compact-lead">say "co-op" or "4-player" — SlopMP adds lobby, share link, and sync.</p>
-</header>
-<ul class="fc-facts">
-<li>Host · join · copy link — WebRTC, no account to play</li>
-<li>Host mods sync live to every connected player</li>
-</ul>
-</div>
-</section>
-</article>
-
-<article class="fc-slide fc-compact" id="remix" data-theme="remix" role="tabpanel" aria-labelledby="fc-tab-remix">
-<section class="remix-sec fc-sec">
-<div class="wrap fc-panel">
-<header class="fc-compact-head">
-<span class="fc-tag">#remix-engine</span>
-<h2 class="fc-compact-title">mod any game while it runs.</h2>
-<p class="fc-compact-lead">remix dock patches in-place, sandbox-tests first — voice, text, or fork.</p>
-</header>
-<div class="fc-remix-row">
-<div class="fc-remix-chip">
-<span class="fc-remix-label">live mod</span>
-<p>"double jump height, neon pink coins"</p>
-</div>
-<div class="fc-remix-chip">
-<span class="fc-remix-label">fork</span>
-<p>"you're a goose, everyone is bread"</p>
-</div>
-</div>
-</div>
-</section>
-</article>
-
-</div>
-</div>
-<div class="fc-dots wrap" role="tablist" aria-label="Choose slide">
-<button type="button" class="fc-dot active" data-index="0" aria-label="#how-it-works" aria-selected="true"></button>
-<button type="button" class="fc-dot" data-index="1" aria-label="#slop-studio" aria-selected="false"></button>
-<button type="button" class="fc-dot" data-index="2" aria-label="#ship-it" aria-selected="false"></button>
-<button type="button" class="fc-dot" data-index="3" aria-label="#play-together" aria-selected="false"></button>
-<button type="button" class="fc-dot" data-index="4" aria-label="#remix-engine" aria-selected="false"></button>
-</div>
-</section>
-
-<!-- ============ APP STORE (live demo) ============ -->
-<section class="appstore-sec" id="app">
-<div class="wrap">
-<div class="app-grid">
-<div class="app-copy">
-<span class="app-live-tag">live demo</span>
-<h2 class="sec-title">ai games<br>in your pocket.</h2>
-<p class="sec-sub">the real game runs inside the mockup — grab the on-screen controls and play. the iOS app ships the same library with native touch, sync, and co-op rooms.</p>
-<ul class="app-points">
-<li><strong>START</strong> to begin your run</li>
-<li><strong>stick</strong> to rotate · <strong>A</strong> jump · <strong>B</strong> restart</li>
-</ul>
-<div class="app-cta-row">
-<a class="app-play-full" href="games/run3/index.html">Play full screen →</a>
-<div class="app-badges">
-<button class="app-badge app-notify" type="button">
-<svg class="ab-icon" viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M16.36 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.83-.81-3-.79-1.54.02-2.96.9-3.75 2.28-1.6 2.78-.41 6.89 1.15 9.15.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.39 0 1.78.74 3 .72 1.24-.02 2.02-1.12 2.78-2.23.87-1.28 1.23-2.52 1.25-2.59-.03-.01-2.4-.92-2.42-3.65zM14.13 5.7c.64-.78 1.07-1.85.95-2.93-.92.04-2.04.61-2.7 1.38-.59.69-1.11 1.79-.97 2.85 1.03.08 2.08-.52 2.72-1.3z"/></svg>
-<span class="ab-text"><span class="ab-top">Coming soon to the</span><span class="ab-bot">App Store</span></span>
-</button>
-<button class="app-badge app-badge-google app-notify" type="button">
-<svg class="ab-icon" viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M3 20.5V3.5C3 2.91 3.34 2.39 3.84 2.15L13.69 12 3.84 21.85C3.34 21.61 3 21.09 3 20.5M16.81 15.12 6.05 21.34 14.54 12.85 16.81 15.12M20.16 10.81C20.5 11.08 20.75 11.5 20.75 12c0 .5-.25.92-.59 1.19L17.89 14.5 15.39 12l2.5-2.5 2.27 1.31M6.05 2.66 16.81 8.88 14.54 11.15 6.05 2.66Z"/></svg>
-<span class="ab-text"><span class="ab-top">Coming soon on</span><span class="ab-bot">Google Play</span></span>
-</button>
-</div>
-</div>
-</div>
-
-<div class="app-phone-wrap">
-<div class="iphone" id="app-phone">
-<div class="ip-island"></div>
-<div class="ip-screen">
-<div class="delta">
-<div class="delta-screen" id="delta-screen">
-<iframe id="delta-game" class="ds-game" src="games/run3/index.html?embed=1" title="Run Infinite — playable demo" loading="lazy" tabindex="-1"></iframe>
-<div class="ds-idle" id="ds-idle">
-<span class="ds-idle-title">RUN INFINITE</span>
-<button type="button" class="ds-idle-cta" id="ds-start-btn">press START</button>
-</div>
-<div class="ds-live">RUN INFINITE</div>
-</div>
-<div class="delta-shoulders">
-<span class="sh l">L</span>
-<span class="delta-word">SLOP</span>
-<span class="sh r">R</span>
-</div>
-<div class="delta-body" id="delta-body">
-<div class="analog-stick" id="analog-stick" aria-label="move stick">
-<div class="stick-base" id="stick-base">
-<div class="stick-knob" id="stick-knob"></div>
-</div>
-</div>
-<div class="face">
-<button type="button" class="fbtn-ab a" data-input="jump" aria-label="jump">A</button>
-<button type="button" class="fbtn-ab b" data-input="restart" aria-label="restart">B</button>
-</div>
-<div class="delta-sys">
-<button type="button" class="sysbtn sysbtn-start" data-input="start"><i></i>START</button>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="app-phone-glow" aria-hidden="true"></div>
-</div>
-</div>
-</div>
-</section>
-
 <!-- ============ FOOTER ============ -->
 <footer class="site-footer">
 <div class="footer-glass">
 <div class="footer-grid">
 <div class="fbrand">
 <div class="brand-row">
-<svg viewBox="0 0 64 64" width="34" height="34" aria-hidden="true">
-<rect x="2" y="31" width="11" height="8" rx="4" fill="#FF7A35" stroke="#1A1A2E" stroke-width="3"/>
-<rect x="51" y="31" width="11" height="8" rx="4" fill="#FF7A35" stroke="#1A1A2E" stroke-width="3"/>
-<path d="M10 30 h44 v9 a15 15 0 0 1 -15 15 h-14 a15 15 0 0 1 -15 -15 z" fill="#FF4EB8" stroke="#1A1A2E" stroke-width="3" stroke-linejoin="round"/>
-<ellipse cx="32" cy="28" rx="24" ry="7" fill="#FFE135" stroke="#1A1A2E" stroke-width="3"/>
-<circle cx="32" cy="19" r="4.5" fill="#FFE135" stroke="#1A1A2E" stroke-width="3"/>
-<circle cx="25" cy="41" r="4.5" fill="#FFFFFF"/>
-<circle cx="25.5" cy="41.5" r="2" fill="#1A1A2E"/>
-<circle cx="39" cy="41" r="4.5" fill="#FFFFFF"/>
-<circle cx="39.5" cy="41.5" r="2" fill="#1A1A2E"/>
-<path d="M28.5 47 q3.5 3.5 7 0" fill="none" stroke="#1A1A2E" stroke-width="2.5" stroke-linecap="round"/>
-</svg>
 <span class="wordmark">slop<span class="dot-pk">.</span>game</span>
 </div>
 <p class="tagline">a brand-new launchpad for experimental and AI-generated games. currently in early beta.</p>
@@ -473,7 +268,7 @@ an experiment in prompt-to-game. <span class="pk">no code needed.</span> just vi
 <li><a href="games/slopkart/index.html">SlopKart</a></li>
 <li><a href="games/sloppy-zombies/index.html">Sloppy Zombies</a></li>
 <li><a href="games/dungeon-panic/index.html">Dungeon Panic</a></li>
-<li><a href="#multiplayer">Multiplayer</a></li>
+<li><a href="studio.html">Multiplayer</a></li>
 </ul>
 </div>
 <div class="fcol">
@@ -481,7 +276,7 @@ an experiment in prompt-to-game. <span class="pk">no code needed.</span> just vi
 <ul>
 <li><a href="studio.html">Slop Studio</a></li>
 <li><a href="#pwin">Cook a Game</a></li>
-<li><a href="#publish">Upload from Repo</a></li>
+<li><a href="studio.html">Upload from Repo</a></li>
 <li><a href="games/sloppy-zombies/index.html?remix=1">Remix Live</a></li>
 </ul>
 </div>

@@ -13,14 +13,6 @@ position: absolute;
 inset: 0;
 z-index: 0;
 pointer-events: none;
-background: #f9f9f9 linear-gradient(180deg,
-#FFFBF0 0%, #FFE135 16%, #FF7A35 33%, #FF4EB8 50%,
-#4ECAFF 68%, #2B6BFF 84%, #11121A 100%);
-}
-.games-sec-bg canvas {
-display: block;
-width: 100% !important;
-height: 100% !important;
 }
 
 .games-sec > .wrap,
@@ -51,8 +43,8 @@ text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45), 0 4px 18px rgba(255, 255, 255, 0
 padding-bottom: 36px;
 }
 
-#games.games-browse-nav .browse-intro .sec-head {
-scroll-margin-top: var(--nav-height, 140px);
+#games .browse-intro .sec-head {
+scroll-margin-top: 140px;
 }
 
 .browse-stage {
@@ -65,14 +57,80 @@ max-width: 1680px;
 margin: 0 auto;
 }
 
-/* keep top grid row from sitting under the browse nav stack */
-#games.games-browse-nav .browse-grid {
-padding-top: clamp(48px, 5.5vw, 58px);
-scroll-margin-top: var(--nav-height, 120px);
+#games .browse-grid {
+scroll-margin-top: 120px;
 }
 
 .pop-head {
-margin: 38px 0 16px;
+margin: 0 0 16px;
+}
+
+/* ---- gold winners frame around most-played podium ---- */
+
+.podium-block {
+position: relative;
+margin-top: 38px;
+padding-top: 14px;
+}
+
+.podium-block::before {
+content: 'WINNING NOW';
+position: absolute;
+top: 0;
+left: clamp(16px, 3vw, 28px);
+z-index: 3;
+font-family: 'Space Grotesk', sans-serif;
+font-size: 11px;
+letter-spacing: 0.14em;
+color: var(--ink);
+background: linear-gradient(135deg, #ffe98a, var(--y));
+border: 2.5px solid #c9920a;
+border-radius: 999px;
+padding: 4px 12px;
+box-shadow: 2px 2px 0 rgba(201, 146, 10, 0.35);
+white-space: nowrap;
+}
+
+.podium-stack {
+position: relative;
+max-width: 1120px;
+margin: 0 auto;
+border: 3px solid #c9920a;
+border-radius: 22px;
+overflow: hidden;
+box-shadow:
+0 0 0 1px rgba(255, 225, 53, 0.55),
+0 10px 36px rgba(201, 146, 10, 0.22);
+}
+
+.podium-gold {
+padding: clamp(18px, 2.4vw, 28px);
+background:
+linear-gradient(145deg, rgba(255, 225, 53, 0.22) 0%, rgba(255, 251, 240, 0.55) 42%, rgba(255, 207, 58, 0.14) 100%);
+border-bottom: 2px solid rgba(201, 146, 10, 0.35);
+}
+
+.podium-gold .pop-head {
+margin-bottom: clamp(14px, 2vw, 18px);
+}
+
+.podium-gold .pop-head h3 {
+color: var(--ink);
+}
+
+.podium-gold .pod-slot.first .pod-card {
+border-color: #c9920a;
+box-shadow: 0 0 0 2px rgba(255, 225, 53, 0.45), var(--shb);
+}
+
+/* promo flush under the podium — same outer card */
+.podium-stack .hero-promo {
+width: 100%;
+max-width: none;
+margin: 0;
+border: none;
+border-radius: 0;
+box-shadow: none;
 }
 
 /* ---- most-played podium (#1 center, #2 left, #3 right) ---- */

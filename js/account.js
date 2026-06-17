@@ -45,28 +45,31 @@ function ensureModal() {
   modal.className = 'auth-modal hidden';
   modal.innerHTML = `
     <div class="auth-card">
-      <button class="auth-close" id="auth-close">X</button>
-      <h3 class="auth-title" id="auth-title">join slop.game</h3>
-      <p class="auth-sub" id="auth-sub">pick a username — it shows on everything you cook, post, and publish.</p>
+      <button class="auth-close" id="auth-close" type="button" aria-label="Close">×</button>
+      <header class="auth-head">
+        <p class="auth-kicker">slop<span class="dot-pk">.</span>game</p>
+        <h3 class="auth-title" id="auth-title">Create your account</h3>
+        <p class="auth-sub" id="auth-sub">Pick a plan and claim your username to start cooking.</p>
+      </header>
       <div class="auth-tabs" id="auth-tabs">
-        <button class="auth-tab active" data-mode="signup">Create account</button>
-        <button class="auth-tab" data-mode="login">Sign in</button>
+        <button type="button" class="auth-tab active" data-mode="signup">Create account</button>
+        <button type="button" class="auth-tab" data-mode="login">Sign in</button>
       </div>
       <div class="auth-plans" id="auth-plans">
         <button type="button" class="auth-plan active" data-plan="free" aria-pressed="true">
           <span class="ap-top"><span class="ap-name">Free</span><span class="ap-price">$0</span></span>
-          <span class="ap-desc">fast models · daily credits · supported by ads</span>
+          <span class="ap-desc">Fast models · daily credits · ads</span>
         </button>
-        <button type="button" class="auth-plan" data-plan="pro" aria-pressed="false">
-          <span class="ap-top"><span class="ap-name">✦ Pro</span><span class="ap-price">$5<small>/mo</small></span></span>
-          <span class="ap-desc">frontier models · no ads · 600 credits / month</span>
+        <button type="button" class="auth-plan pro" data-plan="pro" aria-pressed="false">
+          <span class="ap-top"><span class="ap-name">Pro</span><span class="ap-price">$5<small>/mo</small></span></span>
+          <span class="ap-desc">Frontier models · no ads · 600 credits/mo</span>
         </button>
       </div>
       <form id="auth-form">
-        <input id="auth-username" placeholder="username (3-20 chars)" autocomplete="username" maxlength="20">
+        <input id="auth-username" placeholder="username" autocomplete="username" maxlength="20">
         <input id="auth-email" type="email" placeholder="email" autocomplete="email">
-        <input id="auth-password" type="password" placeholder="password (6+ chars)" autocomplete="current-password">
-        <button type="submit" class="auth-submit" id="auth-submit">Create account</button>
+        <input id="auth-password" type="password" placeholder="password (6+ characters)" autocomplete="current-password">
+        <button type="submit" class="auth-submit" id="auth-submit">Create free account</button>
       </form>
       <div class="auth-error" id="auth-error"></div>
       <div class="auth-divider" id="auth-divider"><span>or</span></div>
@@ -120,16 +123,16 @@ function setMode(next) {
   const sub = modal.querySelector('#auth-sub');
   const submit = modal.querySelector('#auth-submit');
   if (claim) {
-    title.textContent = 'pick your username';
-    sub.textContent = 'one username per person — it becomes your profile at slop.game/yourname.';
+    title.textContent = 'Claim your username';
+    sub.textContent = 'One per person — this becomes your profile at slop.game/yourname.';
     submit.textContent = 'Claim username';
   } else if (signup) {
-    title.textContent = 'join slop.game';
-    sub.textContent = 'you need an account to cook a game — pick a plan, then claim your username.';
-    submit.textContent = 'Create account';
+    title.textContent = 'Create your account';
+    sub.textContent = 'Pick a plan and claim your username to start cooking.';
+    submit.textContent = 'Create free account';
   } else {
-    title.textContent = 'welcome back';
-    sub.textContent = 'sign in to publish games and keep your library in sync.';
+    title.textContent = 'Welcome back';
+    sub.textContent = 'Sign in to publish games and keep your library in sync.';
     submit.textContent = 'Sign in';
   }
   syncPlanUI();

@@ -1,9 +1,14 @@
 // Hero: hint-chip typewriter, the model picker, the cook-game flow, and the waitlist.
 
 import { showToast } from './toast.js';
-import { cookGameForReal } from './cook.js';
-import { MODELS, MODEL_CHOICES } from './ai.js';
+import { MODELS, MODEL_CHOICES } from './models.js';
 import { getUser, onUser, openAuthModal, promptUsername } from './account.js';
+
+let cookModule = null;
+async function getCookModule() {
+  cookModule ??= import('./cook.js');
+  return cookModule;
+}
 
 let typeTimer = null;
 
@@ -138,6 +143,7 @@ export async function cookGame() {
   btn.disabled = true;
   btn.textContent = 'Cooking…';
 
+  const { cookGameForReal } = await getCookModule();
   const game = await cookGameForReal(textarea.value.trim());
 
   if (game) {
@@ -201,6 +207,18 @@ function initWaitlist() {
   });
 }
 
+/** Pause hero bg video when off-screen — avoids decoding 14MB MP4 while browsing games. */
+function lazyHeroVideo() {
+  const video = document.querySelector('.hero-video');
+  const hero = document.querySelector('.hero');
+  if (!video || !hero) return;
+  const io = new IntersectionObserver(([e]) => {
+    if (e.isIntersecting) video.play().catch(() => {});
+    else video.pause();
+  }, { threshold: 0.05 });
+  io.observe(hero);
+}
+
 export function initHero() {
   initModelPicker();
 
@@ -221,7 +239,7 @@ export function initHero() {
   }
 
   // nav "Cook a Game" scrolls to the prompt window and focuses it
-  document.getElementById('nav-cook').addEventListener('click', () => {
+  document.getElementById('nav-cook')?.addEventListener('click', () => {
     document.getElementById('pwin').scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => document.getElementById('prompt-input').focus(), 600);
   });
@@ -230,4 +248,5 @@ export function initHero() {
   onUser(maybeResumePendingCook);
 
   initWaitlist();
+  lazyHeroVideo();
 }

@@ -35,55 +35,6 @@ font-size: 20px;
 }
 .meme-banner .pk { color: var(--pk); }
 
-/* ============ how it works ============ */
-.how-sec {
-background: var(--bl);
-border-top: var(--bw) solid var(--ink);
-border-bottom: var(--bw) solid var(--ink);
-}
-
-.how-grid {
-display: grid;
-grid-template-columns: repeat(3, 1fr);
-gap: 28px;
-}
-
-.how-card {
-background: var(--wh);
-border: var(--bw) solid var(--ink);
-border-radius: var(--r);
-box-shadow: var(--sh);
-padding: 32px 28px;
-transition: transform .15s ease, box-shadow .15s ease;
-}
-.how-card:hover { transform: translate(-3px, -3px); box-shadow: var(--shb); }
-
-.how-icon {
-display: inline-block;
-font-size: 42px;
-animation: fdeco 4s ease-in-out infinite;
-}
-.how-card:nth-child(1) .how-icon { animation-delay: 0s; }
-.how-card:nth-child(2) .how-icon { animation-delay: .7s; }
-.how-card:nth-child(3) .how-icon { animation-delay: 1.4s; }
-
-.how-card h3 { font-size: 24px; margin: 14px 0 10px; }
-
-.how-card p {
-font-size: 15px;
-font-weight: 600;
-color: var(--soft);
-line-height: 1.6;
-margin-bottom: 16px;
-}
-
-.how-tag {
-font-family: 'Space Mono', monospace;
-font-weight: 700;
-font-size: 13px;
-color: var(--pk);
-}
-
 /* ============ games grid ============ */
 /* background lives in browse.css (shader + watercolor) */
 
@@ -248,72 +199,7 @@ transition: transform .12s ease, box-shadow .12s ease;
 }
 .gcta:hover { transform: translate(-2px, -2px); box-shadow: var(--shb); }
 
-/* ============ remix section ============ */
-.remix-sec { background: var(--cr); }
-
-.remix-banner {
-background: linear-gradient(105deg, var(--or), var(--pk));
-border: var(--bw) solid var(--ink);
-border-radius: 20px;
-box-shadow: var(--shb);
-padding: 46px 44px;
-color: var(--wh);
-text-align: center;
-}
-
-.remix-banner h2 {
-font-size: clamp(28px, 4vw, 40px);
-text-shadow: 3px 3px 0 var(--ink);
-}
-
-.remix-chips {
-display: flex;
-justify-content: center;
-flex-wrap: wrap;
-gap: 10px;
-margin: 26px 0 30px;
-}
-
-.remix-chips span {
-background: var(--wh);
-color: var(--ink);
-border: 2.5px solid var(--ink);
-border-radius: 100px;
-padding: 8px 18px;
-font-weight: 800;
-font-size: 14px;
-}
-
-.remix-grid {
-display: grid;
-grid-template-columns: repeat(3, 1fr);
-gap: 28px;
-margin-top: 36px;
-}
-
-.rbadge {
-position: absolute;
-top: 12px;
-left: 12px;
-background: var(--or);
-color: var(--wh);
-border: 2.5px solid var(--ink);
-border-radius: 100px;
-padding: 4px 12px;
-font-weight: 900;
-font-size: 12px;
-z-index: 2;
-}
-
-.rfrom {
-font-family: 'Space Mono', monospace;
-font-size: 11px;
-font-weight: 700;
-color: var(--soft);
-margin-top: 6px;
-}
-
 @media (max-width: 900px) {
-.how-grid, .games-grid, .remix-grid { grid-template-columns: 1fr; }
+.games-grid { grid-template-columns: 1fr; }
 .gcard.featured { grid-column: span 1; }
 }

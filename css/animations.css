@@ -1,36 +1,5 @@
 /* ============ all keyframes live here ============ */
 
-/* nav logo pot */
-@keyframes pot-wobble {
-0% { transform: rotate(-3deg) scale(1); }
-50% { transform: rotate(3deg) scale(1.06); }
-100% { transform: rotate(-2deg) scale(1); }
-}
-
-/* steam puffs above the pot lid */
-@keyframes steam-rise {
-0% { transform: translateY(0); opacity: .85; }
-100% { transform: translateY(-9px); opacity: 0; }
-}
-
-/* hero floating emoji decorations */
-@keyframes fdeco {
-0%, 100% { transform: translateY(0) rotate(-5deg); }
-50% { transform: translateY(-14px) rotate(5deg); }
-}
-
-/* "play" word in hero h1 */
-@keyframes wig {
-0%, 100% { transform: rotate(-2deg); }
-50% { transform: rotate(2deg); }
-}
-
-/* subdomain preview icon */
-@keyframes bob {
-from { transform: translateY(0); }
-to { transform: translateY(-4px); }
-}
-
 /* marquee strip */
 @keyframes mq {
 from { transform: translateX(0); }

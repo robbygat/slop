@@ -2,7 +2,7 @@
 // Describe a game → the agent writes it (single- or multi-file), crash-tests
 // it, and boots it in the playtest pane. Keep prompting to edit ANY aspect.
 // Generate or upload sprites, flip on multiplayer, run a live collaborative
-// jam, bring your own xAI key/model, and export the whole folder as a .zip.
+// jam, bring your own API key/model, and export the whole folder as a .zip.
 
 import { chatStream, extractFence, extractMetaLine, imageGen, MODELS, MODEL_CHOICES, setUserKey } from './ai.js';
 import { testGameHTML } from './sandbox.js';
@@ -20,8 +20,7 @@ const $ = (id) => document.getElementById(id);
 let collab = null;
 let agentShader = null; // live shader behind the agent header (loaded lazily)
 
-// Drive the agent's "thinking" visuals: the header shader speeds up + brightens,
-// and the orb spins faster / pulses while the agent works.
+// Drive the agent's "thinking" visuals: the header shader speeds up + brightens while the agent works.
 function setAgentThinking(on) {
 document.querySelector('.agent-head')?.classList.toggle('thinking', on);
 agentShader?.setThinking(on);
@@ -161,7 +160,6 @@ return s;
 // ---------------------------------------------------------------- timeline UI
 function tlAgent(text, cls = '') {
 const wrap = document.createElement('div'); wrap.className = 'tl-agent-wrap';
-wrap.innerHTML = `<div class="tl-agent-av" aria-hidden="true"></div>`;
 const el = document.createElement('div'); el.className = `tl-agent ${cls}`; el.textContent = text;
 wrap.appendChild(el);
 $('timeline').appendChild(wrap);
@@ -719,7 +717,7 @@ let errOverlay = null;
 
 function refreshFrame() {
 $('play-empty').style.display = 'none';
-$('play-frame').style.display = '';
+$('play-frame').style.display = 'block';
 frameMonitor?.destroy();
 frameMonitor = attachFrameMonitor($('play-frame'), {
 onErrors(errs) {
@@ -736,6 +734,8 @@ $('undo-btn').disabled = !game.history.length;
 $('download-btn').disabled = !game.srcHtml;
 debugPanel?.setErrors([]);
 errOverlay?.hide();
+const buildBtn = $('build-btn');
+if (buildBtn && !busy) buildBtn.textContent = buildBtnLabel();
 }
 function persist() {
 const record = { name: game.name, desc: game.desc || game.prompt.slice(0, 90), prompt: game.prompt, html: finalHTML(), srcHtml: game.srcHtml, files: game.files, sprites: game.sprites, thumb: game.thumb, multiplayer: game.multiplayer, model: game.model, studio: true };
@@ -909,24 +909,30 @@ let pend = null; try { pend = localStorage.getItem(STUDIO_PROMPT_KEY); } catch {
 if (!pend) return;
 try { localStorage.removeItem(STUDIO_PROMPT_KEY); } catch { /* */ }
 const box = $('prompt');
-if (box && !box.value.trim()) { box.value = pend; box.focus(); }
-toast('you\'re in — hit Build It to cook your game 🍲');
+if (box && !box.value.trim()) { box.value = pend; autoGrowPrompt(); box.focus(); }
+toast('you\'re in — hit Generate to cook your game 🍲');
 }
 
 async function submitPrompt() {
 const ask = $('prompt').value.trim();
-if (!ask || busy) return;
+if (!ask || busy) {
+if (!ask) {
+const pwin = $('studio-pwin');
+if (pwin) { pwin.classList.remove('shake'); void pwin.offsetWidth; pwin.classList.add('shake'); }
+}
+return;
+}
 if (collab?.isClient) { collab.postToBoard(ask); tlUser(ask); tlAgent('posted to the host\'s prompt board — they can click it to build it in.', 'good'); $('prompt').value = ''; return; }
 if (!ensureAccount(ask)) return;
 await runHostPrompt(ask, true);
 }
 async function runHostPrompt(ask, fromInput) {
 if (busy) { toast('still building the last one…'); return; }
-busy = true; setAgentThinking(true); $('build-btn').disabled = true; $('build-btn').textContent = game.srcHtml ? 'Editing…' : 'Cooking…';
-if (fromInput) { tlUser(ask); $('prompt').value = ''; }
+busy = true; setAgentThinking(true); $('build-btn').disabled = true; $('build-btn').textContent = game.srcHtml ? 'Applying…' : 'Generating…';
+if (fromInput) { tlUser(ask); $('prompt').value = ''; autoGrowPrompt(); }
 try { await runPrompt(ask); }
 catch (err) { tlAgent(`! ${err.message}`, 'bad'); console.error(err); }
-finally { busy = false; setAgentThinking(false); setTimeout(() => { $('build-btn').disabled = false; $('build-btn').textContent = collab?.isClient ? 'Post to board' : (game.srcHtml ? 'Apply Edit' : 'Build It'); }, 700); }
+finally { busy = false; setAgentThinking(false); setTimeout(() => { $('build-btn').disabled = false; $('build-btn').textContent = buildBtnLabel(); }, 700); }
 }
 
 function initTabs() {
@@ -995,19 +1001,84 @@ if (!$('studio-main')?.classList.contains('view-preview')) setStudioView('build'
 if (isMobileStudio()) setStudioView('build');
 }
 
-async function warnIfStudioNeedsKey() {
-const hasKey = !!localStorage.getItem('slop-key');
-let proxy = false;
-try {
-const res = await fetch('/api/config');
-if (res.ok) proxy = !!(await res.json())?.ai;
-} catch { /* static hosting */ }
-if (!hasKey && !proxy) {
-tlAgent('on SLOP.game mobile you need your own xAI key — tap Menu → Settings, paste your key, save, then build.', 'bad');
-}
+// ---------------------------------------------------------------- settings
+function buildBtnLabel() {
+if (collab?.isClient) return 'Post to board';
+return game.srcHtml ? 'Apply Edit' : 'Generate';
 }
 
-// ---------------------------------------------------------------- settings
+function autoGrowPrompt() {
+const el = $('prompt');
+if (!el) return;
+el.style.height = 'auto';
+el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function shortModelLabel(choice) {
+if (!choice) return 'Model';
+const dash = choice.label.indexOf(' — ');
+return dash >= 0 ? choice.label.slice(0, dash) : choice.label;
+}
+
+function setStudioModelMenuOpen(open) {
+const wrap = $('studio-model-wrap');
+const btn = $('studio-model-btn');
+const menu = $('studio-model-menu');
+if (!wrap || !btn || !menu) return;
+wrap.classList.toggle('open', open);
+btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+menu.toggleAttribute('hidden', !open);
+}
+
+function paintStudioModelMenu(sel, list) {
+if (!list || !sel) return;
+list.innerHTML = MODEL_CHOICES.map((m) => {
+const on = m.id === sel.value;
+const lock = m.tier === 'pro' ? '<span class="model-menu-lock" aria-hidden="true">🔒</span>' : '';
+return `<button type="button" class="model-menu-opt${on ? ' active' : ''}" role="option" aria-selected="${on}" data-id="${m.id}">${lock}<span class="model-menu-opt-label">${m.label}</span></button>`;
+}).join('');
+}
+
+function syncStudioModelButton(sel) {
+const btn = $('studio-model-btn');
+const choice = MODEL_CHOICES.find((m) => m.id === sel?.value);
+if (!btn) return;
+const name = shortModelLabel(choice);
+btn.title = choice ? `${name}${choice.tier === 'pro' ? ' (Pro)' : ''}` : 'Choose build model';
+btn.setAttribute('aria-label', choice ? `Model: ${name}. Choose build model` : 'Choose build model');
+}
+
+function initStudioModelMenu(sel) {
+const list = $('studio-model-list');
+const btn = $('studio-model-btn');
+const wrap = $('studio-model-wrap');
+if (!sel || !list || !btn || !wrap) return;
+const refresh = () => {
+paintStudioModelMenu(sel, list);
+syncStudioModelButton(sel);
+};
+refresh();
+btn.addEventListener('click', (e) => {
+e.stopPropagation();
+setStudioModelMenuOpen(!wrap.classList.contains('open'));
+});
+list.addEventListener('click', (e) => {
+const opt = e.target.closest('.model-menu-opt');
+if (!opt) return;
+setBuildModel(opt.dataset.id);
+refresh();
+setStudioModelMenuOpen(false);
+});
+document.addEventListener('click', (e) => {
+if (!wrap.classList.contains('open')) return;
+if (wrap.contains(e.target)) return;
+setStudioModelMenuOpen(false);
+});
+document.addEventListener('keydown', (e) => {
+if (e.key === 'Escape') setStudioModelMenuOpen(false);
+});
+}
+
 function modelOptionsHTML() {
 return MODEL_CHOICES.map((m) => `<option value="${m.id}">${m.tier === 'pro' ? '🔒 ' : ''}${m.label}</option>`).join('');
 }
@@ -1018,20 +1089,25 @@ game.model = id;
 localStorage.setItem('slop-model', id);
 $('studio-model') && ($('studio-model').value = id);
 $('model-select') && ($('model-select').value = id);
+const sel = $('studio-model');
+if (sel) {
+paintStudioModelMenu(sel, $('studio-model-list'));
+syncStudioModelButton(sel);
+}
 }
 
 function initModelPickers() {
 const saved = localStorage.getItem('slop-model');
 const pick = MODEL_CHOICES.some((m) => m.id === saved) ? saved : 'gpt-5.5';
-setBuildModel(pick);
 const html = modelOptionsHTML();
 for (const id of ['studio-model', 'model-select']) {
 const sel = $(id);
 if (!sel) continue;
 sel.innerHTML = html;
-sel.value = game.model;
 sel.addEventListener('change', () => setBuildModel(sel.value));
 }
+setBuildModel(pick);
+initStudioModelMenu($('studio-model'));
 }
 
 function initSettings() {
@@ -1045,7 +1121,7 @@ const key = $('api-key').value.trim();
 setBuildModel($('model-select').value);
 if (key) localStorage.setItem('slop-key', key); else localStorage.removeItem('slop-key');
 setUserKey(key);
-$('settings-note').textContent = key ? 'OK using your own key & model' : 'OK model saved — using slop\'s shared access';
+$('settings-note').textContent = key ? 'saved — builds will use your API key' : 'saved — using slop shared AI access';
 setTimeout(() => $('settings-modal').classList.add('hidden'), 900);
 toast('settings saved');
 });
@@ -1065,18 +1141,17 @@ import('./hero-shader.js').then(({ mountShader }) => {
 const bg = $('studio-shader');
 if (bg) agentShader = mountShader(bg, { interactionEl: document.body, ripples: true });
 }).catch(() => {});
-const wrap = $('play-frame-wrap');
+const wrap = $('studio-play-stage') || $('play-frame-wrap');
 debugPanel = createDebugPanel(wrap);
-errOverlay = mountErrorOverlay(wrap, {
+errOverlay = mountErrorOverlay($('play-frame-wrap'), {
 onFix(err) {
 if (!game.srcHtml || busy) return;
 $('prompt').value = `Fix this runtime error:\n${err}`;
 $('prompt').focus();
-toast('error sent to prompt — hit Build It to patch in place');
+toast('error sent to prompt — hit Generate to patch in place');
 },
 });
 tlAgent('hey — I\'m your game agent. describe anything and I\'ll ask a few planning questions, then build it live. edits patch in place; say "online multiplayer" for shareable rooms.', 'good');
-warnIfStudioNeedsKey();
 
 const params = new URLSearchParams(location.search);
 const id = params.get('id');
@@ -1086,14 +1161,16 @@ const remix = params.get('remix');
 if (remix) { tlAgent('pulling that game from the community…', 'working'); const cg = await api.communityGame(remix); if (cg) { Object.assign(game, { id: `studio-${Math.random().toString(36).slice(2, 8)}`, name: `${cg.name} (remix)`, desc: cg.desc, prompt: cg.prompt || '', srcHtml: cg.html, files: {}, sprites: {} }); $('game-title').value = game.name; refreshFrame(); persist(); renderFiles(); tlAgent(`forked "${cg.name}" by @${cg.username} — remix away.`, 'good'); } else tlAgent('couldn\'t fetch that game — is the backend running?', 'bad'); }
 
 const seed = params.get('prompt');
-if (seed) { $('prompt').value = seed; if (params.get('auto') === '1') submitPrompt(); }
+if (seed) { $('prompt').value = seed; autoGrowPrompt(); if (params.get('auto') === '1') submitPrompt(); }
 
 $('build-btn').addEventListener('click', submitPrompt);
-$('prompt').addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitPrompt(); });
-document.querySelectorAll('.chip').forEach((c) => c.addEventListener('click', () => { $('prompt').value = c.textContent; $('prompt').focus(); }));
-document.querySelectorAll('.template').forEach((t) => t.addEventListener('click', () => { $('prompt').value = t.dataset.prompt; $('prompt').focus(); }));
+const promptEl = $('prompt');
+promptEl?.addEventListener('input', autoGrowPrompt);
+promptEl?.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitPrompt(); });
+document.querySelectorAll('.chip').forEach((c) => c.addEventListener('click', () => { $('prompt').value = c.textContent; autoGrowPrompt(); $('prompt').focus(); }));
+document.querySelectorAll('.template').forEach((t) => t.addEventListener('click', () => { $('prompt').value = t.dataset.prompt; autoGrowPrompt(); $('prompt').focus(); }));
 
-const mic = createSpeech({ onText(t) { $('prompt').value = t; }, onState(on) { $('mic-btn').classList.toggle('listening', on); } });
+const mic = createSpeech({ onText(t) { $('prompt').value = t; autoGrowPrompt(); }, onState(on) { $('mic-btn').classList.toggle('listening', on); } });
 $('mic-btn').addEventListener('click', () => { if (!mic) { toast('no speech recognition here — type instead'); return; } mic.toggle(); });
 
 $('sprite-gen').addEventListener('click', generateSpriteFromForm);
@@ -1136,7 +1213,7 @@ $('invite-close').addEventListener('click', () => $('invite-modal').classList.ad
 collab = initCollab({
 onAddPrompt: (text, author) => { tlUser(`${author}: ${text}`); runHostPrompt(text, false); },
 getBuild: () => ({ html: finalHTML(), name: game.name }),
-setClientBuild: (html, name) => { $('play-empty').style.display = 'none'; $('play-frame').style.display = ''; $('play-frame').srcdoc = html; if (name) { $('game-title').value = name; game.name = name; } },
+setClientBuild: (html, name) => { $('play-empty').style.display = 'none'; $('play-frame').style.display = 'block'; $('play-frame').srcdoc = html; if (name) { $('game-title').value = name; game.name = name; } },
 tl: (t) => tlAgent(t, ''), toast,
 });
 const pathSeg = location.pathname.slice(1);

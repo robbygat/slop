@@ -1,38 +1,6 @@
 /* ============================================================================
-SLOP.game — additive styles for NEW homepage sections only.
-Matches the original neo-brutalist look (solid colors, 3px ink borders,
-hard offset shadows). Does NOT override any existing element styling.
+SLOP.game — additive homepage styles (nav search, browse chrome, card grid).
 ========================================================================== */
-
-/* ---------------------------------------------------------------- hero logo (centerpiece) */
-.hero-logo-crop {
-overflow: hidden;
-width: clamp(320px, 78vw, 640px);
-aspect-ratio: 5 / 2; /* show middle 40% — crop 30% top + bottom */
-margin: 0;
-padding: 0;
-line-height: 0;
-}
-
-.hero-logo {
-display: block;
-width: 100%;
-height: auto;
-margin: 0;
-padding: 0;
-transform: translateY(-30%);
-}
-
-/* ---------------------------------------------------------------- how-it-works pot mascot */
-.how-pot {
-display: block;
-margin: 0 auto 10px;
-width: 104px; height: 104px;
-filter: drop-shadow(4px 5px 0 rgba(26,26,46,.18));
-animation: howPotBob 3.2s ease-in-out infinite;
-}
-@keyframes howPotBob { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-7px) rotate(2deg); } }
-@media (prefers-reduced-motion: reduce) { .how-pot { animation: none; } }
 
 /* ---------------------------------------------------------------- nav search */
 .nav-search {
@@ -70,22 +38,6 @@ animation: howPotBob 3.2s ease-in-out infinite;
 }
 .nav-search input::placeholder { color: var(--soft); opacity: 0.65; }
 
-/* ---------------------------------------------------------------- hero model switcher (LLM-chat style) */
-.model-switch { position: relative; display: inline-flex; justify-self: end; }
-.model-switch::after {
-content: '▾'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-pointer-events: none; font-size: 11px; color: var(--ink); opacity: .7;
-}
-.model-pick {
-appearance: none; -webkit-appearance: none;
-font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px; color: var(--ink);
-background: rgba(255, 255, 255, .9); border: 2px solid var(--ink); border-radius: 100px;
-padding: 6px 30px 6px 14px; cursor: pointer; outline: none; line-height: 1.2;
-transition: background .12s ease;
-}
-.model-pick:hover { background: #fff; }
-.model-pick:focus { background: #fff; }
-
 /* ---------------------------------------------------------------- xp pill */
 .xp-pill { display: inline-flex; align-items: center; gap: 8px; background: var(--wh); border: var(--bw) solid var(--ink); border-radius: 100px; padding: 4px 12px 4px 5px; box-shadow: var(--sh); }
 .xp-pill .lvl { width: 26px; height: 26px; border-radius: 50%; background: var(--pk); color: #fff; display: grid; place-items: center; font-family: 'Space Grotesk', sans-serif; font-size: 12px; }
@@ -93,86 +45,15 @@ transition: background .12s ease;
 .xp-pill .xpb i { display: block; height: 100%; background: var(--mt); border-radius: 100px; transition: width .5s ease; }
 .xp-pill .xpn { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 11px; color: var(--soft); }
 
-/* ---------------------------------------------------------------- shared new-section buttons (original style) */
-.bbtn {
-display: inline-flex; align-items: center; gap: 8px;
-font-family: 'Space Grotesk', sans-serif; font-size: 16px;
-padding: 13px 26px; border: var(--bw) solid var(--ink); border-radius: 100px;
-background: var(--wh); color: var(--ink); box-shadow: var(--sh);
-transition: transform .12s ease, box-shadow .12s ease;
-}
-.bbtn:hover { transform: translate(-2px,-2px); box-shadow: var(--shb); }
-.bbtn.primary { background: var(--pk); color: #fff; }
-.bbtn.cool { background: var(--bl); color: var(--ink); }
-
-/* ---------------------------------------------------------------- daily drop */
-.drop-card {
-display: grid; grid-template-columns: 1.05fr .95fr; gap: 0; overflow: hidden;
-background: var(--wh); border: var(--bw) solid var(--ink); border-radius: var(--r);
-box-shadow: var(--shb);
-}
-.drop-art { position: relative; min-height: 320px; background: var(--bl); border-right: var(--bw) solid var(--ink); }
-.drop-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.drop-art .badge { position: absolute; top: 16px; left: 16px; z-index: 2; background: var(--ink); color: var(--y); font-family: 'Space Grotesk', sans-serif; font-size: 13px; padding: 7px 16px; border-radius: 100px; }
-.drop-info { padding: 40px; display: flex; flex-direction: column; justify-content: center; }
-.drop-info h3 { font-family: 'Space Grotesk', sans-serif; font-size: 34px; margin: 14px 0 10px; }
-.drop-info p { color: var(--soft); font-size: 16px; font-weight: 600; line-height: 1.6; margin-bottom: 24px; }
-.drop-row { display: flex; gap: 12px; flex-wrap: wrap; }
-
-/* ---------------------------------------------------------------- scroll reveal (motion only, no color) */
-.reveal { opacity: 0; transform: translateY(22px); transition: opacity .5s ease, transform .5s ease; }
-.reveal.in { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
-
 /* ---------------------------------------------------------------- responsive */
-@media (max-width: 1000px) {
-.drop-card { grid-template-columns: 1fr; }
-.drop-art { min-height: 220px; border-right: none; border-bottom: var(--bw) solid var(--ink); }
-}
 @media (max-width: 720px) {
 /* keep search on desktop/tablet only in the bar; drawer handles mobile */
 .nav-search-bar input { width: 100%; font-size: 13px; }
 }
 
 /* ============================================================================
-hero watercolor + Newgrounds-style arcade + prize ribbon + report
+Browse section chrome + card report button
 ========================================================================== */
-
-/* ---- moving watercolor games section (former hero backdrop) ---- */
-.games-sec::before, .games-sec::after {
-content: ''; position: absolute; inset: -35%; z-index: 1; pointer-events: none;
-filter: blur(64px) saturate(1.25);
-background:
-radial-gradient(28% 34% at 18% 28%, rgba(255,225,53,.60), transparent 60%),
-radial-gradient(26% 30% at 76% 22%, rgba(255,78,184,.52), transparent 60%),
-radial-gradient(34% 40% at 62% 72%, rgba(78,202,255,.52), transparent 62%),
-radial-gradient(26% 30% at 28% 76%, rgba(61,255,176,.46), transparent 60%),
-radial-gradient(24% 28% at 86% 64%, rgba(43,107,255,.46), transparent 60%),
-radial-gradient(22% 26% at 48% 12%, rgba(255,122,53,.42), transparent 60%);
-opacity: .32;
-animation: heroWC 26s ease-in-out infinite alternate;
-}
-.games-sec::after { animation-duration: 34s; animation-direction: alternate-reverse; opacity: .22; }
-@keyframes heroWC {
-0% { transform: translate(0,0) scale(1) rotate(0deg); }
-50% { transform: translate(-5%,3%) scale(1.18) rotate(7deg); }
-100% { transform: translate(4%,-3%) scale(1.12) rotate(-6deg); }
-}
-.hero-inner { position: relative; z-index: 2; width: 100%; }
-.hero .fdeco { z-index: 1; }
-@media (prefers-reduced-motion: reduce) { .games-sec::before, .games-sec::after { animation: none; } }
-
-/* ---- July prize ribbon ---- */
-.prize-ribbon {
-display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-background: var(--grad-sun); border: var(--bw) solid var(--ink); border-radius: 16px;
-padding: 14px 20px; margin-bottom: 30px; box-shadow: var(--sh);
-}
-.pr-badge { font-family: 'Space Grotesk', sans-serif; font-size: 14px; color: #fff; background: var(--ink); border-radius: 100px; padding: 6px 14px; white-space: nowrap; }
-.pr-text { flex: 1; min-width: 220px; font-weight: 700; font-size: 14.5px; color: var(--ink); }
-.pr-text b { font-family: 'Space Grotesk', sans-serif; font-weight: 400; }
-.pr-cta { font-family: 'Space Grotesk', sans-serif; font-size: 14px; color: #fff; background: var(--pk); border: 2.5px solid var(--ink); border-radius: 100px; padding: 9px 18px; box-shadow: 3px 3px 0 var(--ink); transition: transform .12s; white-space: nowrap; }
-.pr-cta:hover { transform: translate(-2px,-2px); }
 
 /* ---- section sub-heads ---- */
 .pop-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 16px; flex-wrap: wrap; }
@@ -183,29 +64,6 @@ padding: 14px 20px; margin-bottom: 30px; box-shadow: var(--sh);
 .sbtn:hover { transform: translate(-1px,-1px); }
 .sbtn.active { background: var(--ink); color: var(--y); }
 
-/* ---- denser Newgrounds-style grid ---- */
-.games-grid.dense { grid-template-columns: repeat(4, 1fr); gap: 18px; }
-.games-grid.dense .gcard.featured { grid-column: span 2; }
-@media (max-width: 1100px) { .games-grid.dense { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 760px) { .games-grid.dense { grid-template-columns: repeat(2, 1fr); } .games-grid.dense .gcard.featured { grid-column: span 2; } }
-@media (max-width: 460px) { .games-grid.dense { grid-template-columns: 1fr; } .games-grid.dense .gcard.featured { grid-column: span 1; } }
-.games-grid.dense .gbody { padding: 14px 16px 16px; }
-.games-grid.dense .gtitle-row h3 { font-size: 17px; }
-.games-grid.dense .gdesc { font-size: 13px; margin: 6px 0 10px; }
-
-/* most popular — single spotlight card */
-.games-grid.dense.solo {
-grid-template-columns: 1fr;
-max-width: min(680px, 100%);
-margin: 0 auto;
-}
-.games-grid.dense.solo .gcard.featured {
-grid-column: span 1;
-}
-.games-grid.dense.solo .gcard.featured .gthumb {
-aspect-ratio: 16 / 9;
-min-height: clamp(180px, 52vw, 380px);
-}
 .gcat { display: inline-block; font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; color: var(--el); background: rgba(43,107,255,.1); border-radius: 100px; padding: 3px 9px; margin-bottom: 6px; }
 
 /* ---- report button on cards ---- */

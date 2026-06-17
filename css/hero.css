@@ -69,8 +69,8 @@ letter-spacing: -0.03em;
 
 .hero-brand .wordmark,
 .hero-brand .wordmark .dot-pk {
-color: var(--ink);
-text-shadow: 0 1px 12px rgba(255, 255, 255, 0.45);
+color: #fff;
+text-shadow: 0 2px 16px rgba(17, 18, 26, 0.45), 0 1px 4px rgba(17, 18, 26, 0.35);
 }
 
 .hero-topnav {
@@ -341,23 +341,23 @@ font-weight: 800;
 font-size: clamp(48px, 10vw, 112px);
 line-height: 0.95;
 letter-spacing: -0.045em;
-color: var(--ink);
+color: #fff;
 text-shadow:
-0 1px 0 rgba(255, 255, 255, 0.55),
-0 8px 32px rgba(255, 255, 255, 0.35),
-0 4px 24px rgba(17, 18, 26, 0.25);
+0 2px 28px rgba(17, 18, 26, 0.55),
+0 1px 6px rgba(17, 18, 26, 0.4);
 }
 
 .hero-sub {
 max-width: 48ch;
 margin: 12px auto 0;
-font-size: clamp(15px, 1.9vw, 18px);
-font-weight: 700;
-color: var(--ink);
+font-family: var(--font-display);
+font-size: clamp(16px, 2vw, 19px);
+font-weight: 800;
+color: #fff;
 line-height: 1.55;
 text-shadow:
-0 1px 0 rgba(255, 255, 255, 0.55),
-0 4px 24px rgba(255, 255, 255, 0.35);
+0 2px 24px rgba(17, 18, 26, 0.62),
+0 1px 5px rgba(17, 18, 26, 0.48);
 }
 
 /* ---- prompt command bar (premium pill) ---- */
@@ -634,7 +634,7 @@ transition: color .15s;
 .hero-promo {
 width: 100%;
 max-width: min(820px, calc(100% - 32px));
-margin: clamp(28px, 5vw, 52px) auto;
+margin: clamp(28px, 4vw, 40px) auto 0;
 border: var(--bw) solid var(--ink);
 border-radius: calc(var(--r) + 4px);
 box-shadow: var(--shb);
@@ -749,65 +749,11 @@ color: #c7c7df;
 .hp-cta { width: 100%; text-align: center; }
 }
 
-/* ============ legacy / shared ============ */
-.sub-prev {
-display: flex;
-align-items: center;
-justify-content: center;
-flex-wrap: wrap;
-gap: 14px;
-margin-top: 26px;
-font-family: 'Space Mono', monospace;
-font-weight: 700;
-font-size: clamp(13px, 2.5vw, 15px);
-}
-
-.sub-pill {
-background: var(--wh);
-border: var(--bw) solid var(--ink);
-border-radius: 100px;
-padding: 11px 24px;
-}
-.sub-pill #sub-domain { color: var(--pk); }
-
-.bob-spark {
-display: inline-block;
-font-size: 20px;
-animation: bob .8s ease-in-out infinite alternate;
-}
-
-.stat-row {
-display: flex;
-justify-content: center;
-flex-wrap: wrap;
-gap: 20px;
-margin-top: 40px;
-}
-
-.stat-pill {
-display: flex;
-align-items: baseline;
-gap: 9px;
-background: var(--wh);
-border: var(--bw) solid var(--ink);
-border-radius: 100px;
-box-shadow: var(--sh);
-padding: 16px 30px;
-font-weight: 800;
-font-size: 15px;
-}
-
-.stat-num {
-font-family: 'Space Grotesk', sans-serif;
-font-size: 26px;
-color: var(--pk);
-}
-
 /* ============ responsive ============ */
 @media (max-width: 600px) {
 .hero { padding: 22px 14px 36px; }
 .hero-slogan { font-size: clamp(36px, 11vw, 52px); }
-.hero-sub { font-size: 14px; }
+.hero-sub { font-size: 15px; font-weight: 800; }
 
 .pbar {
 padding: 12px;

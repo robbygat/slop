@@ -1,11 +1,6 @@
 /* ============ site-wide mobile polish (load last) ============ */
 
-.fc-tab-short { display: none; }
-
 @media (max-width: 720px) {
-.fc-tab-full { display: none; }
-.fc-tab-short { display: inline; }
-
 /* ---- nav ---- */
 .site-nav {
 height: 52px;
@@ -90,31 +85,28 @@ border-width: 2px;
 /* ---- games section ---- */
 .browse-intro { padding-bottom: 18px; }
 
-.prize-ribbon {
-padding: 10px 12px;
-gap: 8px;
-margin-bottom: 16px;
-border-radius: 12px;
-border-width: 2.5px;
+.podium-block {
+margin-top: 24px;
+padding-top: 12px;
 }
 
-.pr-badge { font-size: 11px; padding: 4px 10px; }
-
-.pr-text {
-font-size: 12px;
-min-width: 0;
-line-height: 1.45;
+.podium-block::before {
+font-size: 10px;
+left: 14px;
+padding: 3px 10px;
+letter-spacing: 0.1em;
 }
 
-.pr-cta {
-font-size: 12px;
-padding: 7px 12px;
-border-width: 2px;
-box-shadow: 2px 2px 0 var(--ink);
+.podium-stack {
+border-radius: 18px;
+}
+
+.podium-gold {
+padding: 16px 14px 18px;
 }
 
 .pop-head {
-margin: 18px 0 8px;
+margin: 0 0 8px;
 gap: 8px;
 }
 
@@ -143,150 +135,9 @@ box-shadow: none;
 .sbtn.active,
 .fbtn.active { box-shadow: 2px 2px 0 var(--ink); }
 
-.games-grid.dense .gbody { padding: 10px 12px 12px; }
-
-.games-grid.dense .gtitle-row h3 { font-size: 15px; }
-
-.games-grid.dense .gdesc { font-size: 12px; margin: 4px 0 8px; }
-
-.games-grid.dense.solo { max-width: 100%; }
-
 .gcard-v2 .gbody { padding: 10px 12px 12px; }
 
 .gcta { font-size: 12px; padding: 8px 12px; }
-
-/* ---- feature carousel ---- */
-.fc-head {
-flex-direction: column;
-align-items: stretch;
-padding-top: 12px;
-padding-bottom: 10px;
-gap: 10px;
-}
-
-.fc-head.wrap { padding-left: 12px; padding-right: 12px; }
-
-.fc-tabs {
-display: flex;
-flex-wrap: nowrap;
-overflow-x: auto;
--webkit-overflow-scrolling: touch;
-scroll-snap-type: x proximity;
-scrollbar-width: none;
-gap: 6px;
-padding-bottom: 4px;
-width: 100%;
-flex: none;
-}
-.fc-tabs::-webkit-scrollbar { display: none; }
-
-.fc-tab {
-font-size: 11px;
-padding: 7px 12px;
-border-width: 2px;
-flex-shrink: 0;
-scroll-snap-align: start;
-}
-
-.fc-tab.active { box-shadow: 2px 2px 0 #000; }
-
-.fc-tab:hover { transform: none; }
-
-.fc-controls {
-gap: 5px;
-margin-left: auto;
-}
-
-.fc-arrow {
-width: 34px;
-height: 34px;
-font-size: 16px;
-border-width: 2px;
-box-shadow: 2px 2px 0 #000;
-}
-
-.fc-arrow:hover { box-shadow: 2px 2px 0 #000; transform: none; }
-
-.fc-dots { padding: 10px 12px 14px; gap: 7px; }
-
-.fc-dot {
-width: 8px;
-height: 8px;
-border-width: 1.5px;
-}
-
-.feature-carousel .fc-slide .how-sec,
-.feature-carousel .fc-slide .studio-sec,
-.feature-carousel .fc-slide .publish-sec,
-.feature-carousel .fc-slide .multiplayer-sec,
-.feature-carousel .fc-slide .remix-sec {
-min-height: auto;
-}
-
-.feature-carousel .fc-slide .wrap,
-.feature-carousel .fc-slide .fc-panel {
-padding-top: 22px;
-padding-bottom: 26px;
-}
-
-.feature-carousel .sec-head.fc-panel-head { margin-bottom: 16px; }
-
-.feature-carousel .fc-slide .sec-title,
-.feature-carousel .fc-slide .fc-title {
-font-size: clamp(22px, 6vw, 28px);
-}
-
-.feature-carousel .fc-slide .sec-sub,
-.feature-carousel .fc-slide .fc-lead,
-.feature-carousel .fc-slide .remix-sub {
-font-size: 13px;
-line-height: 1.55;
-}
-
-.feature-carousel .fc-slide .fc-tag,
-.feature-carousel .fc-slide .remix-kicker,
-.feature-carousel .fc-slide .studio-kicker,
-.feature-carousel .fc-compact-head .fc-tag {
-font-size: 10px;
-padding: 4px 10px;
-}
-
-.feature-carousel .fc-compact-title {
-font-size: clamp(20px, 5.5vw, 26px);
-}
-
-.feature-carousel .fc-compact-lead {
-font-size: 13px;
-}
-
-.feature-carousel .fc-steps li,
-.feature-carousel .fc-facts li {
-font-size: 12px;
-}
-
-.feature-carousel .fc-remix-chip {
-flex: 1 1 100%;
-max-width: none;
-}
-
-.feature-carousel .how-card,
-.feature-carousel .pub-card,
-.feature-carousel .mp-card,
-.feature-carousel .remix-demo {
-padding: 14px;
-}
-
-.feature-carousel .how-card h3,
-.feature-carousel .pub-card h3,
-.feature-carousel .mp-card h3 {
-font-size: 17px;
-}
-
-.feature-carousel .how-card p,
-.feature-carousel .pub-card p,
-.feature-carousel .mp-card p {
-font-size: 13px;
-}
 
 /* ---- misc sections ---- */
 .meme-banner {
@@ -294,12 +145,6 @@ font-size: 13px;
 padding: 11px 14px;
 line-height: 1.45;
 }
-
-.app-grid { gap: 28px; }
-
-.app-copy .sec-sub { font-size: 14px; }
-
-.app-points li { font-size: 13px; }
 
 .footer-grid { gap: 24px; }
 
@@ -315,12 +160,8 @@ line-height: 1.45;
 }
 
 @media (max-width: 400px) {
-.fc-tab { font-size: 9px; padding: 4px 6px; }
-
 .sbtn,
 .fbtn { font-size: 9px; padding: 4px 7px; }
-
-.pr-cta { width: 100%; text-align: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {

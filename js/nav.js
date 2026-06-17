@@ -20,13 +20,20 @@ export function initNav(options = {}) {
     const browseAnchor = document.querySelector('.mq-wrap');
     let browseActive = false;
 
+    const positionBrowseDock = () => {
+      if (!browseDock || !nav.classList.contains('nav--show')) return;
+      const navRect = nav.getBoundingClientRect();
+      browseDock.style.top = `${Math.round(navRect.bottom)}px`;
+    };
+
     const setBrowseActive = (on) => {
       if (on === browseActive || !browseDock) return;
       browseActive = on;
       nav.classList.toggle('nav--browse', on);
       browseDock.toggleAttribute('hidden', !on);
       browseDock.setAttribute('aria-hidden', on ? 'false' : 'true');
-      gamesSec?.classList.toggle('games-browse-nav', on);
+      if (on) positionBrowseDock();
+      else browseDock.style.top = '';
     };
 
     const measureNavHeight = () => {
@@ -52,6 +59,7 @@ export function initNav(options = {}) {
         setBrowseActive(false);
       }
 
+      if (browseActive) positionBrowseDock();
       document.documentElement.style.setProperty('--nav-height', `${measureNavHeight()}px`);
       ticking = false;
     };

@@ -10,15 +10,16 @@
 
 import * as THREE from 'three';
 
-// 7 stops, top → bottom, all straight from css/tokens.css (light cream → ink).
+// 8 stops, top → bottom — cream through mint green into ink.
 const PALETTE = [
-  [0xFF, 0xFB, 0xF0], // cream    #FFFBF0
-  [0xFF, 0xE1, 0x35], // yellow   #FFE135
-  [0xFF, 0x7A, 0x35], // orange   #FF7A35
-  [0xFF, 0x4E, 0xB8], // hot pink #FF4EB8
-  [0x4E, 0xCA, 0xFF], // sky      #4ECAFF
-  [0x2B, 0x6B, 0xFF], // electric #2B6BFF
-  [0x11, 0x12, 0x1A], // ink      #11121A
+  [0xFF, 0xFB, 0xF0], // cream       #FFFBF0
+  [0xFF, 0xE1, 0x35], // yellow      #FFE135
+  [0x3D, 0xFF, 0xB0], // mint green  #3DFFB0
+  [0xFF, 0x7A, 0x35], // orange      #FF7A35
+  [0xFF, 0x4E, 0xB8], // hot pink    #FF4EB8
+  [0x4E, 0xCA, 0xFF], // sky         #4ECAFF
+  [0x2B, 0x6B, 0xFF], // electric    #2B6BFF
+  [0x11, 0x12, 0x1A], // ink         #11121A
 ].map(([r, g, b]) => new THREE.Color(r / 255, g / 255, b / 255));
 
 const MAX_RIPPLES = 10;
@@ -37,7 +38,7 @@ const FRAG = /* glsl */ `
   uniform float uTime;
   uniform float uAspect;
   uniform float uBoost;          // 0 idle → 1 "thinking": faster, louder, brighter
-  uniform vec3  uColors[7];
+  uniform vec3  uColors[8];
   uniform float uGrainIntensity, uGrainSpeed, uGrainMean, uGrainVariance;
   uniform float uWaveIntensity, uNoiseIntensity, uNoiseScale, uNoiseSpeed;
   uniform vec2  uRipplePos[10];
@@ -92,25 +93,35 @@ const FRAG = /* glsl */ `
     return 42.0 * dot(m * m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
   }
 
-  // 7-stop vertical gradient (smooth segment blends).
+  // 8-stop vertical gradient (smooth segment blends).
   vec3 gradient(float t){
     t = clamp(t, 0.0, 1.0);
     vec3 c = uColors[0];
-    c = mix(c, uColors[1], smoothstep(0.0,     1.0/6.0, t));
-    c = mix(c, uColors[2], smoothstep(1.0/6.0, 2.0/6.0, t));
-    c = mix(c, uColors[3], smoothstep(2.0/6.0, 3.0/6.0, t));
-    c = mix(c, uColors[4], smoothstep(3.0/6.0, 4.0/6.0, t));
-    c = mix(c, uColors[5], smoothstep(4.0/6.0, 5.0/6.0, t));
-    c = mix(c, uColors[6], smoothstep(5.0/6.0, 1.0,     t));
+    c = mix(c, uColors[1], smoothstep(0.0,     1.0/7.0, t));
+    c = mix(c, uColors[2], smoothstep(1.0/7.0, 2.0/7.0, t));
+    c = mix(c, uColors[3], smoothstep(2.0/7.0, 3.0/7.0, t));
+    c = mix(c, uColors[4], smoothstep(3.0/7.0, 4.0/7.0, t));
+    c = mix(c, uColors[5], smoothstep(4.0/7.0, 5.0/7.0, t));
+    c = mix(c, uColors[6], smoothstep(5.0/7.0, 6.0/7.0, t));
+    c = mix(c, uColors[7], smoothstep(6.0/7.0, 1.0,     t));
     return c;
   }
 
-  // Three-layer wave system at scales 0.5 / 0.8 / 1.2 and speeds 0.24 / 0.2 / 0.3.
+  // Multi-layer wave field — faster, deeper, with a slow counter-rotating layer.
   float waveField(vec2 uv, float t){
-    float w  = snoise(vec3(uv * 0.5,         t * 0.24));
-          w += snoise(vec3(uv * 0.8 + 11.0,  t * 0.20)) * 0.7;
-          w += snoise(vec3(uv * 1.2 + 23.0,  t * 0.30)) * 0.5;
-    return w / 2.2;
+    float w  = snoise(vec3(uv * 0.55,         t * 0.34));
+          w += snoise(vec3(uv * 0.95 + 11.0,  t * 0.28)) * 0.75;
+          w += snoise(vec3(uv * 1.45 + 23.0,  t * 0.42)) * 0.55;
+          w += snoise(vec3(uv * 2.1  + 37.0,  t * 0.22)) * 0.35;
+    return w / 2.65;
+  }
+
+  // Drifting aurora blob — pushes bright mint through the field.
+  float auroraField(vec2 uv, float t){
+    vec2 drift = vec2(sin(t * 0.27), cos(t * 0.31)) * 0.18;
+    float a = snoise(vec3(uv * 1.6 + drift, t * 0.38));
+    a += snoise(vec3(uv * 2.8 - drift.yx, t * 0.44)) * 0.55;
+    return smoothstep(-0.05, 0.72, a);
   }
 
   float rand(vec2 c){ return fract(sin(dot(c, vec2(12.9898, 78.233))) * 43758.5453); }
@@ -147,23 +158,61 @@ const FRAG = /* glsl */ `
   void main(){
     vec2 uv = vUv;
     float boost = uBoost;
+    float t = uTime;
 
-    // Domain-warped, breathing, parabolic-arched gradient coordinate.
-    float arch    = -pow(uv.x - 0.5, 2.0) * 0.55;
-    float breathe = sin(uTime * 0.5) * 0.04;
+    // Domain warp — liquid, flowing coordinate space.
+    vec2 warp1 = vec2(
+      snoise(vec3(uv * 1.7 + 0.0, t * 0.26)),
+      snoise(vec3(uv * 1.7 + 5.2, t * 0.23))
+    );
+    vec2 warp2 = vec2(
+      snoise(vec3(uv * 3.2 + 9.0, t * 0.19)),
+      snoise(vec3(uv * 3.2 + 14.0, t * 0.21))
+    ) * 0.45;
+    vec2 wuv = uv + (warp1 + warp2) * 0.11 * (1.0 + boost * 0.8);
+
+    // Slow swirl around center — aurora vortex feel.
+    vec2 centered = wuv - 0.5;
+    float dist = length(centered);
+    float angle = atan(centered.y, centered.x) + t * 0.14 + dist * 2.4;
+    vec2 swirl = vec2(cos(angle), sin(angle)) * dist * 0.06 * sin(t * 0.55 + dist * 4.0);
+    wuv += swirl;
+
+    float arch    = -pow(wuv.x - 0.5, 2.0) * 0.55;
+    float breathe = sin(t * 0.62) * 0.05 + sin(t * 1.1 + wuv.x * 3.0) * 0.018;
     float waveAmt = uWaveIntensity  * (1.0 + boost * 1.4);
     float noizAmt = uNoiseIntensity * (1.0 + boost * 1.0);
-    float waves   = waveField(uv * uNoiseScale, uTime) * 0.07 * waveAmt;
-    float n       = snoise(vec3(uv * uNoiseScale, uTime * uNoiseSpeed * (1.0 + boost * 2.0))) * 0.05 * noizAmt;
-    float gy      = (1.0 - uv.y) + arch + breathe + waves + n;
 
+    // Counter-rotating wave sampling for extra motion.
+    float rotA = t * 0.11;
+    float rotB = -t * 0.08;
+    mat2 rotMatA = mat2(cos(rotA), -sin(rotA), sin(rotA), cos(rotA));
+    mat2 rotMatB = mat2(cos(rotB), -sin(rotB), sin(rotB), cos(rotB));
+    vec2 ruvA = (wuv - 0.5) * rotMatA + 0.5;
+    vec2 ruvB = (wuv - 0.5) * rotMatB + 0.5;
+
+    float waves   = waveField(ruvA * uNoiseScale, t) * 0.11 * waveAmt;
+          waves  += waveField(ruvB * uNoiseScale * 1.3 + 3.0, t * 1.15) * 0.05 * waveAmt;
+    float n       = snoise(vec3(wuv * uNoiseScale * 1.2, t * uNoiseSpeed * (1.0 + boost * 2.0))) * 0.06 * noizAmt;
+    float ribbon  = sin(wuv.x * 9.0 + t * 0.9 + waveField(wuv, t) * 2.5) * 0.022 * waveAmt;
+
+    float gy = (1.0 - wuv.y) + arch + breathe + waves + n + ribbon;
     vec3 col = gradient(gy);
 
+    // Bright mint aurora blooms — the green punch.
+    float aurora = auroraField(wuv, t);
+    vec3 mint = uColors[2];
+    col = mix(col, mint, aurora * 0.42);
+    col += mint * aurora * 0.18 * (0.65 + 0.35 * sin(t * 1.4 + dist * 6.0));
+
     // Grain (overlay blend).
-    col = mix(col, overlayBlend(col, grain(uv, uTime)), uGrainIntensity);
+    col = mix(col, overlayBlend(col, grain(uv, t)), uGrainIntensity);
+
+    // Subtle shimmer pulse.
+    col += 0.04 * (0.5 + 0.5 * sin(t * 1.8 + wuv.x * 5.0 + wuv.y * 4.0)) * (1.0 + boost * 0.6);
 
     // Brightness pulse while "thinking".
-    col += boost * 0.07 * (0.5 + 0.5 * sin(uTime * 3.0));
+    col += boost * 0.07 * (0.5 + 0.5 * sin(t * 3.0));
 
     // Ripples in aspect-corrected -1..1 space.
     vec2 p = uv * 2.0 - 1.0;
@@ -184,16 +233,19 @@ export function mountShader(el, opts = {}) {
   if (!el) return null;
   const { interactionEl = el, ripples = true } = opts;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const coarse = matchMedia('(pointer: coarse)').matches;
+  const dprCap = reduce ? 1 : coarse ? 1.25 : 1.5;
 
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+    renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false, powerPreference: 'high-performance' });
   } catch (e) {
     return null; // CSS gradient fallback stays in place
   }
   renderer.setClearColor(0xf9f9f9, 1);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, dprCap));
   el.appendChild(renderer.domElement);
+  el.classList.add('shader-live');
 
   const uniforms = {
     uTime: { value: 0 },
@@ -201,13 +253,13 @@ export function mountShader(el, opts = {}) {
     uBoost: { value: 0 },
     uColors: { value: PALETTE },
     uGrainIntensity: { value: 0.075 },
-    uGrainSpeed: { value: 2.0 },
+    uGrainSpeed: { value: 2.6 },
     uGrainMean: { value: 0.0 },
     uGrainVariance: { value: 0.5 },
-    uWaveIntensity: { value: 1.2 },
-    uNoiseIntensity: { value: 1.55 },
-    uNoiseScale: { value: 2.0 },
-    uNoiseSpeed: { value: 0.15 },
+    uWaveIntensity: { value: 1.75 },
+    uNoiseIntensity: { value: 1.9 },
+    uNoiseScale: { value: 2.1 },
+    uNoiseSpeed: { value: 0.24 },
     uRipplePos: { value: Array.from({ length: MAX_RIPPLES }, () => new THREE.Vector2()) },
     uRippleTime: { value: new Array(MAX_RIPPLES).fill(-100) },
     uRippleCount: { value: 0 },
@@ -223,6 +275,7 @@ export function mountShader(el, opts = {}) {
     const r = el.getBoundingClientRect();
     const w = Math.max(1, r.width);
     const h = Math.max(1, r.height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, dprCap));
     renderer.setSize(w, h, false); // keep CSS sizing; only update the drawing buffer
     uniforms.uAspect.value = w / h;
   }
@@ -316,6 +369,3 @@ export function initGamesShader() {
   if (!el) return;
   mountShader(el, { interactionEl: el.closest('.games-sec') || el });
 }
-
-/** @deprecated use initGamesShader — kept for any stale imports */
-export const initHeroShader = initGamesShader;

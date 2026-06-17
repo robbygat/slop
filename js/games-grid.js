@@ -176,7 +176,7 @@ if (video.getBoundingClientRect().height > 0) play(video);
 function thumbMedia(g, { video = false } = {}) {
 if (video && g.previewVideo) {
 const poster = g.thumb ? ` poster="${escapeHTML(g.thumb)}"` : '';
-return `<div class="gthumb-video-wrap"><div class="gthumb-video-crop"><video class="gthumb-video" src="${escapeHTML(g.previewVideo)}"${poster} type="video/mp4" autoplay muted loop playsinline preload="auto" aria-label="${escapeHTML(g.name)} gameplay preview"></video></div></div>`;
+return `<div class="gthumb-video-wrap"><div class="gthumb-video-crop"><video class="gthumb-video" src="${escapeHTML(g.previewVideo)}"${poster} type="video/mp4" muted loop playsinline preload="none" aria-label="${escapeHTML(g.name)} gameplay preview"></video></div></div>`;
 }
 if (g.thumb) {
 return `<img src="${g.thumb}" alt="${escapeHTML(g.name)} gameplay screenshot" loading="lazy">`;
@@ -391,10 +391,8 @@ renderPodium();
 // hide the static "most popular" row while searching so the results grid is
 // the only thing on screen — otherwise search looks like it did nothing.
 const searching = !!query.trim();
-const pop = document.getElementById('popular-grid');
-const popHead = document.querySelector('.pop-head');
-if (pop) pop.style.display = searching ? 'none' : '';
-if (popHead) popHead.style.display = searching ? 'none' : '';
+const popBlock = document.getElementById('podium-block');
+if (popBlock) popBlock.style.display = searching ? 'none' : '';
 }
 
 export function setSort(sort) {
@@ -471,17 +469,6 @@ window.location.href = launchPlayHref({ id: card.dataset.id });
 export function initGamesGrid() {
 rerenderGrid();
 
-// pull the real, global play counts then repaint with honest numbers
-loadPlays().then(rerenderGrid);
-
-// pull community-published games from the backend (no-op when offline)
-api.communityGames().then((list) => {
-if (list?.length) {
-communityGames = list;
-rerenderGrid();
-}
-});
-
 document.querySelectorAll('#filter-row .fbtn').forEach((btn) => {
 btn.addEventListener('click', () => filterGames(btn.dataset.tag, btn));
 });
@@ -492,4 +479,19 @@ btn.addEventListener('click', () => setSort(btn.dataset.sort));
 
 document.getElementById('games-grid').addEventListener('click', onGridClick);
 document.getElementById('popular-grid')?.addEventListener('click', onPodiumClick);
+
+const defer = (fn) => {
+if ('requestIdleCallback' in window) requestIdleCallback(fn, { timeout: 2500 });
+else setTimeout(fn, 900);
+};
+
+defer(() => {
+loadPlays().then(rerenderGrid);
+api.communityGames().then((list) => {
+if (list?.length) {
+communityGames = list;
+rerenderGrid();
+}
+});
+});
 }

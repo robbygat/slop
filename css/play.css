@@ -18,9 +18,6 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: #f9f9f9 linear-gradient(180deg,
-    #FFFBF0 0%, #FFE135 16%, #FF7A35 33%, #FF4EB8 50%,
-    #4ECAFF 68%, #2B6BFF 84%, #11121A 100%);
 }
 
 .play-page-bg canvas {
@@ -610,9 +607,6 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: #f9f9f9 linear-gradient(180deg,
-    #FFFBF0 0%, #FFE135 16%, #FF7A35 33%, #FF4EB8 50%,
-    #4ECAFF 68%, #2B6BFF 84%, #11121A 100%);
 }
 
 .play-fs-bg canvas {

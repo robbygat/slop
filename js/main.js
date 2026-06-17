@@ -3,53 +3,51 @@
 import { initHero } from './hero.js';
 import { initGamesGrid } from './games-grid.js';
 import { initNav } from './nav.js';
-import { initStats } from './stats.js';
 import { initAccount, openAuthModal, getUser } from './account.js';
-import { initUpload } from './upload.js';
 import { initXP } from './xp.js';
-import { initDailyDrop, initReveal } from './discover.js';
-import { initFeatureCarousel } from './feature-carousel.js';
-import { initAppStore } from './appstore.js';
 import { initPricing } from './pricing.js';
-import { initAds } from './ads.js';
 import { showToast } from './toast.js';
 
+function deferIdle(fn, timeout = 2500) {
+  if ('requestIdleCallback' in window) requestIdleCallback(fn, { timeout });
+  else setTimeout(fn, Math.min(timeout, 1200));
+}
+
+function lazyGamesShader() {
+  const sec = document.getElementById('games');
+  if (!sec) return;
+  let started = false;
+  const boot = () => {
+    if (started) return;
+    started = true;
+    io.disconnect();
+    import('./hero-shader.js').then((m) => m.initGamesShader()).catch(() => {});
+  };
+  const io = new IntersectionObserver(([e]) => { if (e?.isIntersecting) boot(); }, { rootMargin: '80px 0px', threshold: 0 });
+  io.observe(sec);
+}
+
 function init() {
-initAccount();
-initXP();
-initHero();
+  initAccount();
+  initXP();
+  initHero();
+  initGamesGrid();
+  lazyGamesShader();
 
-// interactive Three.js shader showpiece — dynamically imported so a CDN/WebGL
-// failure only drops the visual (CSS gradient fallback) instead of the page JS.
-import('./hero-shader.js').then((m) => m.initGamesShader()).catch(() => {});
+  deferIdle(() => import('./stats.js').then((m) => m.initStats()).catch(() => {}));
 
-initGamesGrid();
-initUpload();
-initFeatureCarousel();
-initDailyDrop();
-initAppStore();
-initReveal();
-initStats();
+  document.getElementById('footer-signup')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (getUser()) showToast(`you're already signed in as ${getUser().username}`);
+    else openAuthModal();
+  });
 
-// the hero top-bar auth control (#hero-auth) is rendered + wired by account.js,
-// so it reflects sign-in state instead of always showing "Sign in".
-
-document.getElementById('footer-signup')?.addEventListener('click', (e) => {
-e.preventDefault();
-if (getUser()) showToast(`you're already signed in as ${getUser().username}`);
-else openAuthModal();
-});
-
-// global search + mobile nav drawer
-initNav({ filterGrid: true });
-
-// Pro membership pill + credits, and ads (free tier only — off until enabled)
-initPricing();
-initAds();
+  initNav({ filterGrid: true });
+  initPricing();
 }
 
 if (document.readyState === 'loading') {
-document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', init);
 } else {
-init();
+  init();
 }

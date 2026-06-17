@@ -1,62 +1,35 @@
-// Shared xAI (Grok) client.
+// Shared multi-provider AI client.
 //
 // When the SLOP.game backend is running, every call routes through /api/ai/*
-// so the API key stays on the server (this is the production path). When the
+// so API keys stay on the server (this is the production path). When the
 // site is opened as static files with no backend, direct calls require a
 // user-supplied key (Slop Studio settings) — no baked-in key ships in the repo.
 
 import { getSupabase, SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase.js';
+import { MODELS, MODEL_CHOICES, isProModel, providerFor } from './models.js';
 
-const DIRECT_URL = 'https://api.x.ai/v1/chat/completions';
-const DIRECT_IMG_URL = 'https://api.x.ai/v1/images/generations';
-// Production path: the metered Supabase Edge Functions (hold the secret keys,
-// check the signed-in user's credits, and bill real token usage).
+export { MODELS, MODEL_CHOICES, isProModel, providerFor };
+
+const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
+const XAI_URL = 'https://api.x.ai/v1/chat/completions';
+const XAI_IMG_URL = 'https://api.x.ai/v1/images/generations';
+const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const EDGE_CHAT = `${SUPABASE_URL}/functions/v1/ai-proxy`;
 const EDGE_IMAGE = `${SUPABASE_URL}/functions/v1/image-proxy`;
 
-// Defaults are FREE-tier models so a brand-new (free) account can cook immediately
-// without hitting the Pro gate. Pro members can pick the frontier models in the
-// picker (grok-4.3, claude-opus-4-8, …). Keep these in the 'free' tier of MODEL_CHOICES.
-export const MODELS = {
-cook: 'gpt-5.5', // homepage quick-cook — OpenAI flagship (strongest)
-remix: 'grok-4.20-0309-non-reasoning', // live code edits — latency first (kept on fast Grok)
-studio: 'gpt-5.5', // studio builds — OpenAI flagship (strongest)
-};
-
-// Every model the picker offers (label → id). `tier` mirrors the server gate in
-// supabase/functions/_shared/models.ts: 'free' models are open to everyone (cheap/
-// fast); 'pro' models (the frontier ones) need a Pro membership. Keep this list in
-// sync with that file. Selecting a Pro model while signed out / on the free tier
-// returns an honest 403 from the proxy.
-export const MODEL_CHOICES = [
-{ id: 'gpt-5.5', label: 'GPT-5.5 — OpenAI flagship', provider: 'openai', tier: 'free' },
-{ id: 'grok-4.20-0309-non-reasoning', label: 'Grok 4.20 — fast', provider: 'xai', tier: 'free' },
-{ id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5 — fast', provider: 'anthropic', tier: 'free' },
-{ id: 'gpt-4o-mini', label: 'GPT-4o mini — fast', provider: 'openai', tier: 'free' },
-{ id: 'grok-4.3', label: 'Grok 4.3 — best quality', provider: 'xai', tier: 'pro' },
-{ id: 'claude-opus-4-8', label: 'Claude Opus 4.8 — Anthropic flagship', provider: 'anthropic', tier: 'pro' },
-{ id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6 — Anthropic', provider: 'anthropic', tier: 'pro' },
-{ id: 'gpt-4o', label: 'GPT-4o — OpenAI', provider: 'openai', tier: 'pro' },
-];
-
-// quick lookup: is this model a Pro-only model? (used to lock the picker UI)
-export function isProModel(id) {
-return MODEL_CHOICES.find((m) => m.id === id)?.tier === 'pro';
-}
-
-// Which provider a model id belongs to (used to route + to fail fast client-side).
-export function providerFor(model) {
-const m = String(model || '');
-if (m.startsWith('claude')) return 'anthropic';
-if (m.startsWith('gpt') || m.startsWith('o1') || m.startsWith('o3') || m.startsWith('chatgpt')) return 'openai';
-return 'xai';
-}
-
-// Bring-your-own key: when a user supplies their own xAI key in the studio,
-// calls go DIRECT to xAI with it (bypassing the shared server proxy/credits).
+// Bring-your-own key: when a user supplies their own API key in the studio,
+// calls go direct to that provider (bypassing the shared server proxy/credits).
 let userKey = null;
 export function setUserKey(k) { userKey = (k && k.trim()) || null; }
 export function hasUserKey() { return !!userKey; }
+
+function keyProviderFor(key) {
+const k = (key || '').trim();
+if (k.startsWith('xai-')) return 'xai';
+if (k.startsWith('sk-ant-')) return 'anthropic';
+if (k.startsWith('sk-')) return 'openai';
+return null;
+}
 
 // probe once per page: is the backend (and its AI proxy) up?
 let proxyPromise = null;
@@ -104,6 +77,68 @@ if (delta) { full += delta; onDelta?.(delta, full); }
 return { text: full, finishReason, truncated: finishReason === 'length' };
 }
 
+async function readAnthropicSSE(res, onDelta) {
+const reader = res.body.getReader();
+const decoder = new TextDecoder();
+let buffer = '';
+let full = '';
+let finishReason = null;
+for (;;) {
+const { done, value } = await reader.read();
+if (done) break;
+buffer += decoder.decode(value, { stream: true });
+const lines = buffer.split('\n');
+buffer = lines.pop();
+for (const line of lines) {
+const s = line.trim();
+if (!s.startsWith('data:')) continue;
+const payload = s.slice(5).trim();
+if (!payload) continue;
+try {
+const ev = JSON.parse(payload);
+if (ev.type === 'message_delta' && ev.delta?.stop_reason) finishReason = ev.delta.stop_reason;
+if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta' && ev.delta.text) {
+full += ev.delta.text;
+onDelta?.(ev.delta.text, full);
+}
+} catch { /* keep-alive / non-JSON */ }
+}
+}
+return { text: full, finishReason, truncated: finishReason === 'max_tokens' };
+}
+
+async function chatStreamDirect({ model, messages, maxTokens, temperature, signal, onDelta }) {
+const keyProv = keyProviderFor(userKey);
+const modelProv = providerFor(model);
+if (!keyProv) throw new Error('Unrecognized API key — use sk-… (OpenAI), sk-ant-… (Anthropic), or xai-… (xAI).');
+if (keyProv !== modelProv) throw new Error(`Your key is for ${keyProv} — pick a ${keyProv} model, or paste a key for ${modelProv}.`);
+
+if (keyProv === 'xai') {
+const res = await postOrThrow(XAI_URL, { Authorization: `Bearer ${userKey}` }, { model, messages, max_tokens: maxTokens, temperature, stream: true }, signal);
+return readSSE(res, onDelta);
+}
+if (keyProv === 'openai') {
+const res = await postOrThrow(OPENAI_URL, { Authorization: `Bearer ${userKey}` }, { model, messages, max_tokens: maxTokens, temperature, stream: true }, signal);
+return readSSE(res, onDelta);
+}
+const system = messages.filter((m) => m.role === 'system').map((m) => String(m.content ?? '')).join('\n\n');
+const msgs = messages.filter((m) => m.role !== 'system')
+.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.content ?? '') }));
+const res = await postOrThrow(ANTHROPIC_URL, {
+'x-api-key': userKey,
+'anthropic-version': '2023-06-01',
+'anthropic-dangerous-direct-browser-access': 'true',
+}, {
+model,
+...(system ? { system } : {}),
+messages: msgs,
+max_tokens: maxTokens,
+temperature,
+stream: true,
+}, signal);
+return readAnthropicSSE(res, onDelta);
+}
+
 // POST and surface a clean error message (the edge proxy returns {error, code}).
 async function postOrThrow(url, headers, body, signal) {
 const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body), signal });
@@ -118,8 +153,8 @@ return res;
 
 /**
 * Streaming chat completion. Calls onDelta(chunk, fullSoFar) as tokens arrive.
-* Resolves with the complete response text. Transport order:
-*   1. your own xAI key (Settings) → straight to xAI, no credits used (xAI models only)
+* Transport order:
+*   1. your own API key (Settings) → direct to OpenAI, Anthropic, or xAI
 *   2. local dev server.js proxy (carries the dev keys, no auth)
 *   3. production: the metered Supabase edge function (needs a signed-in session)
 *
@@ -129,15 +164,13 @@ chatStream.lastMeta = { finishReason: null, truncated: false };
 export async function chatStream({ model, messages, maxTokens = 16384, temperature = 0.6, signal, onDelta }) {
 let result;
 if (userKey) {
-if (providerFor(model) !== 'xai') throw new Error(`${model} runs on slop credits — remove your own key to use it, or pick a Grok model.`);
-const res = await postOrThrow(DIRECT_URL, { Authorization: `Bearer ${userKey}` }, { model, messages, max_tokens: maxTokens, temperature, stream: true }, signal);
-result = await readSSE(res, onDelta);
+result = await chatStreamDirect({ model, messages, maxTokens, temperature, signal, onDelta });
 } else if (await hasProxy()) {
 const res = await postOrThrow('/api/ai/chat', {}, { model, messages, max_tokens: maxTokens, temperature, stream: true }, signal);
 result = await readSSE(res, onDelta);
 } else {
 const token = await sessionToken();
-if (!token) throw new Error('sign in to cook with slop AI — or add your own xAI key in Settings.');
+if (!token) throw new Error('sign in to cook with slop AI — or add your own API key in Settings.');
 const res = await postOrThrow(EDGE_CHAT, { Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY }, { model, messages, max_tokens: maxTokens, temperature }, signal);
 result = await readSSE(res, onDelta);
 }
@@ -153,8 +186,8 @@ export async function imageGen(prompt, { maxSize = 256 } = {}) {
 let b64;
 let mime;
 if (userKey) {
-// own xAI key → direct (no credits)
-const res = await fetch(DIRECT_IMG_URL, {
+if (keyProviderFor(userKey) !== 'xai') throw new Error('Sprite generation needs an xAI key (xai-…) or slop credits — remove your key or sign in.');
+const res = await fetch(XAI_IMG_URL, {
 method: 'POST',
 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${userKey}` },
 body: JSON.stringify({ model: 'grok-imagine-image', prompt, n: 1, response_format: 'b64_json' }),
@@ -172,7 +205,7 @@ if (!res.ok) throw new Error(data.error || `image error ${res.status}`);
 } else {
 // production: metered edge function (costs a few credits per sprite)
 const token = await sessionToken();
-if (!token) throw new Error('sign in to generate sprites — or add your own xAI key in Settings.');
+if (!token) throw new Error('sign in to generate sprites — or add an xAI API key in Settings.');
 const res = await fetch(EDGE_IMAGE, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY }, body: JSON.stringify({ prompt }) });
 const data = await res.json().catch(() => ({}));
 if (!res.ok) throw new Error(data.error || `image error ${res.status}`);
