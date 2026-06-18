@@ -299,16 +299,34 @@ background: linear-gradient(135deg, #ffe98a, var(--y));
 .pod-slot.first .pod-info h4 { font-size: clamp(18px, 1.9vw, 24px); }
 .pod-slot.first .pod-plays { font-size: 12.5px; }
 
+/* mobile: a single 900px stack of podium cards is too heavy — turn the top-3
+   into a compact, swipeable carousel (the next card peeks to signal scroll) */
 @media (max-width: 760px) {
 .podium {
-grid-template-columns: 1fr;
-max-width: 460px;
-gap: 14px;
+display: flex;
+grid-template-columns: none;
+max-width: none;
+gap: 12px;
+margin: 0;
+padding: 2px 2px 6px;
+overflow-x: auto;
+scroll-snap-type: x mandatory;
+scroll-padding-left: 2px;
+-webkit-overflow-scrolling: touch;
+scrollbar-width: none;
 }
-.pod-slot { padding-top: 0; }
+.podium::-webkit-scrollbar { display: none; }
+.pod-slot {
+flex: 0 0 79%;
+max-width: 300px;
+padding-top: 0;
+scroll-snap-align: start;
+}
 .pod-slot.first { order: 1; }
 .pod-slot.second { order: 2; }
 .pod-slot.third { order: 3; }
+/* uniform sizing in the carousel — don't let #1 balloon the row height */
+.pod-slot.first .pod-info h4 { font-size: 18px; }
 }
 
 /* ---- borderless masonry gallery (Pinterest-style tight columns) ---- */

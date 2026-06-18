@@ -87,10 +87,12 @@ border-width: 2px;
 .mq .diamond { font-size: 11px; }
 
 /* ---- games section ---- */
-.browse-intro { padding-bottom: 18px; }
+.browse-intro { padding-bottom: 14px; }
+
+.platform-stats { margin: 16px 0 4px; }
 
 .podium-block {
-margin-top: 24px;
+margin-top: 22px;
 padding-top: 12px;
 }
 

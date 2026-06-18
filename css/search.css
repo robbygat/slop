@@ -108,14 +108,8 @@
 }
 
 @media (max-width: 560px) {
-  .platform-stats {
-    grid-template-columns: 1fr;
-  }
-  .pstat + .pstat {
-    border-left: none;
-    border-top: var(--bw) solid var(--ink);
-  }
-  .pstat { padding: 16px 12px; }
-  .pstat-num { font-size: 36px; }
-  .pstat-label { font-size: 10px; letter-spacing: 0.06em; }
+  /* stay a single compact row of 3 — stacking these wastes ~150px of height */
+  .pstat { padding: 14px 6px; gap: 4px; }
+  .pstat-num { font-size: clamp(24px, 8vw, 32px); }
+  .pstat-label { font-size: 9px; letter-spacing: 0.03em; white-space: normal; }
 }

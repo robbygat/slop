@@ -173,7 +173,9 @@ font-size: 13px;
 @media (max-width: 860px) {
 .hero-topnav { display: none; }
 .htb-ghost { display: none; }
-.hero-search { display: none; }
+/* higher specificity than brand.css `.nav-search{display:flex}`, which loads
+   after hero.css and would otherwise keep the search visible (and overflowing) */
+.hero-topcta .hero-search { display: none; }
 }
 
 /* ---- head: headline aligned to prompt box width ---- */
