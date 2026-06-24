@@ -1,0 +1,11 @@
+# Cloudflare Pages / Netlify-style headers (GitHub Pages ignores this file).
+# Use with Cloudflare Pages, or see docs/APPLE_UNIVERSAL_LINKS.md for a Transform Rule
+# if you keep GitHub Pages behind Cloudflare DNS proxy.
+
+/.well-known/apple-app-site-association
+  Content-Type: application/json
+  Cache-Control: public, max-age=300
+
+/apple-app-site-association
+  Content-Type: application/json
+  Cache-Control: public, max-age=300

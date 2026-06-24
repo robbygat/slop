@@ -1,0 +1,14 @@
+# Optional: serve AASA with application/json when slop.game uses Cloudflare DNS.
+# Does not replace GitHub Pages for the rest of the site.
+#
+#   npm i -g wrangler   # or npx wrangler
+#   wrangler login
+#   wrangler deploy
+
+name = "slop-aasa"
+main = "cloudflare/aasa-worker.js"
+compatibility_date = "2024-06-01"
+
+[[routes]]
+pattern = "slop.game/.well-known/apple-app-site-association"
+zone_name = "slop.game"
