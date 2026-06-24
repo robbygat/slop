@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["6S8Z64V9JP.game.slop.slop"],
+        "components": [
+          { "/": "/play/*", "comment": "Open any game (and ?room= invites) in the app" }
+        ]
+      }
+    ]
+  }
+}
