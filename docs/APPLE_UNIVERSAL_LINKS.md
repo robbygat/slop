@@ -1,44 +1,44 @@
 # Apple Universal Links (slop.game)
 
-Source file: `docs/apple-app-site-association`  
-Live path: `https://slop.game/.well-known/apple-app-site-association`
+Canonical copy: `docs/apple-app-site-association`
 
-## GitHub Pages limitation
+Live URLs (both required):
 
-GitHub Pages serves extensionless files as `Content-Type: application/octet-stream`.
-It cannot set `application/json` per path. Modern iOS and Apple’s CDN accept the file
-anyway, so this is cosmetic — not a blocker.
+- `https://slop.game/.well-known/apple-app-site-association`
+- `https://slop.game/apple-app-site-association`
 
-## Fix: `application/json` (pick one)
+App ID: `6S8Z64V9JP.game.slop.slop` (Team ID + bundle id `game.slop.slop` — **not** `io.slop.game`, which is only the custom URL scheme for OAuth).
 
-### A. Cloudflare Transform Rule (easiest — keep GitHub Pages)
-
-If `slop.game` DNS is on Cloudflare (orange-cloud proxy):
-
-1. **Rules** → **Transform Rules** → **Modify Response Header**
-2. **When:** URI Path equals `/.well-known/apple-app-site-association`
-3. **Then:** Set static header `Content-Type` = `application/json`
-
-No repo or hosting change. GitHub Pages still serves the file; Cloudflare rewrites the header.
-
-### B. Cloudflare Pages (use `_headers` in repo root)
-
-1. Create a Cloudflare Pages project from this repo (build command: none, output: `/`)
-2. Add custom domain `slop.game`
-3. Disable GitHub Pages for this repo (avoid two hosts on one domain)
-4. The root `_headers` file sets `Content-Type: application/json` automatically
-
-### C. Cloudflare Worker (single-route)
-
-See `cloudflare/aasa-worker.js` + `wrangler.toml`. Deploy with `npx wrangler deploy`
-after `slop.game` is a zone on Cloudflare. The worker only handles the AASA path;
-all other traffic still goes to GitHub Pages.
+Paths: `/play/*`, `/r/*`, `/g/*` — covers multiplayer invites like `/play/<slug>?room=<code>`.
 
 ## Verify
 
 ```bash
-curl -sI https://slop.game/.well-known/apple-app-site-association | grep -i content-type
+curl -sI https://slop.game/.well-known/apple-app-site-association
+curl -sI https://slop.game/apple-app-site-association
 curl -sL https://slop.game/.well-known/apple-app-site-association
 ```
 
-Expect `Content-Type: application/json`, HTTP 200, no redirects.
+Expect HTTP 200, no redirects, JSON body with `appID` `6S8Z64V9JP.game.slop.slop`.
+
+## Content-Type
+
+GitHub Pages serves extensionless files as `application/octet-stream`. Modern iOS accepts this; for `application/json` see Option A below.
+
+### A. Cloudflare Transform Rule (keep GitHub Pages)
+
+Rules → Transform Rules → Modify Response Header → URI Path equals `/.well-known/apple-app-site-association` OR `/apple-app-site-association` → set `Content-Type: application/json`.
+
+### B. Cloudflare Pages
+
+Use root `_headers` (already in repo) and point `slop.game` at Cloudflare Pages.
+
+### C. Cloudflare Worker
+
+`npx wrangler deploy` (see `cloudflare/aasa-worker.js`).
+
+## iOS checklist
+
+- Associated Domains: `applinks:slop.game`
+- AASA must be live **before** TestFlight install (iOS fetches at install time)
+- Provisioning profile must include Associated Domains capability

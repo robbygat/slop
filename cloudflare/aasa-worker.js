@@ -8,12 +8,11 @@
 
 const AASA = `{
   "applinks": {
+    "apps": [],
     "details": [
       {
-        "appIDs": ["6S8Z64V9JP.game.slop.slop"],
-        "components": [
-          { "/": "/play/*", "comment": "Open any game (and ?room= invites) in the app" }
-        ]
+        "appID": "6S8Z64V9JP.game.slop.slop",
+        "paths": ["/play/*", "/r/*", "/g/*"]
       }
     ]
   }
@@ -22,7 +21,8 @@ const AASA = `{
 export default {
   async fetch(request) {
     const url = new URL(request.url);
-    if (url.pathname !== '/.well-known/apple-app-site-association') {
+    if (url.pathname !== '/.well-known/apple-app-site-association'
+      && url.pathname !== '/apple-app-site-association') {
       return fetch(request);
     }
     return new Response(AASA, {
