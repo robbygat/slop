@@ -59,6 +59,13 @@
     .wall-card img,.wall-card video{display:block;width:100%;height:100%;object-fit:cover;background:#050607;border-radius:clamp(14px,1.7vw,25px)}
     .wall-card:after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:linear-gradient(125deg,#73d8ff14,transparent 35%,#ff6b9d0e)}
     .row-mid .wall-card{width:var(--wcw-m);filter:brightness(.9);box-shadow:0 26px 60px #000b}
+    /* back row bobs gently on top of the horizontal drift — odd positions run
+       slower and out of phase with even ones so the float feels organic, not
+       mechanical */
+    @keyframes wallBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+    .row-mid .wall-card img,.row-mid .wall-card video{position:absolute;inset:-6% 0 auto 0;width:100%;height:112%;animation:wallBob 5s ease-in-out infinite}
+    .row-mid .wall-card:nth-child(odd) img,.row-mid .wall-card:nth-child(odd) video{animation-duration:6.6s;animation-delay:-2.3s}
+    .row-mid .wall-card:nth-child(even) img,.row-mid .wall-card:nth-child(even) video{animation-delay:-.6s}
     /* focus-in blur is scoped to the intro so we never carry filter layers at rest */
     .app-wall.wall-intro .wall-card{filter:blur(calc(var(--e)*7px))}
     .app-wall.wall-intro .row-mid .wall-card{filter:brightness(.9) blur(calc(var(--e)*7px))}
