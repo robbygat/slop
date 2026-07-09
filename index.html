@@ -258,7 +258,7 @@
             </div>
             <div class="wall-set" aria-hidden="true">
               <figure class="wall-card"><img src="/NewSite/wall-cube.webp" loading="lazy" decoding="async" alt=""></figure>
-              <figure class="wall-card"><img src="/NewSite/drift-poster.jpg" loading="lazy" decoding="async" alt=""></figure>
+              <figure class="wall-card wall-video-clone"><img src="/NewSite/drift-poster.jpg" loading="lazy" decoding="async" alt=""></figure>
               <figure class="wall-card"><img src="/NewSite/wall-bottle.webp" loading="lazy" decoding="async" alt=""></figure>
               <figure class="wall-card"><img src="/NewSite/wall-agent-build.webp" loading="lazy" decoding="async" alt=""></figure>
               <figure class="wall-card"><img src="/NewSite/wall-agent-start.webp" loading="lazy" decoding="async" alt=""></figure>
@@ -315,6 +315,22 @@
     // app wall — play the wall videos only while the section is on screen
     const appWall=document.getElementById('appWall');
     if(appWall){
+      // shuffle wall images — front and back rows draw from one shared pool so
+      // every screenshot gets a chance to land in the more prominent front row
+      // on each load, rather than a fixed set always staying in back.
+      (function shuffleWallImages(){
+        const sets=[...appWall.querySelectorAll('.wall-row .wall-set')];
+        if(sets.length<4)return;
+        const [midMain,midClone,frontMain,frontClone]=sets;
+        const sel='.wall-card:not(.wall-video):not(.wall-video-clone) img';
+        const mainImgs=[...midMain.querySelectorAll(sel),...frontMain.querySelectorAll(sel)];
+        const cloneImgs=[...midClone.querySelectorAll(sel),...frontClone.querySelectorAll(sel)];
+        if(mainImgs.length!==cloneImgs.length)return;
+        const pool=mainImgs.map(img=>({src:img.getAttribute('src'),alt:img.getAttribute('alt')||''}));
+        for(let i=pool.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[pool[i],pool[j]]=[pool[j],pool[i]]}
+        mainImgs.forEach((img,i)=>{img.src=pool[i].src;img.alt=pool[i].alt});
+        cloneImgs.forEach((img,i)=>{img.src=pool[i].src});
+      })();
       const wallVids=[...appWall.querySelectorAll('video')];
       let wallVis=false;
       const syncWall=()=>{wallVids.forEach(v=>{if(wallVis&&!document.hidden){if(v.preload!=='auto')v.preload='auto';v.muted=true;const p=v.play();if(p&&p.catch)p.catch(()=>{})}else v.pause()})};
