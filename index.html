@@ -339,6 +339,12 @@
         const mainImgs=[...midMain.querySelectorAll(sel),...frontMain.querySelectorAll(sel)];
         const cloneImgs=[...midClone.querySelectorAll(sel),...frontClone.querySelectorAll(sel)];
         if(mainImgs.length!==cloneImgs.length)return;
+        // derive the asset folder from an element whose src is already correct
+        // (the markup's own src attrs get path-rewritten for the deployed
+        // mirror of this page; these plain filename literals below would not)
+        // so the shuffle keeps working whether this file lives at the site
+        // root or is served directly from within the NewSite folder.
+        const base=(()=>{const v=appWall.querySelector('video');const s=v&&v.getAttribute('src')||'';const i=s.lastIndexOf('/');return i===-1?'':s.slice(0,i+1)})();
         const allWallImages=[
           {src:'wall-cube.webp',alt:"A Rubik's cube puzzle game in the Slop feed"},
           {src:'wall-bottle.webp',alt:'Flip the Bottle game in Slop'},
@@ -360,8 +366,8 @@
         const pool=allWallImages.slice();
         for(let i=pool.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[pool[i],pool[j]]=[pool[j],pool[i]]}
         const picked=pool.slice(0,mainImgs.length);
-        mainImgs.forEach((img,i)=>{img.src=picked[i].src;img.alt=picked[i].alt});
-        cloneImgs.forEach((img,i)=>{img.src=picked[i].src});
+        mainImgs.forEach((img,i)=>{img.src=base+picked[i].src;img.alt=picked[i].alt});
+        cloneImgs.forEach((img,i)=>{img.src=base+picked[i].src});
       })();
       const wallVids=[...appWall.querySelectorAll('video')];
       let wallVis=false;
