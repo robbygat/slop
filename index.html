@@ -325,9 +325,12 @@
     // app wall — play the wall videos only while the section is on screen
     const appWall=document.getElementById('appWall');
     if(appWall){
-      // shuffle wall images — front and back rows draw from one shared pool so
-      // every screenshot gets a chance to land in the more prominent front row
-      // on each load, rather than a fixed set always staying in back.
+      // shuffle wall images — every screenshot in the carousel is pooled here,
+      // shuffled, and sampled down to the slot count on each load. Front and
+      // back rows draw from the same shuffled draw, so across visits every
+      // image gets a chance at any slot, including the more prominent front
+      // row, and the wall isn't limited to whichever 11 happened to be
+      // hand-placed in the markup.
       (function shuffleWallImages(){
         const sets=[...appWall.querySelectorAll('.wall-row .wall-set')];
         if(sets.length<4)return;
@@ -336,10 +339,29 @@
         const mainImgs=[...midMain.querySelectorAll(sel),...frontMain.querySelectorAll(sel)];
         const cloneImgs=[...midClone.querySelectorAll(sel),...frontClone.querySelectorAll(sel)];
         if(mainImgs.length!==cloneImgs.length)return;
-        const pool=mainImgs.map(img=>({src:img.getAttribute('src'),alt:img.getAttribute('alt')||''}));
+        const allWallImages=[
+          {src:'wall-cube.webp',alt:"A Rubik's cube puzzle game in the Slop feed"},
+          {src:'wall-bottle.webp',alt:'Flip the Bottle game in Slop'},
+          {src:'wall-agent-build.webp',alt:'Slop Agent building a game with AI'},
+          {src:'wall-agent-start.webp',alt:"Slop Agent's build screen"},
+          {src:'wall-leaderboard.webp',alt:'Live leaderboard for a game in Slop'},
+          {src:'wall-worms.webp',alt:'Worms! gameplay in Slop'},
+          {src:'wall-zombie.webp',alt:'Zombie jump gameplay in Slop'},
+          {src:'wall-agent-log.webp',alt:"Slop Agent's build log while creating a game"},
+          {src:'wall-2048.webp',alt:'2048 puzzle game in Slop'},
+          {src:'wall-discover.webp',alt:'Discover screen with trending games in Slop'},
+          {src:'wall-profile.webp',alt:'Creator profile and games in Slop'},
+          {src:'wall-downloads.webp',alt:'Offline downloads screen in Slop'},
+          {src:'wall-search.webp',alt:'Search screen in Slop'},
+          {src:'wall-agent-code.webp',alt:'Slop Agent generating game code'},
+          {src:'wall-comments.webp',alt:'Comments on a game in Slop'},
+          {src:'wall-alerts.webp',alt:'Notifications in Slop'}
+        ];
+        const pool=allWallImages.slice();
         for(let i=pool.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[pool[i],pool[j]]=[pool[j],pool[i]]}
-        mainImgs.forEach((img,i)=>{img.src=pool[i].src;img.alt=pool[i].alt});
-        cloneImgs.forEach((img,i)=>{img.src=pool[i].src});
+        const picked=pool.slice(0,mainImgs.length);
+        mainImgs.forEach((img,i)=>{img.src=picked[i].src;img.alt=picked[i].alt});
+        cloneImgs.forEach((img,i)=>{img.src=picked[i].src});
       })();
       const wallVids=[...appWall.querySelectorAll('video')];
       let wallVis=false;
