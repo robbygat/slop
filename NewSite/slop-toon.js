@@ -52,12 +52,6 @@
     return `rgba(${value >> 16},${(value >> 8) & 255},${value & 255},${alpha})`;
   };
   const labelFor = value => value.split('-').map(part => part[0].toUpperCase() + part.slice(1)).join(' ');
-  const pickDifferent = (items, current) => {
-    if (items.length < 2) return items[0];
-    let next;
-    do next = items[Math.floor(Math.random() * items.length)]; while (next === current);
-    return next;
-  };
   const unitFor = rect => rect.w / 100;
 
   function depthPose(value) {
@@ -142,7 +136,15 @@
       this.nextGazeAt = 0;
       this.nextAutoSpin = performance.now() + random(7000, 14000);
       this.autoSpin = null;
-      this.skin = { palette: PALETTES[0], finish: 'living-jelly', aura: 'bubbles', hat: 'bare', pattern: 'clean', eye: EYE_COLORS[0] };
+      this.skin = {
+        palette: PALETTES.find(palette => palette.id === stage.dataset.palette) || PALETTES[0],
+        finish: FINISHES.includes(stage.dataset.finish) ? stage.dataset.finish : 'living-jelly',
+        aura: AURAS.includes(stage.dataset.aura) ? stage.dataset.aura : 'bubbles',
+        hat: HATS.includes(stage.dataset.hat) ? stage.dataset.hat : 'bare',
+        pattern: PATTERNS.includes(stage.dataset.pattern) ? stage.dataset.pattern : 'clean',
+        eye: EYE_COLORS.includes(stage.dataset.eye) ? stage.dataset.eye : EYE_COLORS[0]
+      };
+      this.bags = Object.create(null);
       this.skinChangedAt = -Infinity;
       this.shuffleTimer = 0;
       this.mouthAmount = 0;
@@ -248,8 +250,8 @@
       this.stage.classList.remove('is-dragging');
       const now = performance.now();
       if (!this.dragged) {
-        this.shuffleLook();
         this.angularVelocity = 0;
+        this.shuffleLook();
       } else {
         this.angularVelocity = clamp(this.angularVelocity, -15, 15);
         const seconds = Math.max(0.12, (now - this.dragStartedAt) / 1000);
@@ -276,6 +278,7 @@
       clearTimeout(this.shuffleTimer);
       const now = performance.now();
       this.reactionAt = now;
+      this.angularVelocity = (Math.random() < .5 ? -1 : 1) * 18;
       if (reduceMotion.matches) {
         this.randomizeSkin();
         return;
@@ -289,15 +292,34 @@
       }, 430);
     }
 
+    drawFromBag(key, items, current) {
+      let bag = this.bags[key];
+      if (!bag?.length) {
+        bag = [...items];
+        for (let index = bag.length - 1; index > 0; index -= 1) {
+          const swap = Math.floor(Math.random() * (index + 1));
+          [bag[index], bag[swap]] = [bag[swap], bag[index]];
+        }
+        this.bags[key] = bag;
+      }
+      let next = bag.pop();
+      if (next === current && bag.length) {
+        const alternate = bag.pop();
+        bag.unshift(next);
+        next = alternate;
+      }
+      return next;
+    }
+
     randomizeSkin() {
-      const palette = pickDifferent(PALETTES, this.skin.palette);
+      const palette = this.drawFromBag('palette', PALETTES, this.skin.palette);
       this.skin = {
         palette,
-        finish: pickDifferent(FINISHES, this.skin.finish),
-        aura: pickDifferent(AURAS, this.skin.aura),
-        hat: pickDifferent(HATS, this.skin.hat),
-        pattern: pickDifferent(PATTERNS, this.skin.pattern),
-        eye: pickDifferent(EYE_COLORS, this.skin.eye)
+        finish: this.drawFromBag('finish', FINISHES, this.skin.finish),
+        aura: this.drawFromBag('aura', AURAS, this.skin.aura),
+        hat: this.drawFromBag('hat', HATS, this.skin.hat),
+        pattern: this.drawFromBag('pattern', PATTERNS, this.skin.pattern),
+        eye: this.drawFromBag('eye', EYE_COLORS, this.skin.eye)
       };
       this.skinChangedAt = performance.now();
       this.reactionAt = this.skinChangedAt;
