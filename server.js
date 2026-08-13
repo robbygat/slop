@@ -646,6 +646,7 @@ const MIME = {
 '.css': 'text/css; charset=utf-8',
 '.png': 'image/png',
 '.jpg': 'image/jpeg',
+'.webp': 'image/webp',
 '.svg': 'image/svg+xml',
 '.json': 'application/json',
 '.ico': 'image/x-icon',
@@ -697,7 +698,7 @@ const ext = path.extname(filePath).toLowerCase();
 const headers = {
 'Content-Type': MIME[ext] || 'application/octet-stream',
 // images cache briefly; html/js/css revalidate so deploys land instantly
-'Cache-Control': ['.png', '.jpg', '.svg', '.woff2'].includes(ext) ? 'public, max-age=600' : 'no-cache',
+'Cache-Control': ['.png', '.jpg', '.webp', '.svg', '.woff2'].includes(ext) ? 'public, max-age=600' : 'no-cache',
 };
 // gzip text assets when the client supports it — matters at 1000 users
 const accepts = (req.headers['accept-encoding'] || '').includes('gzip');

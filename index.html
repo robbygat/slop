@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#090a08">
   <meta name="description" content="Slop turns a simple prompt into a playable game you can publish, share, and remix instantly.">
+  <link rel="icon" type="image/png" href="/NewSite/reallogo.png">
   <link rel="preload" as="image" href="/NewSite/hero-bg-poster.jpg" fetchpriority="high">
   <link rel="preload" as="video" href="/NewSite/hero-bg.mp4" type="video/mp4" fetchpriority="high">
   <title>Slop — Prompt. Publish. Play.</title>
@@ -12,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    :root{--black:#0b0d10;--ink:#f5f7fa;--muted:#a6adb8;--lime:#73d8ff;--coral:#ff6b9d;--sky:#5fe6c4;--gold:#efcb68;--line:#ffffff1f;--panel:#15181d;--panel-hi:#20242b;--pad:clamp(20px,4vw,64px)}
+    :root{--black:#0b0d10;--ink:#f5f7fa;--muted:#a6adb8;--lime:#ff7a24;--coral:#ff6b9d;--sky:#5fe6c4;--gold:#ffbc5c;--line:#ffffff1f;--panel:#15181d;--panel-hi:#20242b;--pad:clamp(20px,4vw,64px)}
     *{box-sizing:border-box}html{scroll-behavior:smooth;overflow-x:hidden;max-width:100%}body{margin:0;max-width:100%;background:var(--black);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow-x:hidden}button,input{font:inherit}a{color:inherit;text-decoration:none}button,a{cursor:pointer}::selection{background:var(--lime);color:#080807}
     body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:99;opacity:.045;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E")}
     .nav{position:absolute;z-index:20;top:0;left:0;width:100%;height:84px;padding:0 var(--pad);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ffffff24}.brand{display:flex;align-items:center;gap:11px;font:700 24px/1 'Space Grotesk',sans-serif;letter-spacing:-.05em}.brand-mark{width:27px;height:27px;background:var(--lime);border-radius:6px;display:grid;place-items:center;color:#090a08;font-size:18px;transform:rotate(-4deg)}.nav-links{display:flex;align-items:center;gap:28px;font-size:12px;font-weight:700}.nav-links a:not(.nav-cta){color:#dbddd4}.nav-cta,.cta{background:var(--lime);color:#090a08;border:1px solid var(--lime);border-radius:6px;font-weight:800;padding:13px 18px;box-shadow:3px 3px 0 #090a08;transition:transform .15s,box-shadow .15s}.nav-cta:hover,.cta:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 #090a08}.mobile-hide{display:flex}
@@ -31,7 +32,7 @@
     .brand-mark:before,.brand-mark:after{content:none}
     .nav .brand-mark{animation:logoPulse 4.5s ease-in-out infinite}
     .nav .brand-mark:before{content:"";position:absolute;inset:-6px;border-radius:50%;background:conic-gradient(#73d8ff,#5fe6c4 28%,#ffffff00 46%,#ff6b9d 62%,#efcb68 80%,#73d8ff);-webkit-mask:radial-gradient(farthest-side,#0000 calc(100% - 2px),#000 calc(100% - 1px));mask:radial-gradient(farthest-side,#0000 calc(100% - 2px),#000 calc(100% - 1px));animation:ringSpin 7s linear infinite;opacity:.9}
-    .hero-logo{position:absolute;z-index:4;left:50%;top:50%;width:clamp(88px,9vw,138px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;display:grid;place-items:center;background:#050505;color:#f5f7fa;border:1px solid #ffffff35;box-shadow:0 0 0 7px #ffffff0a,0 24px 70px #000b;font:700 clamp(20px,2.3vw,34px)/1 'Space Grotesk',sans-serif;letter-spacing:-.06em}
+    .hero-logo{position:absolute;z-index:4;left:50%;top:50%;width:clamp(88px,9vw,138px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;display:grid;place-items:center;background:#000;color:#f5f7fa;border:1px solid #ffffff35;box-shadow:0 0 0 7px #ffffff0a,0 24px 70px #000b;font:700 clamp(20px,2.3vw,34px)/1 'Space Grotesk',sans-serif;letter-spacing:-.06em}.hero-logo img{width:100%;height:100%;object-fit:contain;transform:scale(1.12);display:block}
     .hero:before{background:linear-gradient(0deg,#06110dbd 0%,transparent 48%,#03101b7d 100%);z-index:1}.hero:after{display:none}.hero-video{filter:saturate(1.12) contrast(1.05);object-position:50% 50%}.feed-tabs{position:absolute;z-index:5;top:112px;left:50%;transform:translateX(-50%);display:flex;gap:34px;align-items:center;font:700 18px 'Space Grotesk';text-shadow:0 2px 12px #000}.feed-tabs span{color:#a6adb8}.feed-tabs strong{position:relative}.feed-tabs strong:after{content:"";position:absolute;left:50%;bottom:-12px;width:36px;height:4px;border-radius:99px;background:white;transform:translateX(-50%)}.hero-logo{left:var(--pad);top:112px;width:58px;font-size:14px;transform:none}.action-rail{position:absolute;z-index:6;right:var(--pad);top:50%;transform:translateY(-36%);display:grid;gap:17px;text-align:center}.rail-item{display:grid;place-items:center;gap:5px;color:#fff;font:700 10px 'Space Mono';text-shadow:0 2px 8px #000}.rail-icon{width:48px;height:48px;border:1px solid #ffffff55;border-radius:50%;display:grid;place-items:center;background:#0808078c;backdrop-filter:blur(10px);font:700 21px 'Space Grotesk'}.rail-item:nth-child(1) .rail-icon{color:var(--coral)}.rail-item:nth-child(3) .rail-icon{color:var(--gold)}
     .feed-card{position:absolute;z-index:5;left:var(--pad);right:calc(var(--pad) + 95px);bottom:112px;max-width:720px;padding:22px 25px;border:1px solid #ffffff28;border-radius:26px;background:#07100de6;box-shadow:0 24px 60px #0007;backdrop-filter:blur(18px)}.feed-meta{display:flex;align-items:center;gap:12px;font:700 12px 'Space Mono';color:#f5f7fa}.new-chip{padding:6px 9px;background:var(--sky);color:#07100d;border-radius:99px;font-size:9px}.best-chip{padding:6px 10px;border-radius:99px;background:#ffffff0b;color:var(--gold)}.feed-card h1{font:700 clamp(38px,6vw,76px)/.9 'Space Grotesk';letter-spacing:-.07em;margin:18px 0 10px}.feed-card h1 span{color:var(--lime);display:inline}.feed-card p{margin:0 0 15px;color:#d8dde2}.feed-tags{display:flex;gap:8px}.feed-tags span{border:1px solid #ffffff42;border-radius:99px;padding:7px 10px;font:400 10px 'Space Mono';color:#d6dbe0}
     .app-dock{position:absolute;z-index:7;left:50%;bottom:22px;transform:translateX(-50%);width:min(560px,calc(100% - 40px));height:76px;border:1px solid #ffffff25;border-radius:28px;background:#080b0adf;display:flex;align-items:center;justify-content:space-around;box-shadow:0 20px 55px #000b;backdrop-filter:blur(20px)}.dock-item{display:grid;place-items:center;gap:4px;color:#8e9695;font:400 9px 'Space Mono'}.dock-item i{font:normal 18px sans-serif}.dock-logo{width:62px;height:62px;border-radius:50%;background:#050505;border:1px solid #ffffff35;display:grid;place-items:center;color:#fff;font:700 15px 'Space Grotesk';box-shadow:0 0 0 6px #ffffff08,0 0 28px #73d8ff24}
@@ -110,9 +111,9 @@
     @keyframes youPop{0%,100%{transform:rotate(-2deg) scale(1)}50%{transform:rotate(1.6deg) scale(1.035)}}
     .hero-video{animation:heroZoom 26s ease-in-out infinite alternate;will-change:transform}
     .hero-fx{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;mix-blend-mode:screen}
-    .hero h1 .hl{display:block;overflow:visible;color:var(--ink)}
+    .hero h1 .hl{display:inline-block;overflow:visible;color:var(--ink)}
     .hero h1 .hl i{font-style:normal;display:block;opacity:0;animation:riseIn 1.05s cubic-bezier(.16,1,.3,1) .18s forwards}
-    .hero h1 .hl.accent i{color:var(--lime);animation:riseIn 1.05s cubic-bezier(.16,1,.3,1) .36s forwards,glitch 7s steps(1) 3.2s infinite}
+    .hero h1 .hl.accent i{color:var(--lime);animation:riseIn 1.05s cubic-bezier(.16,1,.3,1) .36s forwards,glitch 10s steps(1) 3.2s infinite}
     .hero-content .eyebrow{opacity:0;animation:fadeUp .8s ease .08s forwards}
     .hero-copy{opacity:0;animation:fadeUp .95s cubic-bezier(.16,1,.3,1) .62s forwards}
     .hero-stores{opacity:0;animation:fadeUp .95s cubic-bezier(.16,1,.3,1) .78s forwards}
@@ -192,6 +193,23 @@
     .closing-marquee span{font:700 clamp(150px,26vw,330px)/1 'Space Grotesk',sans-serif;letter-spacing:-.06em;color:transparent;-webkit-text-stroke:1.5px #0909092b;flex:none}
     .closing .you{display:inline-block;background:#090a08;color:var(--lime);padding:.02em .13em .07em;border-radius:.13em;box-shadow:.08em .08em 0 #0909093a;animation:youPop 5s ease-in-out infinite}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important}.js .rv{opacity:1;transform:none}.lin-dash,.lin-pulse,.remix-prompt{opacity:1!important}.hero-video{animation:none}.closing-marquee{animation:none}}
+    /* hero logo sizing */
+    .hero-logo{width:clamp(190px,20vw,300px);isolation:isolate;background:radial-gradient(circle at 50% 42%,#30241c 0%,#171719 62%,#090a0d 100%);border-color:#ffffff2b;box-shadow:0 0 0 10px #ffffff08,0 30px 90px #000d,0 0 70px #ff731f24,inset 0 0 0 2px #ffffff13,inset 0 1px 0 #ffffff24}
+    .hero-logo img{width:76%;height:76%;position:relative;z-index:1;object-fit:contain;transform:none;filter:drop-shadow(0 14px 10px #000a) drop-shadow(0 2px 2px #000b)}
+    @media(max-width:800px){.hero-logo{width:170px}}
+    @media(max-width:380px){.hero-logo{width:150px}}
+    @media(max-height:700px) and (max-width:800px){.hero-logo{width:145px}}
+    @media(min-width:801px) and (max-height:860px){.hero-logo{width:clamp(165px,16vw,250px)}}
+    /* Slop Agent character story */
+    .slop-cast{padding:clamp(82px,10vw,145px) var(--pad);overflow:hidden;border-block:1px solid var(--line);background:radial-gradient(circle at 18% 30%,#ff741d1f,transparent 34%),radial-gradient(circle at 86% 68%,#73d8ff1a,transparent 32%),#0e1014}
+    .slop-cast-inner{max-width:1180px;margin:0 auto}.slop-cast-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.55fr);gap:clamp(28px,6vw,90px);align-items:end;margin-bottom:clamp(38px,5vw,66px)}
+    .slop-cast h2{font:700 clamp(48px,7vw,96px)/.88 'Space Grotesk',sans-serif;letter-spacing:-.07em;margin:12px 0 0}.slop-cast-copy{color:var(--muted);font-size:16px;line-height:1.65;margin:0;max-width:470px}
+    .slop-cast-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,2vw,24px)}.slop-pose{margin:0;min-width:0;border:1px solid #ffffff24;border-radius:clamp(22px,2.4vw,36px);overflow:hidden;background:#15181d;box-shadow:0 28px 70px #0008;transition:transform .35s cubic-bezier(.2,.8,.2,1),border-color .35s}.slop-pose:hover{transform:translateY(-8px);border-color:#ffffff57}
+    .slop-pose:nth-child(1){background:radial-gradient(circle at 50% 45%,#73d8ff30,transparent 56%),#15181d}.slop-pose:nth-child(2){background:radial-gradient(circle at 50% 45%,#ff7a2438,transparent 58%),#171519}.slop-pose:nth-child(3){background:radial-gradient(circle at 50% 45%,#5fe6c42c,transparent 56%),#14181a}
+    .slop-pose img{display:block;width:100%;height:clamp(240px,27vw,370px);padding:clamp(16px,2vw,28px);object-fit:contain;filter:drop-shadow(0 20px 18px #0008)}.slop-pose figcaption{padding:0 clamp(20px,2.2vw,30px) clamp(22px,2.4vw,32px)}.slop-pose b{display:block;font:700 clamp(20px,2vw,28px) 'Space Grotesk',sans-serif;letter-spacing:-.04em}.slop-pose span{display:block;color:var(--muted);font-size:13px;line-height:1.5;margin-top:6px}.footer a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+    @media(max-width:800px){.slop-cast-head{grid-template-columns:1fr}.slop-cast-grid{grid-template-columns:1fr}.slop-pose{display:grid;grid-template-columns:minmax(130px,.7fr) 1fr;align-items:center}.slop-pose img{height:220px;padding:16px}.slop-pose figcaption{padding:24px 22px 24px 0}}
+    /* launch-orange navigation */
+    .nav{background:#ff7a24eb;border-color:#ffbd8a;box-shadow:0 16px 46px #0009,0 0 42px #ff7a2426}.nav-links a:not(.nav-cta){color:#24150d}.nav .brand-mark{background:#111317;color:#fff;border-color:#111317}.nav .brand-mark:before{opacity:.35}.nav>.nav-cta{background:#111317;color:#fff}.nav>.nav-cta:hover{background:#2a211c;color:#fff}
   </style>
   <script>document.documentElement.classList.add('js')</script>
 </head>
@@ -206,12 +224,12 @@
     <section class="hero">
       <video class="hero-video" src="/NewSite/hero-bg.mp4" poster="/NewSite/hero-bg-poster.jpg" autoplay muted loop playsinline webkit-playsinline disablepictureinpicture preload="auto" fetchpriority="high"></video>
       <canvas class="hero-fx" aria-hidden="true"></canvas>
-      <div class="hero-logo" aria-label="Slop">slop</div>
+      <div class="hero-logo" aria-label="Slop Agent"><img src="/NewSite/marketing/02-slop-orange-cyclops-3d-agent-hero.png" alt="The orange Slop Agent character"></div>
       <div class="hero-content">
-        <h1><span class="hl"><i>Prompt.</i></span><span class="hl accent"><i>Publish. Play.</i></span></h1>
-        <div class="hero-copy"><p>Make games by describing them. Publish instantly. Play with everyone.</p></div>
-        <ul class="hero-note"><li>No code</li><li>No installs</li><li>Just play</li></ul>
-        <div class="store-links hero-stores"><a class="store-badge" href="https://apps.apple.com" target="_blank" rel="noreferrer" aria-label="Coming July 21 to the Apple App Store"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.05 12.54c-.03-3 2.45-4.45 2.56-4.52a5.5 5.5 0 0 0-4.33-2.34c-1.82-.19-3.59 1.09-4.52 1.09-.95 0-2.38-1.07-3.94-1.04A5.78 5.78 0 0 0 1.96 8.7c-2.1 3.64-.53 9 1.48 11.94 1 1.44 2.18 3.05 3.74 2.99 1.52-.06 2.09-.96 3.93-.96 1.82 0 2.36.96 3.94.92 1.64-.02 2.67-1.45 3.63-2.9a11.9 11.9 0 0 0 1.66-3.38 5.2 5.2 0 0 1-3.29-4.77ZM14.09 3.75A5.3 5.3 0 0 0 15.3 0a5.4 5.4 0 0 0-3.5 1.78 5.05 5.05 0 0 0-1.25 3.61 4.46 4.46 0 0 0 3.54-1.64Z"/></svg><span><small>Coming July 21 to the</small><strong>App Store</strong></span></a><a class="store-badge" href="https://play.google.com/store/apps" target="_blank" rel="noreferrer" aria-label="Coming soon to Google Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.2 2.4 14 12 3.2 21.6c-.4-.4-.7-1-.7-1.8V4.2c0-.8.3-1.4.7-1.8Zm12.2 10.8 2.7 2.4-11.8 6.7 9.1-9.1Zm3.9-2.2c.8.4.8 1.6 0 2l-2 1.1-2.9-2.1 2.9-2.1 2 1.1ZM6.3 1.7l11.8 6.7-2.7 2.4-9.1-9.1Z"/></svg><span><small>Coming soon on</small><strong>Google Play</strong></span></a></div>
+        <h1 class="wordmark"><span class="hl accent"><i>Slop.</i></span><span class="hl"><i>game</i></span></h1>
+        <div class="hero-copy"><p>Prompt. Publish. Play.</p></div>
+        <ul class="hero-note"><li>Make games by describing them</li><li>Publish instantly</li><li>Play with everyone</li></ul>
+        <div class="store-links hero-stores"><a class="store-badge" href="https://apps.apple.com" target="_blank" rel="noreferrer" aria-label="Public beta launches August 14th on the Apple App Store"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.05 12.54c-.03-3 2.45-4.45 2.56-4.52a5.5 5.5 0 0 0-4.33-2.34c-1.82-.19-3.59 1.09-4.52 1.09-.95 0-2.38-1.07-3.94-1.04A5.78 5.78 0 0 0 1.96 8.7c-2.1 3.64-.53 9 1.48 11.94 1 1.44 2.18 3.05 3.74 2.99 1.52-.06 2.09-.96 3.93-.96 1.82 0 2.36.96 3.94.92 1.64-.02 2.67-1.45 3.63-2.9a11.9 11.9 0 0 0 1.66-3.38 5.2 5.2 0 0 1-3.29-4.77ZM14.09 3.75A5.3 5.3 0 0 0 15.3 0a5.4 5.4 0 0 0-3.5 1.78 5.05 5.05 0 0 0-1.25 3.61 4.46 4.46 0 0 0 3.54-1.64Z"/></svg><span><small>Public beta August 14th on the</small><strong>App Store</strong></span></a><a class="store-badge" href="https://play.google.com/store/apps" target="_blank" rel="noreferrer" aria-label="Coming soon to Google Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.2 2.4 14 12 3.2 21.6c-.4-.4-.7-1-.7-1.8V4.2c0-.8.3-1.4.7-1.8Zm12.2 10.8 2.7 2.4-11.8 6.7 9.1-9.1Zm3.9-2.2c.8.4.8 1.6 0 2l-2 1.1-2.9-2.1 2.9-2.1 2 1.1ZM6.3 1.7l11.8 6.7-2.7 2.4-9.1-9.1Z"/></svg><span><small>Coming soon on</small><strong>Google Play</strong></span></a></div>
       </div>
       <div class="scroll-cue" aria-hidden="true"><span></span></div>
     </section>
@@ -223,56 +241,65 @@
           <div class="tk-set"><span class="tk-item">Make games by describing them</span><i class="tk-star">✦</i><img class="tk-thumb" src="/NewSite/carousel-1.webp" alt="" loading="lazy" decoding="async"><span class="tk-item tk-outline">Play instantly</span><i class="tk-star">✦</i><span class="tk-item">Remix anything</span><img class="tk-thumb" src="/NewSite/carousel-2.webp" alt="" loading="lazy" decoding="async"><i class="tk-star">✦</i><span class="tk-item tk-outline">Share with the world</span><i class="tk-star">✦</i><img class="tk-thumb" src="/NewSite/carousel-4.webp" alt="" loading="lazy" decoding="async"></div>
         </div></div>
         <div class="tk tk-sub"><div class="tk-track">
-          <div class="tk-set"><span>Launching July 21</span><span>Made by you</span><span>No code</span><span>Remix everything</span><span>Prompt · Publish · Play</span></div>
-          <div class="tk-set"><span>Launching July 21</span><span>Made by you</span><span>No code</span><span>Remix everything</span><span>Prompt · Publish · Play</span></div>
+          <div class="tk-set"><span>Launching August 14th for public beta</span><span>Made by you</span><span>No code</span><span>Remix everything</span><span>Prompt · Publish · Play</span></div>
+          <div class="tk-set"><span>Launching August 14th for public beta</span><span>Made by you</span><span>No code</span><span>Remix everything</span><span>Prompt · Publish · Play</span></div>
         </div></div>
       </div>
     </div>
 
+    <section class="slop-cast" aria-labelledby="slop-cast-title">
+      <div class="slop-cast-inner">
+        <div class="slop-cast-head rv"><div><div class="kicker">Meet the maker</div><h2 id="slop-cast-title">Your game-making buddy.</h2></div><p class="slop-cast-copy">Describe the game you want. Slop Agent writes it, playtests it, repairs what breaks, and gets it ready to publish.</p></div>
+        <div class="slop-cast-grid">
+          <figure class="slop-pose rv"><img src="/NewSite/marketing/03-slop-orange-cyclops-3d-curious.png" loading="lazy" decoding="async" alt="Slop Agent looking curious"><figcaption><b>Start with a sentence.</b><span>Tell Slop what you want to play. Weird ideas are welcome.</span></figcaption></figure>
+          <figure class="slop-pose rv" style="--d:.12s"><img src="/NewSite/marketing/04-slop-orange-cyclops-3d-create-mouth.png" loading="lazy" decoding="async" alt="Slop Agent excited to create"><figcaption><b>Build together.</b><span>The Agent turns your prompt into a working game and checks the result.</span></figcaption></figure>
+          <figure class="slop-pose rv" style="--d:.24s"><img src="/NewSite/marketing/06-slop-orange-cyclops-3d-excited.png" loading="lazy" decoding="async" alt="Slop Agent celebrating"><figcaption><b>Ship the weird thing.</b><span>Publish it, play with friends, then remix whatever comes next.</span></figcaption></figure>
+        </div>
+      </div>
+    </section>
+
     <section class="previews" id="games">
       <div class="previews-head rv"><div><div class="kicker">01 / Inside the app</div><h2>Scroll. Play.<br>Scroll.</h2></div><div class="preview-side"><p>Real games made in Slop. Scroll the feed, tap in, play instantly — then remix any of them into your own.</p></div></div>
-      <!-- App wall · 12 slots: front row = slots 1–6 (slots 2 & 5 are videos), back row = slots 7–12.
-           Slot 2 is the "lead" phone the wall explodes out from. To swap in new screenshots, change the
-           src on the numbered slot below AND its matching clone in the aria-hidden .wall-set. -->
+      <!-- App wall · 12 slots: one gameplay video plus current public-beta screenshots. -->
       <div class="app-wall rv" id="appWall" aria-label="Screens from the Slop app">
         <div class="wall-zoom">
         <div class="wall-row row-mid" aria-hidden="true">
           <div class="wall-track">
             <div class="wall-set">
-              <figure class="wall-card" data-slot="7"><img src="/NewSite/wall-worms.webp" loading="eager" decoding="async" alt=""></figure>
-              <figure class="wall-card" data-slot="8"><img src="/NewSite/wall-zombie.webp" loading="eager" decoding="async" alt=""></figure>
-              <figure class="wall-card" data-slot="9"><img src="/NewSite/wall-agent-log.webp" loading="eager" decoding="async" alt=""></figure>
-              <figure class="wall-card" data-slot="10"><img src="/NewSite/wall-2048.webp" loading="eager" decoding="async" alt=""></figure>
-              <figure class="wall-card" data-slot="11"><img src="/NewSite/wall-discover.webp" loading="eager" decoding="async" alt=""></figure>
-              <figure class="wall-card" data-slot="12"><img src="/NewSite/wall-profile.webp" loading="eager" decoding="async" alt=""></figure>
+              <figure class="wall-card" data-slot="7"><img src="/NewSite/marketing/screenshots/app-01.webp" loading="eager" decoding="async" alt="Slop Agent app introduction"></figure>
+              <figure class="wall-card" data-slot="8"><img src="/NewSite/marketing/screenshots/app-02.webp" loading="eager" decoding="async" alt="Night Drift in the Slop feed"></figure>
+              <figure class="wall-card" data-slot="9"><img src="/NewSite/marketing/screenshots/app-03.webp" loading="eager" decoding="async" alt="Night Drift game card"></figure>
+              <figure class="wall-card" data-slot="10"><img src="/NewSite/marketing/screenshots/app-04.webp" loading="eager" decoding="async" alt="Surfy Sub in the Slop feed"></figure>
+              <figure class="wall-card" data-slot="11"><img src="/NewSite/marketing/screenshots/app-05.webp" loading="eager" decoding="async" alt="Circle messages in Slop"></figure>
+              <figure class="wall-card" data-slot="12"><img src="/NewSite/marketing/screenshots/app-06.webp" loading="eager" decoding="async" alt="Slop creator profile"></figure>
             </div>
             <div class="wall-set">
-              <figure class="wall-card"><img src="/NewSite/wall-worms.webp" loading="eager" decoding="async" alt=""></figure>
-              <figure class="wall-card"><img src="/NewSite/wall-zombie.webp" loading="eager" decoding="async" alt=""></figure>
-              <figure class="wall-card"><img src="/NewSite/wall-agent-log.webp" loading="eager" decoding="async" alt=""></figure>
-              <figure class="wall-card"><img src="/NewSite/wall-2048.webp" loading="eager" decoding="async" alt=""></figure>
-              <figure class="wall-card"><img src="/NewSite/wall-discover.webp" loading="eager" decoding="async" alt=""></figure>
-              <figure class="wall-card"><img src="/NewSite/wall-profile.webp" loading="eager" decoding="async" alt=""></figure>
+              <figure class="wall-card"><img src="/NewSite/marketing/screenshots/app-01.webp" loading="eager" decoding="async" alt=""></figure>
+              <figure class="wall-card"><img src="/NewSite/marketing/screenshots/app-02.webp" loading="eager" decoding="async" alt=""></figure>
+              <figure class="wall-card"><img src="/NewSite/marketing/screenshots/app-03.webp" loading="eager" decoding="async" alt=""></figure>
+              <figure class="wall-card"><img src="/NewSite/marketing/screenshots/app-04.webp" loading="eager" decoding="async" alt=""></figure>
+              <figure class="wall-card"><img src="/NewSite/marketing/screenshots/app-05.webp" loading="eager" decoding="async" alt=""></figure>
+              <figure class="wall-card"><img src="/NewSite/marketing/screenshots/app-06.webp" loading="eager" decoding="async" alt=""></figure>
             </div>
           </div>
         </div>
         <div class="wall-row row-front">
           <div class="wall-track">
             <div class="wall-set">
-              <figure class="wall-card" data-slot="1"><img src="/NewSite/wall-cube.webp" loading="eager" decoding="async" alt="A Rubik's cube puzzle game in the Slop feed"></figure>
+              <figure class="wall-card" data-slot="1"><img src="/NewSite/marketing/screenshots/app-07.webp" loading="eager" decoding="async" alt="Social discovery in Slop"></figure>
               <figure class="wall-card wall-video wall-lead" data-slot="2"><video src="/NewSite/drift-web.mp4" muted loop playsinline webkit-playsinline disablepictureinpicture preload="metadata" poster="/NewSite/drift-poster.jpg" aria-label="Night Drift gameplay in Slop"></video></figure>
-              <figure class="wall-card" data-slot="3"><img src="/NewSite/wall-bottle.webp" loading="eager" decoding="async" alt="Flip the Bottle game in Slop"></figure>
-              <figure class="wall-card" data-slot="4"><img src="/NewSite/wall-agent-build.webp" loading="eager" decoding="async" alt="Slop Agent building a game with AI"></figure>
-              <figure class="wall-card" data-slot="5"><img src="/NewSite/wall-agent-start.webp" loading="eager" decoding="async" alt="Slop Agent's build screen"></figure>
-              <figure class="wall-card" data-slot="6"><img src="/NewSite/wall-leaderboard.webp" loading="eager" decoding="async" alt="Live leaderboard for a game in Slop"></figure>
+              <figure class="wall-card" data-slot="3"><img src="/NewSite/marketing/screenshots/app-08.webp" loading="eager" decoding="async" alt="Build a game with Slop Agent"></figure>
+              <figure class="wall-card" data-slot="4"><img src="/NewSite/marketing/screenshots/app-09.webp" loading="eager" decoding="async" alt="Slop asset store"></figure>
+              <figure class="wall-card" data-slot="5"><img src="/NewSite/marketing/screenshots/app-10.webp" loading="eager" decoding="async" alt="Slop alerts"></figure>
+              <figure class="wall-card" data-slot="6"><img src="/NewSite/marketing/screenshots/app-11.webp" loading="eager" decoding="async" alt="Slop progression rewards"></figure>
             </div>
             <div class="wall-set" aria-hidden="true">
-              <figure class="wall-card"><img src="/NewSite/wall-cube.webp" loading="eager" decoding="async" alt=""></figure>
+              <figure class="wall-card"><img src="/NewSite/marketing/screenshots/app-07.webp" loading="eager" decoding="async" alt=""></figure>
               <figure class="wall-card wall-video-clone"><img src="/NewSite/drift-poster.jpg" loading="eager" decoding="async" alt=""></figure>
-              <figure class="wall-card"><img src="/NewSite/wall-bottle.webp" loading="eager" decoding="async" alt=""></figure>
-              <figure class="wall-card"><img src="/NewSite/wall-agent-build.webp" loading="eager" decoding="async" alt=""></figure>
-              <figure class="wall-card"><img src="/NewSite/wall-agent-start.webp" loading="eager" decoding="async" alt=""></figure>
-              <figure class="wall-card"><img src="/NewSite/wall-leaderboard.webp" loading="eager" decoding="async" alt=""></figure>
+              <figure class="wall-card"><img src="/NewSite/marketing/screenshots/app-08.webp" loading="eager" decoding="async" alt=""></figure>
+              <figure class="wall-card"><img src="/NewSite/marketing/screenshots/app-09.webp" loading="eager" decoding="async" alt=""></figure>
+              <figure class="wall-card"><img src="/NewSite/marketing/screenshots/app-10.webp" loading="eager" decoding="async" alt=""></figure>
+              <figure class="wall-card"><img src="/NewSite/marketing/screenshots/app-11.webp" loading="eager" decoding="async" alt=""></figure>
             </div>
           </div>
         </div>
@@ -309,13 +336,13 @@
       </div>
     </section>
 
-    <section class="closing" id="download"><div class="closing-marquee" aria-hidden="true"><span>PROMPT ✦ PUBLISH ✦ PLAY ✦ REMIX ✦&nbsp;</span><span>PROMPT ✦ PUBLISH ✦ PLAY ✦ REMIX ✦&nbsp;</span></div><span class="brand-mark rv">slop</span><h2 class="rv">Your next favorite game is made by <span class="you">YOU.</span></h2><p class="rv">Prompt. Publish. Play.</p><div class="store-links"><a class="store-badge" href="https://apps.apple.com" target="_blank" rel="noreferrer" aria-label="Coming July 21 to the Apple App Store"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.05 12.54c-.03-3 2.45-4.45 2.56-4.52a5.5 5.5 0 0 0-4.33-2.34c-1.82-.19-3.59 1.09-4.52 1.09-.95 0-2.38-1.07-3.94-1.04A5.78 5.78 0 0 0 1.96 8.7c-2.1 3.64-.53 9 1.48 11.94 1 1.44 2.18 3.05 3.74 2.99 1.52-.06 2.09-.96 3.93-.96 1.82 0 2.36.96 3.94.92 1.64-.02 2.67-1.45 3.63-2.9a11.9 11.9 0 0 0 1.66-3.38 5.2 5.2 0 0 1-3.29-4.77ZM14.09 3.75A5.3 5.3 0 0 0 15.3 0a5.4 5.4 0 0 0-3.5 1.78 5.05 5.05 0 0 0-1.25 3.61 4.46 4.46 0 0 0 3.54-1.64Z"/></svg><span><small>Coming July 21 to the</small><strong>App Store</strong></span></a><a class="store-badge" href="https://play.google.com/store/apps" target="_blank" rel="noreferrer" aria-label="Coming soon to Google Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.2 2.4 14 12 3.2 21.6c-.4-.4-.7-1-.7-1.8V4.2c0-.8.3-1.4.7-1.8Zm12.2 10.8 2.7 2.4-11.8 6.7 9.1-9.1Zm3.9-2.2c.8.4.8 1.6 0 2l-2 1.1-2.9-2.1 2.9-2.1 2 1.1ZM6.3 1.7l11.8 6.7-2.7 2.4-9.1-9.1Z"/></svg><span><small>Coming soon on</small><strong>Google Play</strong></span></a></div><p class="launch-note">iPhone · July 21 &nbsp; / &nbsp; Android · Coming soon</p><form class="mail-form" id="mailForm"><input id="mailEmail" type="email" autocomplete="email" required aria-label="Email address" placeholder="you@email.com"><button type="submit">Join the mailing list</button></form><p class="mail-status" id="mailStatus" aria-live="polite"></p></section>
+    <section class="closing" id="download"><div class="closing-marquee" aria-hidden="true"><span>PROMPT ✦ PUBLISH ✦ PLAY ✦ REMIX ✦&nbsp;</span><span>PROMPT ✦ PUBLISH ✦ PLAY ✦ REMIX ✦&nbsp;</span></div><span class="brand-mark rv">slop</span><h2 class="rv">Your next favorite game is made by <span class="you">YOU.</span></h2><p class="rv">Prompt. Publish. Play.</p><div class="store-links"><a class="store-badge" href="https://apps.apple.com" target="_blank" rel="noreferrer" aria-label="Public beta launches August 14th on the Apple App Store"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.05 12.54c-.03-3 2.45-4.45 2.56-4.52a5.5 5.5 0 0 0-4.33-2.34c-1.82-.19-3.59 1.09-4.52 1.09-.95 0-2.38-1.07-3.94-1.04A5.78 5.78 0 0 0 1.96 8.7c-2.1 3.64-.53 9 1.48 11.94 1 1.44 2.18 3.05 3.74 2.99 1.52-.06 2.09-.96 3.93-.96 1.82 0 2.36.96 3.94.92 1.64-.02 2.67-1.45 3.63-2.9a11.9 11.9 0 0 0 1.66-3.38 5.2 5.2 0 0 1-3.29-4.77ZM14.09 3.75A5.3 5.3 0 0 0 15.3 0a5.4 5.4 0 0 0-3.5 1.78 5.05 5.05 0 0 0-1.25 3.61 4.46 4.46 0 0 0 3.54-1.64Z"/></svg><span><small>Public beta August 14th on the</small><strong>App Store</strong></span></a><a class="store-badge" href="https://play.google.com/store/apps" target="_blank" rel="noreferrer" aria-label="Coming soon to Google Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.2 2.4 14 12 3.2 21.6c-.4-.4-.7-1-.7-1.8V4.2c0-.8.3-1.4.7-1.8Zm12.2 10.8 2.7 2.4-11.8 6.7 9.1-9.1Zm3.9-2.2c.8.4.8 1.6 0 2l-2 1.1-2.9-2.1 2.9-2.1 2 1.1ZM6.3 1.7l11.8 6.7-2.7 2.4-9.1-9.1Z"/></svg><span><small>Coming soon on</small><strong>Google Play</strong></span></a></div><p class="launch-note">Public beta · August 14th</p><form class="mail-form" id="mailForm"><input id="mailEmail" type="email" autocomplete="email" required aria-label="Email address" placeholder="you@email.com"><button type="submit">Join the mailing list</button></form><p class="mail-status" id="mailStatus" aria-live="polite"></p></section>
   </main>
-  <footer class="footer"><span>© 2026 Slop</span><span>Make games by describing them.</span><span>Play instantly.</span></footer>
+  <footer class="footer"><span>© 2026 Slop</span><span>Make games by describing them.</span><a href="/privacy">Privacy</a><span>Play instantly.</span></footer>
 
   <script>
     const prompt=document.getElementById('makerPrompt'),generate=document.getElementById('makerGenerate'),status=document.getElementById('makerStatus');
-    generate.addEventListener('click',()=>{if(!prompt.value.trim()){prompt.focus();status.textContent='Describe a game to start.';return}generate.disabled=true;generate.textContent='Building…';status.textContent='Turning your words into a playable world…';setTimeout(()=>{generate.disabled=false;generate.textContent='Generate';status.textContent='Preview ready in the Slop app · July 21.'},1100)});
+    generate.addEventListener('click',()=>{if(!prompt.value.trim()){prompt.focus();status.textContent='Describe a game to start.';return}generate.disabled=true;generate.textContent='Building…';status.textContent='Turning your words into a playable world…';setTimeout(()=>{generate.disabled=false;generate.textContent='Generate';status.textContent='Preview ready in the Slop app · Public beta August 14th.'},1100)});
     const makerTabs=[...document.querySelectorAll('[data-maker-mode]')],makerPanels=[...document.querySelectorAll('[data-maker-panel]')];makerTabs.forEach(tab=>tab.addEventListener('click',()=>{const mode=tab.dataset.makerMode;makerTabs.forEach(t=>{const active=t===tab;t.classList.toggle('active',active);t.setAttribute('aria-selected',String(active))});makerPanels.forEach(panel=>panel.hidden=panel.dataset.makerPanel!==mode);status.textContent=mode==='paste'?'Paste a complete game file. Slop handles the rest.':'Prompt → playable game → publish.'}));
     const modelPicker=document.getElementById('modelPicker'),models=['＋ GPT-5.5','＋ Quick build','＋ Detailed'];let modelIndex=0;modelPicker.addEventListener('click',()=>{modelIndex=(modelIndex+1)%models.length;modelPicker.textContent=models[modelIndex]});document.getElementById('wrapCode').addEventListener('click',()=>{const code=document.getElementById('codeInput');if(!code.value.trim()){code.focus();status.textContent='Paste your game code to continue.';return}status.textContent='Code wrapped — preview ready in Slop.'});
     const heroVideo=document.querySelector('.hero-video');
@@ -346,22 +373,24 @@
         // root or is served directly from within the NewSite folder.
         const base=(()=>{const v=appWall.querySelector('video');const s=v&&v.getAttribute('src')||'';const i=s.lastIndexOf('/');return i===-1?'':s.slice(0,i+1)})();
         const allWallImages=[
-          {src:'wall-cube.webp',alt:"A Rubik's cube puzzle game in the Slop feed"},
-          {src:'wall-bottle.webp',alt:'Flip the Bottle game in Slop'},
-          {src:'wall-agent-build.webp',alt:'Slop Agent building a game with AI'},
-          {src:'wall-agent-start.webp',alt:"Slop Agent's build screen"},
-          {src:'wall-leaderboard.webp',alt:'Live leaderboard for a game in Slop'},
-          {src:'wall-worms.webp',alt:'Worms! gameplay in Slop'},
-          {src:'wall-zombie.webp',alt:'Zombie jump gameplay in Slop'},
-          {src:'wall-agent-log.webp',alt:"Slop Agent's build log while creating a game"},
-          {src:'wall-2048.webp',alt:'2048 puzzle game in Slop'},
-          {src:'wall-discover.webp',alt:'Discover screen with trending games in Slop'},
-          {src:'wall-profile.webp',alt:'Creator profile and games in Slop'},
-          {src:'wall-downloads.webp',alt:'Offline downloads screen in Slop'},
-          {src:'wall-search.webp',alt:'Search screen in Slop'},
-          {src:'wall-agent-code.webp',alt:'Slop Agent generating game code'},
-          {src:'wall-comments.webp',alt:'Comments on a game in Slop'},
-          {src:'wall-alerts.webp',alt:'Notifications in Slop'}
+          {src:'marketing/screenshots/app-01.webp',alt:'Slop Agent app introduction'},
+          {src:'marketing/screenshots/app-02.webp',alt:'Night Drift in the Slop feed'},
+          {src:'marketing/screenshots/app-03.webp',alt:'Night Drift game card'},
+          {src:'marketing/screenshots/app-04.webp',alt:'Surfy Sub in the Slop feed'},
+          {src:'marketing/screenshots/app-05.webp',alt:'Circle messages in Slop'},
+          {src:'marketing/screenshots/app-06.webp',alt:'Slop creator profile'},
+          {src:'marketing/screenshots/app-07.webp',alt:'Social discovery in Slop'},
+          {src:'marketing/screenshots/app-08.webp',alt:'Build a game with Slop Agent'},
+          {src:'marketing/screenshots/app-09.webp',alt:'Slop asset store'},
+          {src:'marketing/screenshots/app-10.webp',alt:'Slop alerts'},
+          {src:'marketing/screenshots/app-11.webp',alt:'Slop progression rewards'},
+          {src:'marketing/screenshots/app-12.webp',alt:'Comments and GIF replies in Slop'},
+          {src:'marketing/screenshots/app-13.webp',alt:'A cube game in the Slop feed'},
+          {src:'marketing/screenshots/app-14.webp',alt:'Slop loading a game'},
+          {src:'marketing/screenshots/app-15.webp',alt:'Slop game results screen'},
+          {src:'marketing/screenshots/app-16.webp',alt:'Slop workshop buddy editor'},
+          {src:'marketing/screenshots/app-17.webp',alt:'Slop workshop character customization'},
+          {src:'marketing/screenshots/app-18.webp',alt:'Creator profile and games in Slop'}
         ];
         const pool=allWallImages.slice();
         for(let i=pool.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[pool[i],pool[j]]=[pool[j],pool[i]]}
