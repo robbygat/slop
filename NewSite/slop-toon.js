@@ -25,8 +25,12 @@
     { id: 'porcelain', name: 'Porcelain', glow: '#FFFFFF', light: '#F3F1EC', mid: '#DDD9D0', deep: '#B9B3A6', shade: '#8A8478', ink: '#3A362E', cheek: '#FF7595' },
     { id: 'cocoa', name: 'Cocoa', glow: '#F3E2D2', light: '#CBA37C', mid: '#9E7350', deep: '#6F4B31', shade: '#41291A', ink: '#23140C', cheek: '#FF7595' }
   ];
-  const PATTERNS = ['none', 'spots', 'stripes', 'stars', 'swirl', 'bubbles', 'checker', 'topographic', 'confetti'];
-  const EYE_COLORS = ['#5A3418', '#2E8BE6', '#2C8A4B', '#D98A12', '#8145E0', '#C42035', '#12A5A5', '#C9A227'];
+  // The production app's complete 70-item cosmetic collection.
+  const FINISHES = ['living-jelly', 'soft-gummy', 'pearl', 'molten', 'galaxy', 'chrome', 'hologram', 'aurora', 'crystal', 'obsidian', 'first-batch', 'clear-glass', 'sunforge-gold', 'wildfire-gel'];
+  const AURAS = ['none', 'bubbles', 'stardust', 'embers', 'hearts', 'glitch', 'orbit', 'fireflies', 'lightning', 'portal', 'prismatic', 'sloplings', 'petals', 'idea-comets', 'sound-rings', 'echo-trail', 'ribbon-trail'];
+  const HATS = ['bare', 'sprout', 'headphones', 'halo', 'crown', 'horns', 'bow', 'beanie', 'propeller', 'star', 'afro', 'antenna', 'mushroom', 'chef-puff', 'idea-wizard', 'satin-bow', 'pearl-tiara', 'blossom-crown', 'butterfly-clips'];
+  const PATTERNS = ['clean', 'bubbles', 'swirl', 'sparkles', 'stars', 'lava-lamp', 'topographic', 'confetti', 'nebula', 'kintsugi', 'spots', 'stripes', 'drips', 'checker', 'hearts', 'camo', 'fruit-slices', 'gummy-worms', 'arcade-bits', 'gingham-bloom'];
+  const EYE_COLORS = ['#3B1206', '#5A3418', '#2E8BE6', '#2C8A4B', '#D98A12', '#8145E0', '#C42035', '#E85C93', '#12A5A5', '#C9A227', '#8D97A6', '#35F0C0'];
 
   const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
   const random = (low, high) => low + Math.random() * (high - low);
@@ -47,6 +51,14 @@
     const value = Number.parseInt(hex.slice(1), 16);
     return `rgba(${value >> 16},${(value >> 8) & 255},${value & 255},${alpha})`;
   };
+  const labelFor = value => value.split('-').map(part => part[0].toUpperCase() + part.slice(1)).join(' ');
+  const pickDifferent = (items, current) => {
+    if (items.length < 2) return items[0];
+    let next;
+    do next = items[Math.floor(Math.random() * items.length)]; while (next === current);
+    return next;
+  };
+  const unitFor = rect => rect.w / 100;
 
   function depthPose(value) {
     const orientation = normalizedAngle(value);
@@ -130,8 +142,9 @@
       this.nextGazeAt = 0;
       this.nextAutoSpin = performance.now() + random(7000, 14000);
       this.autoSpin = null;
-      this.skin = { palette: PALETTES[0], pattern: 'none', eye: EYE_COLORS[0] };
+      this.skin = { palette: PALETTES[0], finish: 'living-jelly', aura: 'bubbles', hat: 'bare', pattern: 'clean', eye: EYE_COLORS[0] };
       this.skinChangedAt = -Infinity;
+      this.shuffleTimer = 0;
       this.mouthAmount = 0;
       this.bind();
       this.resize();
@@ -145,6 +158,7 @@
       });
 
       if (this.mode === 'hero') {
+        window.addEventListener('pointermove', event => this.trackGlobalPointer(event), { passive: true });
         this.stage.addEventListener('pointerdown', event => this.startDrag(event));
         this.stage.addEventListener('pointerup', event => this.endDrag(event));
         this.stage.addEventListener('pointercancel', event => this.endDrag(event));
@@ -200,6 +214,16 @@
       this.lastInteraction = now;
     }
 
+    trackGlobalPointer(event) {
+      if (event.pointerType && event.pointerType !== 'mouse') return;
+      const rect = this.stage.getBoundingClientRect();
+      const rangeX = Math.max(rect.width * 1.4, innerWidth * 0.34);
+      const rangeY = Math.max(rect.height * 1.4, innerHeight * 0.34);
+      this.gaze.tx = clamp((event.clientX - (rect.left + rect.width / 2)) / rangeX, -1, 1);
+      this.gaze.ty = clamp((event.clientY - (rect.top + rect.height / 2)) / rangeY, -0.9, 0.9);
+      this.pointerLookUntil = performance.now() + 2800;
+    }
+
     startDrag(event) {
       if (this.pointerId !== null) return;
       this.pointerId = event.pointerId;
@@ -224,13 +248,13 @@
       this.stage.classList.remove('is-dragging');
       const now = performance.now();
       if (!this.dragged) {
-        this.reactionAt = now;
+        this.shuffleLook();
         this.angularVelocity = 0;
       } else {
         this.angularVelocity = clamp(this.angularVelocity, -15, 15);
         const seconds = Math.max(0.12, (now - this.dragStartedAt) / 1000);
         const travelTurns = this.dragTravel / TAU;
-        if (travelTurns > 0.58 && travelTurns / seconds > 1.05) this.randomizeSkin();
+        if (travelTurns > 0.58 && travelTurns / seconds > 1.05) this.shuffleLook();
       }
       this.lastInteraction = now;
       this.nextAutoSpin = now + random(9000, 24000);
@@ -243,24 +267,51 @@
         this.lastInteraction = performance.now();
       } else if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        this.reactionAt = performance.now();
+        this.shuffleLook();
         this.lastInteraction = performance.now();
       }
     }
 
+    shuffleLook() {
+      clearTimeout(this.shuffleTimer);
+      const now = performance.now();
+      this.reactionAt = now;
+      if (reduceMotion.matches) {
+        this.randomizeSkin();
+        return;
+      }
+      this.stage.classList.remove('is-shuffling');
+      void this.stage.offsetWidth;
+      this.stage.classList.add('is-shuffling');
+      this.shuffleTimer = setTimeout(() => {
+        this.randomizeSkin();
+        setTimeout(() => this.stage.classList.remove('is-shuffling'), 520);
+      }, 430);
+    }
+
     randomizeSkin() {
-      let palette;
-      do palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
-      while (palette.id === this.skin.palette.id && PALETTES.length > 1);
+      const palette = pickDifferent(PALETTES, this.skin.palette);
       this.skin = {
         palette,
-        pattern: PATTERNS[Math.floor(Math.random() * PATTERNS.length)],
-        eye: EYE_COLORS[Math.floor(Math.random() * EYE_COLORS.length)]
+        finish: pickDifferent(FINISHES, this.skin.finish),
+        aura: pickDifferent(AURAS, this.skin.aura),
+        hat: pickDifferent(HATS, this.skin.hat),
+        pattern: pickDifferent(PATTERNS, this.skin.pattern),
+        eye: pickDifferent(EYE_COLORS, this.skin.eye)
       };
       this.skinChangedAt = performance.now();
       this.reactionAt = this.skinChangedAt;
       this.stage.dataset.skin = palette.id;
-      this.stage.dispatchEvent(new CustomEvent('slopskinchange', { detail: { palette: palette.name, pattern: this.skin.pattern } }));
+      const rgb = Number.parseInt(palette.mid.slice(1), 16);
+      const luminance = (((rgb >> 16) * 299) + (((rgb >> 8) & 255) * 587) + ((rgb & 255) * 114)) / 1000;
+      this.stage.dispatchEvent(new CustomEvent('slopskinchange', {
+        detail: {
+          palette: palette.name,
+          pattern: this.skin.pattern,
+          traits: [labelFor(this.skin.finish), labelFor(this.skin.aura), labelFor(this.skin.hat), labelFor(this.skin.pattern)],
+          colors: { ...palette, contrast: luminance > 142 ? '#120b08' : '#fffdf8' }
+        }
+      }));
     }
 
     updateGaze(timestamp, phase) {
@@ -277,10 +328,16 @@
     updateAutoSpin(timestamp) {
       if (this.mode !== 'hero' || reduceMotion.matches || this.pointerId !== null) return 0;
       if (!this.autoSpin && timestamp >= this.nextAutoSpin && timestamp - this.lastInteraction > 5000) {
-        this.autoSpin = { start: timestamp, duration: random(2900, 4300), direction: Math.random() < 0.5 ? -1 : 1 };
+        this.autoSpin = { start: timestamp, duration: random(2900, 4300), direction: Math.random() < 0.5 ? -1 : 1, shuffle: Math.random() < 0.58, changed: false };
       }
       if (!this.autoSpin) return 0;
       const progress = (timestamp - this.autoSpin.start) / this.autoSpin.duration;
+      if (this.autoSpin.shuffle && !this.autoSpin.changed && progress > 0.68) {
+        this.autoSpin.changed = true;
+        this.stage.classList.add('is-shuffling');
+        this.randomizeSkin();
+        setTimeout(() => this.stage.classList.remove('is-shuffling'), 620);
+      }
       if (progress >= 1) {
         this.angle += TAU * this.autoSpin.direction;
         this.autoSpin = null;
@@ -305,23 +362,124 @@
       }
     }
 
+    drawAura(rect, phase) {
+      const ctx = this.ctx;
+      const { aura, palette } = this.skin;
+      if (aura === 'none') return;
+      const unit = rect.w / 100;
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      if (aura === 'portal' || aura === 'orbit' || aura === 'sound-rings' || aura === 'prismatic') {
+        const count = aura === 'sound-rings' ? 3 : 2;
+        for (let i = 0; i < count; i += 1) {
+          ctx.strokeStyle = aura === 'prismatic' ? `hsla(${(phase * 45 + i * 120) % 360},90%,70%,.38)` : rgba(palette.light, 0.28 - i * 0.06);
+          ctx.lineWidth = unit * (1.8 - i * 0.3);
+          ctx.beginPath();
+          ctx.ellipse(rect.cx, rect.cy + unit * 7, rect.w * (0.55 + i * 0.08), rect.h * (0.38 + i * 0.06), phase * 0.08 + i, 0, TAU);
+          ctx.stroke();
+        }
+      } else if (aura === 'lightning') {
+        ctx.strokeStyle = '#D9F7FF';
+        ctx.shadowColor = '#52D9FF';
+        ctx.shadowBlur = unit * 4;
+        ctx.lineWidth = unit * 1.4;
+        for (const side of [-1, 1]) {
+          ctx.beginPath();
+          ctx.moveTo(rect.cx + side * rect.w * .49, rect.cy - unit * 22);
+          ctx.lineTo(rect.cx + side * rect.w * .61, rect.cy - unit * 7);
+          ctx.lineTo(rect.cx + side * rect.w * .52, rect.cy + unit * 3);
+          ctx.lineTo(rect.cx + side * rect.w * .64, rect.cy + unit * 21);
+          ctx.stroke();
+        }
+      } else if (aura === 'glitch' || aura === 'echo-trail') {
+        ctx.globalAlpha = .22;
+        for (const [dx, color] of [[-8, '#45E7FF'], [8, '#FF4F9A']]) {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = unit * 3;
+          ctx.stroke(makeBodyPath({ ...rect, cx: rect.cx + dx * unit }, phase / 5, .5, .1, 0));
+        }
+      } else if (aura === 'ribbon-trail') {
+        const gradient = ctx.createLinearGradient(rect.x, 0, rect.x + rect.w, 0);
+        gradient.addColorStop(0, '#54E7FF');gradient.addColorStop(.5, '#FF6FAE');gradient.addColorStop(1, '#FFE77B');
+        ctx.strokeStyle = gradient;ctx.lineWidth = unit * 3.5;ctx.globalAlpha = .55;
+        ctx.beginPath();ctx.moveTo(rect.x - unit * 9, rect.cy + Math.sin(phase) * unit * 12);ctx.bezierCurveTo(rect.cx - unit * 30, rect.cy - unit * 38, rect.cx + unit * 29, rect.cy + unit * 42, rect.x + rect.w + unit * 10, rect.cy);ctx.stroke();
+      } else {
+        const symbols = aura === 'hearts' ? ['♥','♥','♥','♥','♥'] : aura === 'petals' ? ['✿','✿','✿','✿','✿'] : aura === 'idea-comets' ? ['✦','✧','✦','✧','✦'] : ['•','✦','•','✦','•','✦'];
+        ctx.font = `700 ${unit * (aura === 'sloplings' ? 9 : 6)}px sans-serif`;
+        ctx.textAlign = 'center';ctx.textBaseline = 'middle';
+        symbols.forEach((symbol, i) => {
+          const angle = phase * (.32 + i * .013) + i / symbols.length * TAU;
+          const radius = rect.w * (.57 + (i % 2) * .08);
+          ctx.fillStyle = aura === 'embers' ? '#FF9B40' : aura === 'hearts' ? palette.cheek : aura === 'fireflies' ? '#F8FF8B' : aura === 'sloplings' ? palette.light : rgba(palette.glow, .75);
+          ctx.globalAlpha = .42 + .34 * (Math.sin(phase * 2 + i) * .5 + .5);
+          ctx.fillText(aura === 'sloplings' ? '●' : symbol, rect.cx + Math.cos(angle) * radius, rect.cy + Math.sin(angle) * rect.h * .48);
+        });
+      }
+      ctx.restore();
+    }
+
+    drawFinish(rect, body, phase) {
+      const ctx = this.ctx;
+      const { finish, palette } = this.skin;
+      if (finish === 'living-jelly') return;
+      ctx.save();ctx.clip(body);
+      if (finish === 'soft-gummy') {
+        ctx.fillStyle = rgba(palette.glow,.14);ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+      } else if (finish === 'pearl' || finish === 'chrome' || finish === 'sunforge-gold') {
+        const g=ctx.createLinearGradient(rect.x,rect.y,rect.x+rect.w,rect.y+rect.h);
+        const colors=finish==='sunforge-gold'?['#6B3500','#FFF0A0','#C96B00','#FFF4B0']:finish==='chrome'?['#121820','#F7FFFF','#697785','#FFFFFF','#222B33']:['#FFF8FF','#A9EAF0','#F4B6E1','#FFF9E8'];
+        colors.forEach((c,i)=>g.addColorStop(i/(colors.length-1),c));ctx.globalAlpha=finish==='pearl'?.34:.48;ctx.fillStyle=g;ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+      } else if (finish === 'galaxy' || finish === 'obsidian' || finish === 'first-batch') {
+        ctx.fillStyle=finish==='obsidian'?'rgba(2,3,9,.58)':'rgba(19,4,44,.48)';ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+        ctx.fillStyle=finish==='first-batch'?'#FF9B45':'#F5E8FF';
+        for(let i=0;i<18;i++){const x=rect.x+((i*47)%97)/100*rect.w,y=rect.y+((i*71)%93)/100*rect.h;this.ellipse(x,y,unitFor(rect)*(i%3===0?1.1:.55),unitFor(rect)*(i%3===0?1.1:.55),ctx.fillStyle)}
+      } else if (finish === 'molten' || finish === 'wildfire-gel') {
+        const g=ctx.createRadialGradient(rect.cx,rect.cy,0,rect.cx,rect.cy,rect.w*.55);g.addColorStop(0,'#FFE76B');g.addColorStop(.46,'#FF6A16');g.addColorStop(1,'#741008');ctx.globalAlpha=.52;ctx.fillStyle=g;ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+      } else if (finish === 'hologram' || finish === 'aurora') {
+        const g=ctx.createLinearGradient(rect.x,rect.y,rect.x+rect.w,rect.y+rect.h);for(let i=0;i<5;i++)g.addColorStop(i/4,`hsla(${(phase*28+i*82)%360},90%,70%,.7)`);ctx.globalAlpha=.38;ctx.fillStyle=g;ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+      } else if (finish === 'crystal' || finish === 'clear-glass') {
+        ctx.globalAlpha=finish==='clear-glass'?.22:.34;ctx.fillStyle='#DDF8FF';ctx.fillRect(rect.x,rect.y,rect.w,rect.h);ctx.strokeStyle='#FFFFFF';ctx.lineWidth=unitFor(rect)*1.2;for(let i=-2;i<4;i++){ctx.beginPath();ctx.moveTo(rect.cx+i*unitFor(rect)*13,rect.y);ctx.lineTo(rect.cx+(i+2)*unitFor(rect)*9,rect.y+rect.h);ctx.stroke()}
+      }
+      ctx.restore();
+    }
+
+    drawHat(rect, pose, phase) {
+      if (pose.front < .04 || this.skin.hat === 'bare') return;
+      const ctx=this.ctx, u=rect.w/100, x=rect.cx+rect.w*pose.faceOffsetX*.28, y=rect.y+u*4, hat=this.skin.hat, p=this.skin.palette;
+      ctx.save();ctx.globalAlpha=pose.front;ctx.translate(x,y);ctx.scale(pose.faceScaleX*.55+.45,1);ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=p.ink;ctx.lineWidth=u*2;
+      if(hat==='halo'){ctx.strokeStyle='#FFF2A1';ctx.shadowColor='#FFE95C';ctx.shadowBlur=u*7;this.ellipse(0,-u*9,u*18,u*5,null,ctx.strokeStyle,u*2.2)}
+      else if(hat==='sprout'||hat==='antenna'){ctx.beginPath();ctx.moveTo(0,u*2);ctx.quadraticCurveTo(u*1,-u*13,u*(hat==='antenna'?0:8),-u*18);ctx.stroke();this.ellipse(hat==='antenna'?0:u*10,-u*19,u*4,u*3,hat==='antenna'?p.cheek:'#66D764',p.ink,u*1.4)}
+      else if(hat==='headphones'){ctx.lineWidth=u*5;ctx.beginPath();ctx.arc(0,0,u*24,Math.PI,TAU);ctx.stroke();this.ellipse(-u*24,u*3,u*6,u*11,p.deep,p.ink,u*1.5);this.ellipse(u*24,u*3,u*6,u*11,p.deep,p.ink,u*1.5)}
+      else if(hat==='crown'||hat==='pearl-tiara'){ctx.fillStyle=hat==='crown'?'#FFD75A':'#F5DDFC';ctx.beginPath();ctx.moveTo(-u*18,u*3);ctx.lineTo(-u*15,-u*15);ctx.lineTo(-u*5,-u*6);ctx.lineTo(0,-u*18);ctx.lineTo(u*6,-u*6);ctx.lineTo(u*16,-u*15);ctx.lineTo(u*18,u*3);ctx.closePath();ctx.fill();ctx.stroke()}
+      else if(hat==='horns'){ctx.fillStyle='#F5E7D1';for(const s of[-1,1]){ctx.beginPath();ctx.moveTo(s*u*10,u*3);ctx.quadraticCurveTo(s*u*27,-u*14,s*u*18,-u*26);ctx.quadraticCurveTo(s*u*7,-u*10,s*u*10,u*3);ctx.fill();ctx.stroke()}}
+      else if(hat.includes('bow')||hat==='butterfly-clips'){ctx.fillStyle=hat==='satin-bow'?'#FF91BE':p.cheek;for(const s of[-1,1]){ctx.beginPath();ctx.ellipse(s*u*10,-u*4,u*10,u*7,s*.35,0,TAU);ctx.fill();ctx.stroke()}this.ellipse(0,-u*4,u*4,u*4,'#FFE6A8',p.ink,u)}
+      else if(hat==='beanie'||hat==='mushroom'||hat==='chef-puff'||hat==='afro'){ctx.fillStyle=hat==='afro'?'#351B14':hat==='mushroom'?'#F36B65':hat==='beanie'?p.deep:'#FFF5DF';const rx=hat==='afro'?29:hat==='mushroom'?27:22,ry=hat==='afro'?20:hat==='chef-puff'?17:12;this.ellipse(0,-u*4,u*rx,u*ry,ctx.fillStyle,p.ink,u*2);if(hat==='beanie')this.ellipse(0,-u*20,u*5,u*5,p.light,p.ink,u)}
+      else if(hat==='propeller'){ctx.fillStyle=p.light;this.ellipse(0,-u*1,u*18,u*7,ctx.fillStyle,p.ink,u*2);ctx.beginPath();ctx.moveTo(0,-u*7);ctx.lineTo(0,-u*19);ctx.stroke();ctx.save();ctx.translate(0,-u*20);ctx.rotate(phase*4);this.ellipse(0,0,u*18,u*3,p.cheek,p.ink,u);ctx.restore()}
+      else if(hat==='star'){ctx.fillStyle='#FFE568';ctx.font=`900 ${u*30}px sans-serif`;ctx.textAlign='center';ctx.fillText('★',0,u*1)}
+      else if(hat==='idea-wizard'){ctx.fillStyle='#7244C9';ctx.beginPath();ctx.moveTo(-u*20,u*4);ctx.lineTo(u*2,-u*34);ctx.lineTo(u*19,u*4);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#FFE568';ctx.font=`900 ${u*8}px sans-serif`;ctx.fillText('✦',-u*1,-u*13)}
+      else if(hat==='blossom-crown'){ctx.fillStyle='#FF9BC2';for(let i=0;i<5;i++)this.ellipse((i-2)*u*8,-u*(5+Math.abs(i-2)*2),u*5,u*5,ctx.fillStyle,p.ink,u)}
+      else {ctx.fillStyle=p.deep;ctx.beginPath();ctx.ellipse(0,-u*2,u*24,u*9,0,Math.PI,TAU);ctx.lineTo(u*18,u*5);ctx.lineTo(-u*18,u*5);ctx.closePath();ctx.fill();ctx.stroke()}
+      ctx.restore();
+    }
+
     drawPattern(rect, pose, phase) {
       const ctx = this.ctx;
       const palette = this.skin.palette;
       const unit = rect.w / 100;
       const pattern = this.skin.pattern;
-      if (pattern === 'none') return;
+      if (pattern === 'clean') return;
       ctx.save();
       ctx.translate(rect.cx + pose.side * rect.w * 0.08, rect.cy);
       ctx.scale(pose.patternScaleX, 1);
       ctx.translate(-rect.cx, -rect.cy);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      if (pattern === 'spots') {
+      if (pattern === 'spots' || pattern === 'lava-lamp' || pattern === 'camo' || pattern === 'fruit-slices' || pattern === 'gummy-worms') {
         for (const [x, y, radius] of [[-23, -18, 7], [18, -11, 5], [-9, 15, 4], [26, 22, 8], [-29, 29, 5]]) {
-          this.ellipse(rect.cx + x * unit, rect.cy + y * unit, radius * unit, radius * 0.78 * unit, rgba(palette.glow, 0.2));
+          this.ellipse(rect.cx + x * unit, rect.cy + y * unit, radius * unit, radius * (pattern==='gummy-worms'?.32:.78) * unit, pattern==='fruit-slices'?'rgba(255,245,130,.38)':rgba(pattern==='camo'?palette.ink:palette.glow, 0.22));
         }
-      } else if (pattern === 'stripes') {
+      } else if (pattern === 'stripes' || pattern === 'drips' || pattern === 'gingham-bloom') {
         ctx.strokeStyle = rgba(palette.ink, 0.13);
         ctx.lineWidth = unit * 7;
         for (let x = -70; x < 70; x += 23) {
@@ -330,7 +488,7 @@
           ctx.lineTo(rect.cx + (x + 24) * unit, rect.y + rect.h);
           ctx.stroke();
         }
-      } else if (pattern === 'stars' || pattern === 'confetti') {
+      } else if (pattern === 'stars' || pattern === 'sparkles' || pattern === 'confetti' || pattern === 'hearts' || pattern === 'arcade-bits') {
         const marks = [[-24, -21], [18, -23], [-4, 9], [29, 19], [-29, 27], [10, 31]];
         ctx.strokeStyle = rgba(palette.glow, 0.42);
         ctx.lineWidth = unit * 1.7;
@@ -338,7 +496,7 @@
           ctx.beginPath();
           ctx.moveTo(rect.cx + (x - 3) * unit, rect.cy + y * unit);
           ctx.lineTo(rect.cx + (x + 3) * unit, rect.cy + y * unit);
-          if (pattern === 'stars') {
+          if (pattern === 'stars' || pattern === 'sparkles' || pattern === 'hearts') {
             ctx.moveTo(rect.cx + x * unit, rect.cy + (y - 3) * unit);
             ctx.lineTo(rect.cx + x * unit, rect.cy + (y + 3) * unit);
           } else {
@@ -346,7 +504,7 @@
           }
           ctx.stroke();
         }
-      } else if (pattern === 'swirl' || pattern === 'topographic') {
+      } else if (pattern === 'swirl' || pattern === 'topographic' || pattern === 'nebula' || pattern === 'kintsugi') {
         ctx.strokeStyle = rgba(palette.glow, pattern === 'swirl' ? 0.26 : 0.19);
         ctx.lineWidth = unit * 1.8;
         const count = pattern === 'swirl' ? 3 : 6;
@@ -488,6 +646,7 @@
       ctx.filter = `blur(${size * 0.013}px)`;
       this.ellipse(rect.cx + pose.side * size * 0.025, rect.y + rect.h * 0.98, rect.w * (0.37 + reaction * 0.035), size * 0.046, 'rgba(0,0,0,.29)');
       ctx.restore();
+      this.drawAura(rect, seconds);
 
       const body = makeBodyPath(rect, seconds / 6.4, 1, 0.12 + reaction * 0.23, lean);
       ctx.save();
@@ -510,6 +669,7 @@
       ctx.save();
       ctx.clip(body);
       this.drawPattern(rect, pose, seconds);
+      this.drawFinish(rect, body, seconds);
       const crown = ctx.createRadialGradient(rect.x + rect.w * (0.28 + pose.lightOffsetX * 0.08), rect.y + rect.h * 0.2, 0, rect.x + rect.w * (0.28 + pose.lightOffsetX * 0.08), rect.y + rect.h * 0.2, rect.w * 0.61);
       crown.addColorStop(0, rgba(palette.glow, 0.30));
       crown.addColorStop(0.54, rgba(palette.glow, 0.30));
@@ -559,13 +719,14 @@
       ctx.clip(body);
       this.drawFace(rect, pose, seconds, mouthOpen);
       ctx.restore();
+      this.drawHat(rect, pose, seconds);
       ctx.restore();
 
       if (this.mode === 'hero') {
         const degrees = Math.round(((normalizedAngle(displayAngle) * 180 / Math.PI) + 360) % 360);
         const direction = degrees < 45 || degrees >= 315 ? 'front' : degrees < 135 ? 'right side' : degrees < 225 ? 'back' : 'left side';
         this.stage.setAttribute('aria-valuenow', String(degrees));
-        this.stage.setAttribute('aria-valuetext', `${direction} view, ${palette.name} skin`);
+        this.stage.setAttribute('aria-valuetext', `${direction} view, ${palette.name}, ${labelFor(this.skin.finish)}, ${labelFor(this.skin.aura)}, ${labelFor(this.skin.hat)}, ${labelFor(this.skin.pattern)}`);
       }
     }
   }
