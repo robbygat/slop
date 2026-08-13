@@ -30,6 +30,7 @@
   const AURAS = ['none', 'bubbles', 'stardust', 'embers', 'hearts', 'glitch', 'orbit', 'fireflies', 'lightning', 'portal', 'prismatic', 'sloplings', 'petals', 'idea-comets', 'sound-rings', 'echo-trail', 'ribbon-trail'];
   const HATS = ['bare', 'sprout', 'headphones', 'halo', 'crown', 'horns', 'bow', 'beanie', 'propeller', 'star', 'afro', 'antenna', 'mushroom', 'chef-puff', 'idea-wizard', 'satin-bow', 'pearl-tiara', 'blossom-crown', 'butterfly-clips'];
   const PATTERNS = ['clean', 'bubbles', 'swirl', 'sparkles', 'stars', 'lava-lamp', 'topographic', 'confetti', 'nebula', 'kintsugi', 'spots', 'stripes', 'drips', 'checker', 'hearts', 'camo', 'fruit-slices', 'gummy-worms', 'arcade-bits', 'gingham-bloom'];
+  const EYES = ['round', 'wide', 'sleepy', 'star', 'wink', 'cyclops', 'dot', 'kawaii', 'heart', 'angry', 'sparkle', 'spiral', 'visor', 'squint', 'three', 'many', 'liquid', 'crescent', 'velvet-lash'];
   const EYE_COLORS = ['#3B1206', '#5A3418', '#2E8BE6', '#2C8A4B', '#D98A12', '#8145E0', '#C42035', '#E85C93', '#12A5A5', '#C9A227', '#8D97A6', '#35F0C0'];
 
   const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
@@ -142,6 +143,7 @@
         aura: AURAS.includes(stage.dataset.aura) ? stage.dataset.aura : 'bubbles',
         hat: HATS.includes(stage.dataset.hat) ? stage.dataset.hat : 'bare',
         pattern: PATTERNS.includes(stage.dataset.pattern) ? stage.dataset.pattern : 'clean',
+        eyes: EYES.includes(stage.dataset.eyes) ? stage.dataset.eyes : 'cyclops',
         eye: EYE_COLORS.includes(stage.dataset.eye) ? stage.dataset.eye : EYE_COLORS[0]
       };
       this.bags = Object.create(null);
@@ -319,6 +321,7 @@
         aura: this.drawFromBag('aura', AURAS, this.skin.aura),
         hat: this.drawFromBag('hat', HATS, this.skin.hat),
         pattern: this.drawFromBag('pattern', PATTERNS, this.skin.pattern),
+        eyes: this.drawFromBag('eyes', EYES, this.skin.eyes),
         eye: this.drawFromBag('eye', EYE_COLORS, this.skin.eye)
       };
       this.skinChangedAt = performance.now();
@@ -330,7 +333,7 @@
         detail: {
           palette: palette.name,
           pattern: this.skin.pattern,
-          traits: [labelFor(this.skin.finish), labelFor(this.skin.aura), labelFor(this.skin.hat), labelFor(this.skin.pattern)],
+          traits: [labelFor(this.skin.finish), labelFor(this.skin.aura), labelFor(this.skin.hat), labelFor(this.skin.pattern), `${labelFor(this.skin.eyes)} eyes`],
           colors: { ...palette, contrast: luminance > 142 ? '#120b08' : '#fffdf8' }
         }
       }));
@@ -560,43 +563,87 @@
       const unit = rect.w / 100;
       const faceX = rect.cx + rect.w * pose.faceOffsetX;
       const faceY = rect.y + rect.h * 0.425;
-      const eyeX = faceX + this.gaze.x * unit * 1.4;
-      const eyeY = faceY + this.gaze.y * unit * 0.9;
-      const pupilX = eyeX + this.gaze.x * unit * 4.7;
-      const pupilY = eyeY + this.gaze.y * unit * 3.15;
       const blinkClock = (phase + 1.1) % 5.7;
       const blink = blinkClock > 5.28 ? Math.sin(((blinkClock - 5.28) / 0.42) * Math.PI) : 0;
-      const eyeWidth = unit * 29.5;
-      const eyeHeight = unit * Math.max(2.1, 31.5 * (1 - blink * 0.92));
+      const eyeType = this.skin.eyes;
 
       ctx.save();
       ctx.globalAlpha *= pose.front;
       ctx.translate(faceX, faceY);
       ctx.scale(pose.faceScaleX, 1);
       ctx.translate(-faceX, -faceY);
-      ctx.shadowColor = rgba(palette.ink, 0.28);
-      ctx.shadowBlur = unit * 2;
-      this.ellipse(eyeX, eyeY, eyeWidth / 2 + unit * 2.1, eyeHeight / 2 + unit * 2.1, palette.ink);
-      ctx.shadowBlur = 0;
-      this.ellipse(eyeX, eyeY, eyeWidth / 2, eyeHeight / 2, '#FFFDF8');
-      if (blink < 0.82) {
-        const iris = ctx.createRadialGradient(pupilX - unit * 1.5, pupilY - unit * 2, unit, pupilX, pupilY, unit * 8.4);
-        iris.addColorStop(0, this.skin.eye);
-        iris.addColorStop(0.66, palette.ink);
-        iris.addColorStop(1, '#160805');
-        this.ellipse(pupilX, pupilY, unit * 8.6, unit * 9.2, iris);
-        this.ellipse(pupilX, pupilY + unit * 0.4, unit * 4.6, unit * 5.1, '#100604');
-        this.ellipse(pupilX - unit * 2.4, pupilY - unit * 3, unit * 1.85, unit * 2.2, '#FFFFFF');
-        this.ellipse(pupilX + unit * 1.4, pupilY + unit * 1.3, unit * 0.85, unit * 1.05, 'rgba(255,255,255,.72)');
-      }
-
       ctx.strokeStyle = palette.ink;
       ctx.lineCap = 'round';
-      ctx.lineWidth = unit * 2.1;
-      ctx.beginPath();
-      ctx.moveTo(eyeX - unit * 9, eyeY - unit * 20.5);
-      ctx.quadraticCurveTo(eyeX + this.gaze.x * unit * 1.4, eyeY - unit * 24 - mouthOpen * unit * 2, eyeX + unit * 9, eyeY - unit * 20.2);
-      ctx.stroke();
+      ctx.lineJoin = 'round';
+      const closedEye = (x, y, radius = 7, down = false) => {
+        ctx.lineWidth = unit * 2.2;
+        ctx.beginPath();
+        ctx.arc(x, y, unit * radius, down ? Math.PI * 1.15 : Math.PI * 1.08, down ? Math.PI * 1.85 : Math.PI * 1.92, down);
+        ctx.stroke();
+      };
+      const standardEye = (x, y, rx = 7.2, ry = 9.2, style = 'normal') => {
+        const height = Math.max(1.2, ry * (1 - blink * .91));
+        if (blink > .88) { closedEye(x, y, rx * .8); return; }
+        ctx.shadowColor = rgba(palette.ink, .27);ctx.shadowBlur = unit * 1.3;
+        this.ellipse(x, y, unit * (rx + 1.5), unit * (height + 1.5), palette.ink);
+        ctx.shadowBlur = 0;
+        this.ellipse(x, y, unit * rx, unit * height, '#FFFDF8');
+        if (style === 'crescent') {
+          this.ellipse(x + unit * 3.2, y - unit * .5, unit * rx * .75, unit * height * .9, palette.light);
+          return;
+        }
+        const px = x + this.gaze.x * unit * Math.min(3.2, rx * .42);
+        const py = y + this.gaze.y * unit * Math.min(2.4, ry * .3);
+        if (style === 'star' || style === 'heart') {
+          ctx.fillStyle = style === 'heart' ? palette.cheek : this.skin.eye;
+          ctx.font = `900 ${unit * Math.min(12, rx * 1.55)}px sans-serif`;
+          ctx.textAlign = 'center';ctx.textBaseline = 'middle';
+          ctx.fillText(style === 'heart' ? '♥' : '★', px, py + unit * .4);
+        } else if (style === 'spiral') {
+          ctx.strokeStyle = this.skin.eye;ctx.lineWidth = unit * 1.5;ctx.beginPath();
+          for(let i=0;i<24;i++){const a=i/23*TAU*2.1,r=unit*(.5+i/23*Math.min(4.7,rx*.62)),sx=px+Math.cos(a)*r,sy=py+Math.sin(a)*r;if(i===0)ctx.moveTo(sx,sy);else ctx.lineTo(sx,sy)}ctx.stroke();ctx.strokeStyle=palette.ink;
+        } else {
+          const iris = ctx.createRadialGradient(px-unit,py-unit,unit*.5,px,py,unit*Math.min(5.2,rx*.7));
+          iris.addColorStop(0,this.skin.eye);iris.addColorStop(.66,palette.ink);iris.addColorStop(1,'#160805');
+          this.ellipse(px,py,unit*Math.min(4.8,rx*.68),unit*Math.min(5.3,ry*.62),iris);
+          this.ellipse(px-unit*1.3,py-unit*1.8,unit*1.05,unit*1.25,'#FFFFFF');
+          if(style==='sparkle'){ctx.fillStyle='#fff';ctx.font=`900 ${unit*5}px sans-serif`;ctx.textAlign='center';ctx.fillText('✦',px+unit*2.4,py+unit*2.5)}
+        }
+        if (style === 'liquid') {
+          ctx.fillStyle = this.skin.eye;ctx.beginPath();ctx.moveTo(x-unit*2,y+unit*6);ctx.quadraticCurveTo(x,y+unit*13,x+unit*2,y+unit*6);ctx.fill();
+        }
+        if (style === 'lash') {
+          ctx.strokeStyle=palette.ink;ctx.lineWidth=unit*1.2;
+          for(const side of[-1,1]){ctx.beginPath();ctx.moveTo(x+side*unit*(rx-1),y-unit*(height-1));ctx.lineTo(x+side*unit*(rx+4),y-unit*(height+4));ctx.stroke()}
+        }
+      };
+      const brow = (x, y, tilt = 0) => {ctx.save();ctx.translate(x,y);ctx.rotate(tilt);ctx.lineWidth=unit*1.5;ctx.beginPath();ctx.moveTo(-unit*4,0);ctx.quadraticCurveTo(0,-unit*1.5,unit*4,0);ctx.stroke();ctx.restore()};
+      const left = faceX - unit * 10.2, right = faceX + unit * 10.2;
+      if (eyeType === 'cyclops') {
+        standardEye(faceX, faceY, 14.7, 15.7);
+        brow(faceX, faceY-unit*22-mouthOpen*unit*2);
+      } else if (eyeType === 'dot') {
+        this.ellipse(left,faceY,unit*2.5,unit*3.1,palette.ink);this.ellipse(right,faceY,unit*2.5,unit*3.1,palette.ink);brow(left,faceY-unit*9);brow(right,faceY-unit*9);
+      } else if (eyeType === 'kawaii') {
+        closedEye(left,faceY,6.5);closedEye(right,faceY,6.5);brow(left,faceY-unit*10);brow(right,faceY-unit*10);
+      } else if (eyeType === 'wink') {
+        standardEye(left,faceY,7,9);closedEye(right,faceY,7);brow(left,faceY-unit*13);brow(right,faceY-unit*11,-.15);
+      } else if (eyeType === 'visor') {
+        ctx.fillStyle=palette.ink;ctx.beginPath();ctx.roundRect(faceX-unit*24,faceY-unit*8,unit*48,unit*17,unit*8);ctx.fill();
+        this.ellipse(faceX-unit*8+this.gaze.x*unit*2,faceY+this.gaze.y*unit,unit*2.4,unit*2.8,this.skin.eye);this.ellipse(faceX+unit*8+this.gaze.x*unit*2,faceY+this.gaze.y*unit,unit*2.4,unit*2.8,this.skin.eye);
+      } else if (eyeType === 'squint') {
+        closedEye(left,faceY,7,true);closedEye(right,faceY,7,true);
+      } else if (eyeType === 'three') {
+        standardEye(faceX,faceY-unit*10,5.5,7);standardEye(left,faceY+unit*4,6,7.5);standardEye(right,faceY+unit*4,6,7.5);
+      } else if (eyeType === 'many') {
+        for(let row=0;row<3;row++)for(let col=0;col<(row===1?4:3);col++){const count=row===1?4:3;standardEye(faceX+(col-(count-1)/2)*unit*7.2,faceY+(row-1)*unit*7,2.1,2.7)}
+      } else {
+        const style = eyeType==='star'?'star':eyeType==='heart'?'heart':eyeType==='spiral'?'spiral':eyeType==='sparkle'?'sparkle':eyeType==='liquid'?'liquid':eyeType==='crescent'?'crescent':eyeType==='velvet-lash'?'lash':'normal';
+        const rx=eyeType==='wide'?8.4:eyeType==='sleepy'?7.8:7.2,ry=eyeType==='wide'?10.6:eyeType==='sleepy'?6.3:9.2;
+        standardEye(left,faceY,rx,ry,style);standardEye(right,faceY,rx,ry,style);
+        if(eyeType==='sleepy'){ctx.fillStyle=rgba(palette.ink,.62);ctx.fillRect(left-unit*8.5,faceY-unit*7.2,unit*17,unit*4.2);ctx.fillRect(right-unit*8.5,faceY-unit*7.2,unit*17,unit*4.2)}
+        const tilt=eyeType==='angry'?.28:0;brow(left,faceY-unit*(ry+7),tilt);brow(right,faceY-unit*(ry+7),-tilt);
+      }
 
       const mouthY = faceY + unit * 24;
       this.ellipse(faceX - unit * 15, mouthY - unit * 1.5, unit * 4.2, unit * 2.2, rgba(palette.cheek, 0.30));
@@ -748,7 +795,7 @@
         const degrees = Math.round(((normalizedAngle(displayAngle) * 180 / Math.PI) + 360) % 360);
         const direction = degrees < 45 || degrees >= 315 ? 'front' : degrees < 135 ? 'right side' : degrees < 225 ? 'back' : 'left side';
         this.stage.setAttribute('aria-valuenow', String(degrees));
-        this.stage.setAttribute('aria-valuetext', `${direction} view, ${palette.name}, ${labelFor(this.skin.finish)}, ${labelFor(this.skin.aura)}, ${labelFor(this.skin.hat)}, ${labelFor(this.skin.pattern)}`);
+        this.stage.setAttribute('aria-valuetext', `${direction} view, ${palette.name}, ${labelFor(this.skin.finish)}, ${labelFor(this.skin.aura)}, ${labelFor(this.skin.hat)}, ${labelFor(this.skin.pattern)}, ${labelFor(this.skin.eyes)} eyes`);
       }
     }
   }
