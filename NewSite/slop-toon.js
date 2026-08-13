@@ -1,48 +1,54 @@
 (() => {
   'use strict';
 
-  const canvas = document.getElementById('heroToonCanvas');
-  const stage = document.getElementById('heroToonStage');
-  if (!canvas || !stage || !canvas.getContext) return;
-
-  const ctx = canvas.getContext('2d');
   const TAU = Math.PI * 2;
-  const palette = {
-    glow: '#FFE9BE',
-    light: '#FFB13B',
-    mid: '#FF8A22',
-    deep: '#F4561D',
-    shade: '#B8300F',
-    ink: '#3B1206',
-    cheek: '#FF7595'
-  };
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
-
-  let width = 0;
-  let height = 0;
-  let dpr = 1;
-  let angle = 0;
-  let dragAngle = 0;
-  let dragStartX = 0;
-  let pointerId = null;
-  let dragged = false;
-  let reactionAt = -Infinity;
-  let lastInteraction = performance.now();
-  let visible = true;
+  const PALETTES = [
+    { id: 'tangerine', name: 'Tangerine', glow: '#FFE9BE', light: '#FFB13B', mid: '#FF8A22', deep: '#F4561D', shade: '#B8300F', ink: '#3B1206', cheek: '#FF7595' },
+    { id: 'grape', name: 'Grape', glow: '#F0E2FF', light: '#C79BFF', mid: '#9A5CF6', deep: '#7431DC', shade: '#45178F', ink: '#260A4D', cheek: '#FF7595' },
+    { id: 'mint', name: 'Mint', glow: '#E4FFF0', light: '#9BF3C6', mid: '#48DC96', deep: '#15B36D', shade: '#067044', ink: '#043723', cheek: '#FF7595' },
+    { id: 'bubblegum', name: 'Bubblegum', glow: '#FFE7F1', light: '#FFAAD0', mid: '#FF6FAE', deep: '#EF3B88', shade: '#A8145B', ink: '#4E0526', cheek: '#FF4F93' },
+    { id: 'blueberry', name: 'Blueberry', glow: '#E0F0FF', light: '#93C6FF', mid: '#4A93FF', deep: '#2B6BFF', shade: '#123C86', ink: '#0A2050', cheek: '#FF7595' },
+    { id: 'lime', name: 'Lime', glow: '#F8FFD8', light: '#DDF97C', mid: '#AEE62E', deep: '#7CBB10', shade: '#477207', ink: '#243C03', cheek: '#FF7595' },
+    { id: 'aqua', name: 'Aqua', glow: '#DFFCFF', light: '#8AEBF7', mid: '#32C8DF', deep: '#0E9ABB', shade: '#055C74', ink: '#03303E', cheek: '#FF7595' },
+    { id: 'void', name: 'Void', glow: '#B7C0D6', light: '#6E778C', mid: '#434B5C', deep: '#272C38', shade: '#12151C', ink: '#05070B', cheek: '#7E6BFF' },
+    { id: 'peach', name: 'Peach', glow: '#FFEFE2', light: '#FFC2A3', mid: '#FF9670', deep: '#EE6A45', shade: '#A83C23', ink: '#4A1608', cheek: '#FF7595' },
+    { id: 'lavender', name: 'Lavender', glow: '#F6EFFF', light: '#D4BEFF', mid: '#B295F0', deep: '#8E6BD6', shade: '#573C91', ink: '#2C1B52', cheek: '#FF7595' },
+    { id: 'ember', name: 'Ember', glow: '#FFD9B0', light: '#FF8B5E', mid: '#F4522E', deep: '#C42714', shade: '#751007', ink: '#3A0703', cheek: '#FF7595' },
+    { id: 'butter', name: 'Butter', glow: '#FFFBE0', light: '#FFEB8F', mid: '#FFD43B', deep: '#E0AC00', shade: '#8F6C00', ink: '#453200', cheek: '#FF7595' },
+    { id: 'rose', name: 'Rose', glow: '#FFEDF2', light: '#FFB3C6', mid: '#F5789B', deep: '#D34A72', shade: '#8C2145', ink: '#430F21', cheek: '#FF7595' },
+    { id: 'slate', name: 'Slate', glow: '#E8EEF6', light: '#AEBDD1', mid: '#7A8CA5', deep: '#52627A', shade: '#2C3646', ink: '#151C26', cheek: '#FF7595' },
+    { id: 'toxic', name: 'Toxic', glow: '#EBFFC7', light: '#B6FF4D', mid: '#7BE800', deep: '#4EA800', shade: '#2A6100', ink: '#162F00', cheek: '#D6FF6B' },
+    { id: 'ultraviolet', name: 'Ultraviolet', glow: '#EBD6FF', light: '#B07BFF', mid: '#7A3BE8', deep: '#4A15A8', shade: '#250459', ink: '#12002E', cheek: '#00E5FF' },
+    { id: 'seafoam', name: 'Seafoam', glow: '#EAFFF8', light: '#A8F0DC', mid: '#5FD6B8', deep: '#27A98A', shade: '#0F6552', ink: '#063228', cheek: '#FF7595' },
+    { id: 'cherry', name: 'Cherry', glow: '#FFE0E0', light: '#FF8A8A', mid: '#F04848', deep: '#C01F1F', shade: '#750B0B', ink: '#3B0303', cheek: '#FF7595' },
+    { id: 'porcelain', name: 'Porcelain', glow: '#FFFFFF', light: '#F3F1EC', mid: '#DDD9D0', deep: '#B9B3A6', shade: '#8A8478', ink: '#3A362E', cheek: '#FF7595' },
+    { id: 'cocoa', name: 'Cocoa', glow: '#F3E2D2', light: '#CBA37C', mid: '#9E7350', deep: '#6F4B31', shade: '#41291A', ink: '#23140C', cheek: '#FF7595' }
+  ];
+  const PATTERNS = ['none', 'spots', 'stripes', 'stars', 'swirl', 'bubbles', 'checker', 'topographic', 'confetti'];
+  const EYE_COLORS = ['#5A3418', '#2E8BE6', '#2C8A4B', '#D98A12', '#8145E0', '#C42035', '#12A5A5', '#C9A227'];
 
   const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+  const random = (low, high) => low + Math.random() * (high - low);
   const smoothstep = value => {
     const t = clamp(value, 0, 1);
     return t * t * (3 - 2 * t);
+  };
+  const smootherstep = value => {
+    const t = clamp(value, 0, 1);
+    return t * t * t * (t * (t * 6 - 15) + 10);
   };
   const normalizedAngle = value => {
     let wrapped = (value + Math.PI) % TAU;
     if (wrapped < 0) wrapped += TAU;
     return wrapped - Math.PI;
   };
+  const rgba = (hex, alpha) => {
+    const value = Number.parseInt(hex.slice(1), 16);
+    return `rgba(${value >> 16},${(value >> 8) & 255},${value & 255},${alpha})`;
+  };
 
-  // This is the same front/side/back projection used by the Flutter app.
-  const depthPose = value => {
+  function depthPose(value) {
     const orientation = normalizedAngle(value);
     const side = Math.sin(orientation);
     const facing = Math.cos(orientation);
@@ -54,60 +60,39 @@
       orientation,
       side,
       facing,
-      edge,
       front,
       back,
       bodyScaleX: 1 - edge * 0.16,
       faceOffsetX: surfaceOffset,
       faceScaleX: 0.14 + Math.max(0, facing) * 0.86,
+      patternScaleX: 0.38 + Math.abs(facing) * 0.62,
       lightOffsetX: side * 0.16
     };
-  };
-
-  function resize() {
-    const rect = canvas.getBoundingClientRect();
-    width = Math.max(1, rect.width);
-    height = Math.max(1, rect.height);
-    dpr = Math.min(2.5, window.devicePixelRatio || 1);
-    canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(height * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  function bodyPath(rect, phase, wobble, spread, lean) {
+  function makeBodyPath(rect, phase, wobble, spread, lean) {
     const points = [];
     const samples = 128;
-    const hw = rect.w / 2;
-    const hh = rect.h / 2;
+    const halfWidth = rect.w / 2;
+    const halfHeight = rect.h / 2;
     const spin = phase * TAU;
-
     for (let index = 0; index < samples; index += 1) {
-      const a = index / samples * TAU;
-      const dx = Math.cos(a);
-      const dy = Math.sin(a);
-      let x = dx * hw;
-      let y = dy * hh;
-
-      // Broad crown swell, two living ripples, then the app's pooled gravity.
-      const crownDelta = Math.atan2(Math.sin(a + Math.PI / 2), Math.cos(a + Math.PI / 2));
+      const angle = index / samples * TAU;
+      let x = Math.cos(angle) * halfWidth;
+      let y = Math.sin(angle) * halfHeight;
+      const crownDelta = Math.atan2(Math.sin(angle + Math.PI / 2), Math.cos(angle + Math.PI / 2));
       const crown = 0.018 * Math.exp(-(crownDelta * crownDelta) / (2 * 0.94 * 0.94));
-      const ripple = (Math.sin(a * 3 + spin) * 0.008 + Math.sin(a * 5 - spin * 1.4) * 0.004) * wobble;
-      const surface = 1 + ripple + crown * wobble;
-      x *= surface;
-      y *= surface;
-
-      const v = clamp(y / hh, -1, 1);
-      const widen = 1 + wobble * (0.13 * v + 0.12 * v * v - 0.03) + spread * 0.3 * Math.max(0, v);
-      const flatten = v > 0 ? 1 - wobble * 0.13 * v * v : 1;
-      x *= widen;
-      y *= flatten;
-      x += lean * hw * (-y / hh) * 0.12;
+      const ripple = (Math.sin(angle * 3 + spin) * 0.008 + Math.sin(angle * 5 - spin * 1.4) * 0.004) * wobble;
+      x *= 1 + ripple + crown * wobble;
+      y *= 1 + ripple + crown * wobble;
+      const vertical = clamp(y / halfHeight, -1, 1);
+      x *= 1 + wobble * (0.13 * vertical + 0.12 * vertical * vertical - 0.03) + spread * 0.3 * Math.max(0, vertical);
+      if (vertical > 0) y *= 1 - wobble * 0.13 * vertical * vertical;
+      x += lean * halfWidth * (-y / halfHeight) * 0.14;
       points.push({ x: rect.cx + x, y: rect.cy + y });
     }
-
     const path = new Path2D();
-    const first = { x: (points[0].x + points[1].x) / 2, y: (points[0].y + points[1].y) / 2 };
-    path.moveTo(first.x, first.y);
+    path.moveTo((points[0].x + points[1].x) / 2, (points[0].y + points[1].y) / 2);
     for (let index = 1; index <= points.length; index += 1) {
       const current = points[index % points.length];
       const next = points[(index + 1) % points.length];
@@ -117,271 +102,473 @@
     return path;
   }
 
-  function ellipse(x, y, rx, ry, fill, stroke, lineWidth = 1) {
-    ctx.beginPath();
-    ctx.ellipse(x, y, Math.max(0.01, rx), Math.max(0.01, ry), 0, 0, TAU);
-    if (fill) {
-      ctx.fillStyle = fill;
-      ctx.fill();
-    }
-    if (stroke) {
-      ctx.strokeStyle = stroke;
-      ctx.lineWidth = lineWidth;
-      ctx.stroke();
-    }
-  }
-
-  function drawFace(rect, pose, phase, reaction) {
-    if (pose.front < 0.002) return;
-    const unit = rect.w / 100;
-    const cx = rect.cx + rect.w * pose.faceOffsetX;
-    const cy = rect.y + rect.h * 0.445;
-    const gazeX = Math.sin(phase * 0.7) * unit * 1.7;
-    const gazeY = Math.cos(phase * 0.43) * unit * 0.7;
-    const blinkClock = (phase + 1.1) % 5.7;
-    const blink = blinkClock > 5.28 ? Math.sin(((blinkClock - 5.28) / 0.42) * Math.PI) : 0;
-    const eyeW = unit * 29.5;
-    const eyeH = unit * Math.max(2.1, 31.5 * (1 - blink * 0.92));
-
-    ctx.save();
-    ctx.globalAlpha *= pose.front;
-    ctx.translate(cx, cy);
-    ctx.scale(pose.faceScaleX, 1);
-    ctx.translate(-cx, -cy);
-
-    ctx.shadowColor = 'rgba(59,18,6,.28)';
-    ctx.shadowBlur = unit * 2;
-    ellipse(cx, cy, eyeW / 2 + unit * 2.1, eyeH / 2 + unit * 2.1, palette.ink);
-    ctx.shadowBlur = 0;
-    ellipse(cx, cy, eyeW / 2, eyeH / 2, '#FFFDF8');
-
-    if (blink < 0.82) {
-      const pupilX = cx + gazeX;
-      const pupilY = cy + gazeY;
-      const iris = ctx.createRadialGradient(pupilX - unit * 1.5, pupilY - unit * 2, unit, pupilX, pupilY, unit * 8.4);
-      iris.addColorStop(0, '#8A481C');
-      iris.addColorStop(0.62, '#56200B');
-      iris.addColorStop(1, palette.ink);
-      ellipse(pupilX, pupilY, unit * 8.6, unit * 9.2, iris);
-      ellipse(pupilX, pupilY + unit * 0.4, unit * 4.6, unit * 5.1, '#130805');
-      ellipse(pupilX - unit * 2.4, pupilY - unit * 3, unit * 1.85, unit * 2.2, '#FFFFFF');
-      ellipse(pupilX + unit * 1.4, pupilY + unit * 1.3, unit * 0.85, unit * 1.05, 'rgba(255,255,255,.72)');
+  class SlopToon {
+    constructor(stage) {
+      this.stage = stage;
+      this.canvas = stage.querySelector('canvas');
+      this.ctx = this.canvas?.getContext?.('2d');
+      if (!this.ctx) return;
+      this.mode = stage.dataset.slopToon || 'hero';
+      this.width = 0;
+      this.height = 0;
+      this.angle = 0;
+      this.dragAngle = 0;
+      this.dragStartX = 0;
+      this.dragStartedAt = 0;
+      this.dragTravel = 0;
+      this.lastDragAngle = 0;
+      this.lastMoveAt = 0;
+      this.pointerId = null;
+      this.dragged = false;
+      this.angularVelocity = 0;
+      this.reactionAt = -Infinity;
+      this.lastInteraction = performance.now();
+      this.lastFrameAt = performance.now();
+      this.visible = true;
+      this.gaze = { x: 0, y: 0, tx: 0, ty: 0 };
+      this.pointerLookUntil = 0;
+      this.nextGazeAt = 0;
+      this.nextAutoSpin = performance.now() + random(7000, 14000);
+      this.autoSpin = null;
+      this.skin = { palette: PALETTES[0], pattern: 'none', eye: EYE_COLORS[0] };
+      this.skinChangedAt = -Infinity;
+      this.mouthAmount = 0;
+      this.bind();
+      this.resize();
+      requestAnimationFrame(timestamp => this.draw(timestamp));
     }
 
-    // A soft brow and smile keep the canonical cyclops expression alive.
-    ctx.strokeStyle = palette.ink;
-    ctx.lineCap = 'round';
-    ctx.lineWidth = unit * 2.1;
-    ctx.beginPath();
-    ctx.moveTo(cx - unit * 9, cy - unit * 20.5);
-    ctx.quadraticCurveTo(cx, cy - unit * 24 - reaction * unit * 2, cx + unit * 9, cy - unit * 20.2);
-    ctx.stroke();
+    bind() {
+      this.stage.addEventListener('pointermove', event => this.trackPointer(event));
+      this.stage.addEventListener('pointerleave', () => {
+        this.pointerLookUntil = 0;
+      });
 
-    ellipse(cx - unit * 15, cy + unit * 18, unit * 4.2, unit * 2.2, 'rgba(255,117,149,.32)');
-    ellipse(cx + unit * 15, cy + unit * 18, unit * 4.2, unit * 2.2, 'rgba(255,117,149,.32)');
+      if (this.mode === 'hero') {
+        this.stage.addEventListener('pointerdown', event => this.startDrag(event));
+        this.stage.addEventListener('pointerup', event => this.endDrag(event));
+        this.stage.addEventListener('pointercancel', event => this.endDrag(event));
+        this.stage.addEventListener('keydown', event => this.onKey(event));
+      } else {
+        this.stage.addEventListener('pointerdown', () => {
+          this.reactionAt = performance.now();
+        });
+        new MutationObserver(() => {
+          if (this.stage.dataset.mouth === 'open') this.reactionAt = performance.now();
+        }).observe(this.stage, { attributes: true, attributeFilter: ['data-mouth'] });
+      }
 
-    const mouthY = cy + unit * 19;
-    if (reaction > 0.18) {
-      ellipse(cx, mouthY, unit * (7.3 + reaction * 2), unit * (3.5 + reaction * 5.5), palette.ink);
-      ellipse(cx, mouthY + unit * 3.1, unit * 4.1, unit * 1.8, '#FF8AA5');
-    } else {
-      ctx.lineWidth = unit * 2.4;
-      ctx.beginPath();
-      ctx.moveTo(cx - unit * 7.2, mouthY - unit * 1.8);
-      ctx.quadraticCurveTo(cx, mouthY + unit * 5.8, cx + unit * 7.2, mouthY - unit * 1.8);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  function draw(timestamp) {
-    requestAnimationFrame(draw);
-    if (!visible || document.hidden || width < 2 || height < 2) return;
-
-    const seconds = timestamp / 1000;
-    const reduced = reduceMotion.matches;
-    const sinceInteraction = timestamp - lastInteraction;
-
-    // The mobile character performs a rare, bounded 360-degree showcase.
-    let autoAngle = 0;
-    if (!reduced && pointerId === null && sinceInteraction > 8000) {
-      const cycle = seconds % 36;
-      if (cycle > 26 && cycle < 31) {
-        const progress = smoothstep((cycle - 26) / 5);
-        autoAngle = progress * TAU;
+      if ('ResizeObserver' in window) new ResizeObserver(() => this.resize()).observe(this.canvas);
+      else window.addEventListener('resize', () => this.resize());
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(entries => {
+          this.visible = entries.some(entry => entry.isIntersecting);
+        }, { rootMargin: '140px' }).observe(this.stage);
       }
     }
-    const displayAngle = angle + autoAngle;
-    const pose = depthPose(displayAngle);
-    const elapsedReaction = (timestamp - reactionAt) / 780;
-    const reaction = elapsedReaction >= 0 && elapsedReaction <= 1
-      ? Math.sin(elapsedReaction * Math.PI) * (1 - elapsedReaction * 0.24)
-      : 0;
-    const idle = reduced ? 0 : Math.sin(seconds * 1.46);
-    const squish = 1 + idle * 0.016 + reaction * 0.075;
-    const stretch = 1 - idle * 0.012 - reaction * 0.055;
-    const lean = reduced ? 0 : Math.sin(seconds * 0.72) * 0.075;
 
-    ctx.clearRect(0, 0, width, height);
-    ctx.save();
-    ctx.translate(width / 2, height / 2);
-    ctx.scale(squish * pose.bodyScaleX, stretch);
-    ctx.translate(-width / 2, -height / 2);
+    resize() {
+      const rect = this.canvas.getBoundingClientRect();
+      this.width = Math.max(1, rect.width);
+      this.height = Math.max(1, rect.height);
+      const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+      const pixelWidth = Math.round(this.width * dpr);
+      const pixelHeight = Math.round(this.height * dpr);
+      if (this.canvas.width !== pixelWidth || this.canvas.height !== pixelHeight) {
+        this.canvas.width = pixelWidth;
+        this.canvas.height = pixelHeight;
+      }
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
 
-    const size = Math.min(width, height);
-    const rect = {
-      x: width / 2 - size * 0.355,
-      y: height / 2 - size * 0.35 - reaction * size * 0.018,
-      w: size * 0.71,
-      h: size * 0.73,
-      cx: width / 2,
-      cy: height / 2 + size * 0.015 - reaction * size * 0.018
-    };
+    trackPointer(event) {
+      const rect = this.stage.getBoundingClientRect();
+      this.gaze.tx = clamp((event.clientX - rect.left) / rect.width * 2 - 1, -1, 1);
+      this.gaze.ty = clamp((event.clientY - rect.top) / rect.height * 2 - 1, -1, 1);
+      this.pointerLookUntil = performance.now() + 950;
+      if (this.mode !== 'hero' || event.pointerId !== this.pointerId) return;
+      const nextAngle = this.dragAngle + (event.clientX - this.dragStartX) / (Math.max(1, this.stage.clientWidth) * 0.62) * TAU;
+      if (Math.abs(event.clientX - this.dragStartX) > 5) this.dragged = true;
+      this.dragTravel += Math.abs(nextAngle - this.lastDragAngle);
+      const now = performance.now();
+      const deltaSeconds = Math.max(0.008, (now - this.lastMoveAt) / 1000);
+      const instantVelocity = (nextAngle - this.lastDragAngle) / deltaSeconds;
+      this.angularVelocity = this.angularVelocity * 0.62 + instantVelocity * 0.38;
+      this.angle = nextAngle;
+      this.lastDragAngle = nextAngle;
+      this.lastMoveAt = now;
+      this.lastInteraction = now;
+    }
 
-    ctx.save();
-    ctx.filter = `blur(${size * 0.015}px)`;
-    ellipse(rect.cx + pose.side * size * 0.025, rect.y + rect.h * 0.98, rect.w * (0.39 + reaction * 0.035), size * 0.055, `rgba(0,0,0,${0.46 - reaction * 0.12})`);
-    ctx.restore();
+    startDrag(event) {
+      if (this.pointerId !== null) return;
+      this.pointerId = event.pointerId;
+      this.dragStartX = event.clientX;
+      this.dragAngle = this.angle;
+      this.lastDragAngle = this.angle;
+      this.dragTravel = 0;
+      this.dragStartedAt = performance.now();
+      this.lastMoveAt = this.dragStartedAt;
+      this.angularVelocity = 0;
+      this.dragged = false;
+      this.autoSpin = null;
+      this.lastInteraction = this.dragStartedAt;
+      this.stage.classList.add('is-dragging');
+      this.stage.setPointerCapture?.(this.pointerId);
+    }
 
-    const body = bodyPath(rect, seconds / 6.4, 1, 0.12 + reaction * 0.23, lean);
-    ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,.48)';
-    ctx.shadowBlur = size * 0.05;
-    ctx.shadowOffsetY = size * 0.025;
-    ctx.fillStyle = palette.shade;
-    ctx.fill(body);
-    ctx.restore();
+    endDrag(event) {
+      if (event.pointerId !== this.pointerId) return;
+      this.stage.releasePointerCapture?.(this.pointerId);
+      this.pointerId = null;
+      this.stage.classList.remove('is-dragging');
+      const now = performance.now();
+      if (!this.dragged) {
+        this.reactionAt = now;
+        this.angularVelocity = 0;
+      } else {
+        this.angularVelocity = clamp(this.angularVelocity, -15, 15);
+        const seconds = Math.max(0.12, (now - this.dragStartedAt) / 1000);
+        const travelTurns = this.dragTravel / TAU;
+        if (travelTurns > 0.58 && travelTurns / seconds > 1.05) this.randomizeSkin();
+      }
+      this.lastInteraction = now;
+      this.nextAutoSpin = now + random(9000, 24000);
+    }
 
-    const bodyGradient = ctx.createLinearGradient(0, rect.y, 0, rect.y + rect.h);
-    bodyGradient.addColorStop(0, palette.glow);
-    bodyGradient.addColorStop(0.24, palette.light);
-    bodyGradient.addColorStop(0.52, palette.mid);
-    bodyGradient.addColorStop(0.79, palette.deep);
-    bodyGradient.addColorStop(1, palette.shade);
-    ctx.fillStyle = bodyGradient;
-    ctx.fill(body);
+    onKey(event) {
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        this.angle += event.key === 'ArrowLeft' ? -Math.PI / 4 : Math.PI / 4;
+        this.lastInteraction = performance.now();
+      } else if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        this.reactionAt = performance.now();
+        this.lastInteraction = performance.now();
+      }
+    }
 
-    ctx.save();
-    ctx.clip(body);
+    randomizeSkin() {
+      let palette;
+      do palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
+      while (palette.id === this.skin.palette.id && PALETTES.length > 1);
+      this.skin = {
+        palette,
+        pattern: PATTERNS[Math.floor(Math.random() * PATTERNS.length)],
+        eye: EYE_COLORS[Math.floor(Math.random() * EYE_COLORS.length)]
+      };
+      this.skinChangedAt = performance.now();
+      this.reactionAt = this.skinChangedAt;
+      this.stage.dataset.skin = palette.id;
+      this.stage.dispatchEvent(new CustomEvent('slopskinchange', { detail: { palette: palette.name, pattern: this.skin.pattern } }));
+    }
 
-    // Four quantized cel planes ported from the app's toon-volume pass.
-    const crown = ctx.createRadialGradient(
-      rect.x + rect.w * (0.28 + pose.lightOffsetX * 0.08),
-      rect.y + rect.h * 0.2,
-      0,
-      rect.x + rect.w * (0.28 + pose.lightOffsetX * 0.08),
-      rect.y + rect.h * 0.2,
-      rect.w * 0.61
-    );
-    crown.addColorStop(0, 'rgba(255,233,190,.30)');
-    crown.addColorStop(0.54, 'rgba(255,233,190,.30)');
-    crown.addColorStop(0.57, 'rgba(255,233,190,.05)');
-    crown.addColorStop(0.6, 'rgba(255,233,190,0)');
-    ctx.fillStyle = crown;
-    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    updateGaze(timestamp, phase) {
+      if (timestamp > this.pointerLookUntil && timestamp > this.nextGazeAt) {
+        this.gaze.tx = clamp(Math.sin(phase * 0.63) * 0.72 + random(-0.26, 0.26), -1, 1);
+        this.gaze.ty = clamp(Math.cos(phase * 0.41) * 0.46 + random(-0.2, 0.2), -0.78, 0.78);
+        this.nextGazeAt = timestamp + random(850, 2300);
+      }
+      const speed = reduceMotion.matches ? 0.25 : 0.075;
+      this.gaze.x += (this.gaze.tx - this.gaze.x) * speed;
+      this.gaze.y += (this.gaze.ty - this.gaze.y) * speed;
+    }
 
-    const lowerBand = ctx.createLinearGradient(0, rect.y, 0, rect.y + rect.h);
-    lowerBand.addColorStop(0, 'rgba(59,18,6,0)');
-    lowerBand.addColorStop(0.58, 'rgba(59,18,6,0)');
-    lowerBand.addColorStop(0.60, 'rgba(59,18,6,.10)');
-    lowerBand.addColorStop(0.74, 'rgba(59,18,6,.10)');
-    lowerBand.addColorStop(0.76, 'rgba(59,18,6,.20)');
-    lowerBand.addColorStop(0.90, 'rgba(59,18,6,.20)');
-    lowerBand.addColorStop(1, 'rgba(59,18,6,.28)');
-    ctx.fillStyle = lowerBand;
-    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    updateAutoSpin(timestamp) {
+      if (this.mode !== 'hero' || reduceMotion.matches || this.pointerId !== null) return 0;
+      if (!this.autoSpin && timestamp >= this.nextAutoSpin && timestamp - this.lastInteraction > 5000) {
+        this.autoSpin = { start: timestamp, duration: random(2900, 4300), direction: Math.random() < 0.5 ? -1 : 1 };
+      }
+      if (!this.autoSpin) return 0;
+      const progress = (timestamp - this.autoSpin.start) / this.autoSpin.duration;
+      if (progress >= 1) {
+        this.angle += TAU * this.autoSpin.direction;
+        this.autoSpin = null;
+        this.nextAutoSpin = timestamp + random(12000, 28000);
+        return 0;
+      }
+      return smootherstep(progress) * TAU * this.autoSpin.direction;
+    }
 
-    const contourX = rect.cx + rect.w * (0.34 - pose.lightOffsetX * 0.7);
-    const contour = ctx.createRadialGradient(contourX, rect.y + rect.h * 0.76, 0, contourX, rect.y + rect.h * 0.76, rect.w * 0.62);
-    contour.addColorStop(0, `rgba(59,18,6,${0.18 + pose.back * 0.08})`);
-    contour.addColorStop(0.52, `rgba(59,18,6,${0.18 + pose.back * 0.08})`);
-    contour.addColorStop(0.56, 'rgba(59,18,6,.03)');
-    contour.addColorStop(0.59, 'rgba(59,18,6,0)');
-    ctx.fillStyle = contour;
-    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-
-    if (pose.back > 0.01) {
-      ctx.globalAlpha = pose.back * 0.72;
-      ctx.strokeStyle = 'rgba(255,225,166,.28)';
-      ctx.lineWidth = size * 0.012;
-      ctx.lineCap = 'round';
+    ellipse(x, y, radiusX, radiusY, fill, stroke, lineWidth = 1) {
+      const ctx = this.ctx;
       ctx.beginPath();
-      ctx.arc(rect.cx - pose.side * rect.w * 0.11, rect.cy - rect.h * 0.06, rect.w * 0.22, 0.2 * Math.PI, 1.46 * Math.PI);
+      ctx.ellipse(x, y, Math.max(0.01, radiusX), Math.max(0.01, radiusY), 0, 0, TAU);
+      if (fill) {
+        ctx.fillStyle = fill;
+        ctx.fill();
+      }
+      if (stroke) {
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = lineWidth;
+        ctx.stroke();
+      }
+    }
+
+    drawPattern(rect, pose, phase) {
+      const ctx = this.ctx;
+      const palette = this.skin.palette;
+      const unit = rect.w / 100;
+      const pattern = this.skin.pattern;
+      if (pattern === 'none') return;
+      ctx.save();
+      ctx.translate(rect.cx + pose.side * rect.w * 0.08, rect.cy);
+      ctx.scale(pose.patternScaleX, 1);
+      ctx.translate(-rect.cx, -rect.cy);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      if (pattern === 'spots') {
+        for (const [x, y, radius] of [[-23, -18, 7], [18, -11, 5], [-9, 15, 4], [26, 22, 8], [-29, 29, 5]]) {
+          this.ellipse(rect.cx + x * unit, rect.cy + y * unit, radius * unit, radius * 0.78 * unit, rgba(palette.glow, 0.2));
+        }
+      } else if (pattern === 'stripes') {
+        ctx.strokeStyle = rgba(palette.ink, 0.13);
+        ctx.lineWidth = unit * 7;
+        for (let x = -70; x < 70; x += 23) {
+          ctx.beginPath();
+          ctx.moveTo(rect.cx + (x - 24) * unit, rect.y);
+          ctx.lineTo(rect.cx + (x + 24) * unit, rect.y + rect.h);
+          ctx.stroke();
+        }
+      } else if (pattern === 'stars' || pattern === 'confetti') {
+        const marks = [[-24, -21], [18, -23], [-4, 9], [29, 19], [-29, 27], [10, 31]];
+        ctx.strokeStyle = rgba(palette.glow, 0.42);
+        ctx.lineWidth = unit * 1.7;
+        for (const [x, y] of marks) {
+          ctx.beginPath();
+          ctx.moveTo(rect.cx + (x - 3) * unit, rect.cy + y * unit);
+          ctx.lineTo(rect.cx + (x + 3) * unit, rect.cy + y * unit);
+          if (pattern === 'stars') {
+            ctx.moveTo(rect.cx + x * unit, rect.cy + (y - 3) * unit);
+            ctx.lineTo(rect.cx + x * unit, rect.cy + (y + 3) * unit);
+          } else {
+            ctx.lineTo(rect.cx + (x + 5) * unit, rect.cy + (y + 3) * unit);
+          }
+          ctx.stroke();
+        }
+      } else if (pattern === 'swirl' || pattern === 'topographic') {
+        ctx.strokeStyle = rgba(palette.glow, pattern === 'swirl' ? 0.26 : 0.19);
+        ctx.lineWidth = unit * 1.8;
+        const count = pattern === 'swirl' ? 3 : 6;
+        for (let index = 0; index < count; index += 1) {
+          ctx.beginPath();
+          ctx.ellipse(rect.cx, rect.cy + unit * 4, unit * (9 + index * 7), unit * (6 + index * 4.8), phase * 0.035, 0.15 * Math.PI, 1.88 * Math.PI);
+          ctx.stroke();
+        }
+      } else if (pattern === 'bubbles') {
+        ctx.strokeStyle = rgba(palette.glow, 0.34);
+        ctx.lineWidth = unit * 1.5;
+        for (const [x, y, radius] of [[-24, -18, 6], [20, -20, 4], [26, 13, 7], [-16, 21, 5], [3, 31, 3]]) {
+          this.ellipse(rect.cx + x * unit, rect.cy + y * unit, radius * unit, radius * unit, null, ctx.strokeStyle, ctx.lineWidth);
+        }
+      } else if (pattern === 'checker') {
+        ctx.fillStyle = rgba(palette.ink, 0.11);
+        const cell = unit * 12;
+        for (let row = -4; row < 5; row += 1) {
+          for (let column = -4; column < 5; column += 1) {
+            if ((row + column) % 2 === 0) ctx.fillRect(rect.cx + column * cell, rect.cy + row * cell, cell, cell);
+          }
+        }
+      }
+      ctx.restore();
+    }
+
+    drawFace(rect, pose, phase, mouthOpen) {
+      if (pose.front < 0.002) return;
+      const ctx = this.ctx;
+      const palette = this.skin.palette;
+      const unit = rect.w / 100;
+      const faceX = rect.cx + rect.w * pose.faceOffsetX;
+      const faceY = rect.y + rect.h * 0.425;
+      const eyeX = faceX + this.gaze.x * unit * 1.4;
+      const eyeY = faceY + this.gaze.y * unit * 0.9;
+      const pupilX = eyeX + this.gaze.x * unit * 4.7;
+      const pupilY = eyeY + this.gaze.y * unit * 3.15;
+      const blinkClock = (phase + 1.1) % 5.7;
+      const blink = blinkClock > 5.28 ? Math.sin(((blinkClock - 5.28) / 0.42) * Math.PI) : 0;
+      const eyeWidth = unit * 29.5;
+      const eyeHeight = unit * Math.max(2.1, 31.5 * (1 - blink * 0.92));
+
+      ctx.save();
+      ctx.globalAlpha *= pose.front;
+      ctx.translate(faceX, faceY);
+      ctx.scale(pose.faceScaleX, 1);
+      ctx.translate(-faceX, -faceY);
+      ctx.shadowColor = rgba(palette.ink, 0.28);
+      ctx.shadowBlur = unit * 2;
+      this.ellipse(eyeX, eyeY, eyeWidth / 2 + unit * 2.1, eyeHeight / 2 + unit * 2.1, palette.ink);
+      ctx.shadowBlur = 0;
+      this.ellipse(eyeX, eyeY, eyeWidth / 2, eyeHeight / 2, '#FFFDF8');
+      if (blink < 0.82) {
+        const iris = ctx.createRadialGradient(pupilX - unit * 1.5, pupilY - unit * 2, unit, pupilX, pupilY, unit * 8.4);
+        iris.addColorStop(0, this.skin.eye);
+        iris.addColorStop(0.66, palette.ink);
+        iris.addColorStop(1, '#160805');
+        this.ellipse(pupilX, pupilY, unit * 8.6, unit * 9.2, iris);
+        this.ellipse(pupilX, pupilY + unit * 0.4, unit * 4.6, unit * 5.1, '#100604');
+        this.ellipse(pupilX - unit * 2.4, pupilY - unit * 3, unit * 1.85, unit * 2.2, '#FFFFFF');
+        this.ellipse(pupilX + unit * 1.4, pupilY + unit * 1.3, unit * 0.85, unit * 1.05, 'rgba(255,255,255,.72)');
+      }
+
+      ctx.strokeStyle = palette.ink;
+      ctx.lineCap = 'round';
+      ctx.lineWidth = unit * 2.1;
+      ctx.beginPath();
+      ctx.moveTo(eyeX - unit * 9, eyeY - unit * 20.5);
+      ctx.quadraticCurveTo(eyeX + this.gaze.x * unit * 1.4, eyeY - unit * 24 - mouthOpen * unit * 2, eyeX + unit * 9, eyeY - unit * 20.2);
       ctx.stroke();
+
+      const mouthY = faceY + unit * 24;
+      this.ellipse(faceX - unit * 15, mouthY - unit * 1.5, unit * 4.2, unit * 2.2, rgba(palette.cheek, 0.30));
+      this.ellipse(faceX + unit * 15, mouthY - unit * 1.5, unit * 4.2, unit * 2.2, rgba(palette.cheek, 0.30));
+      if (mouthOpen > 0.16) {
+        this.ellipse(faceX, mouthY, unit * (7.2 + mouthOpen * 2.4), unit * (3.2 + mouthOpen * 6.2), palette.ink);
+        this.ellipse(faceX, mouthY + unit * (2.6 + mouthOpen * 1.4), unit * 4.2, unit * 1.9, '#FF8AA5');
+      } else {
+        ctx.lineWidth = unit * 2.4;
+        ctx.beginPath();
+        ctx.moveTo(faceX - unit * 7.2, mouthY - unit * 1.8);
+        ctx.quadraticCurveTo(faceX, mouthY + unit * 5.8, faceX + unit * 7.2, mouthY - unit * 1.8);
+        ctx.stroke();
+      }
+      ctx.restore();
     }
-    ctx.restore();
 
-    ctx.strokeStyle = 'rgba(59,18,6,.86)';
-    ctx.lineWidth = size * 0.018;
-    ctx.lineJoin = 'round';
-    ctx.stroke(body);
-    ctx.strokeStyle = 'rgba(255,233,190,.50)';
-    ctx.lineWidth = size * 0.006;
-    ctx.stroke(body);
+    draw(timestamp) {
+      requestAnimationFrame(next => this.draw(next));
+      if (!this.visible || document.hidden || this.width < 2 || this.height < 2) {
+        this.lastFrameAt = timestamp;
+        return;
+      }
+      const ctx = this.ctx;
+      const deltaSeconds = Math.min(0.05, Math.max(0, (timestamp - this.lastFrameAt) / 1000));
+      this.lastFrameAt = timestamp;
+      const seconds = timestamp / 1000;
+      const reduced = reduceMotion.matches;
+      this.updateGaze(timestamp, seconds);
 
-    ctx.save();
-    ctx.clip(body);
-    drawFace(rect, pose, seconds, reaction);
-    ctx.restore();
-    ctx.restore();
+      if (this.mode === 'hero' && this.pointerId === null && !this.autoSpin && Math.abs(this.angularVelocity) > 0.002) {
+        this.angle += this.angularVelocity * deltaSeconds;
+        this.angularVelocity *= Math.exp(-deltaSeconds * 3.25);
+      }
+      const displayAngle = this.angle + this.updateAutoSpin(timestamp);
+      const pose = depthPose(displayAngle);
+      const elapsedReaction = (timestamp - this.reactionAt) / 820;
+      const reaction = elapsedReaction >= 0 && elapsedReaction <= 1 ? Math.sin(elapsedReaction * Math.PI) * (1 - elapsedReaction * 0.22) : 0;
+      const targetMouth = this.stage.dataset.mouth === 'open' ? 1 : 0;
+      this.mouthAmount += (targetMouth - this.mouthAmount) * (reduced ? 0.3 : 0.11);
+      const mouthOpen = Math.max(reaction, this.mouthAmount);
+      const idle = reduced ? 0 : Math.sin(seconds * 1.52);
+      const secondIdle = reduced ? 0 : Math.sin(seconds * 0.79 + 1.4);
+      const squish = 1 + idle * 0.022 + reaction * 0.078;
+      const stretch = 1 - idle * 0.016 - reaction * 0.057;
+      const lean = reduced ? 0 : Math.sin(seconds * 0.68) * 0.12 + this.gaze.x * 0.035;
+      const moveX = reduced ? 0 : (Math.sin(seconds * 0.57) + Math.sin(seconds * 1.13) * 0.35 + this.gaze.x * 0.4) * Math.min(this.width, this.height) * 0.018;
+      const moveY = reduced ? 0 : (secondIdle * 0.7 - Math.abs(idle) * 0.2) * Math.min(this.width, this.height) * 0.014;
+      const size = Math.min(this.width, this.height);
+      const palette = this.skin.palette;
+      const skinPulseAge = (timestamp - this.skinChangedAt) / 850;
+      const skinPulse = skinPulseAge >= 0 && skinPulseAge <= 1 ? Math.sin(skinPulseAge * Math.PI) : 0;
 
-    const degrees = Math.round(((normalizedAngle(displayAngle) * 180 / Math.PI) + 360) % 360);
-    const direction = degrees < 45 || degrees >= 315 ? 'front' : degrees < 135 ? 'right side' : degrees < 225 ? 'back' : 'left side';
-    stage.setAttribute('aria-valuenow', String(degrees));
-    stage.setAttribute('aria-valuetext', `${direction} view`);
-  }
+      ctx.clearRect(0, 0, this.width, this.height);
+      ctx.save();
+      ctx.translate(this.width / 2 + moveX, this.height / 2 + moveY);
+      ctx.scale(squish * pose.bodyScaleX, stretch);
+      ctx.translate(-this.width / 2, -this.height / 2);
+      const rect = {
+        x: this.width / 2 - size * 0.38,
+        y: this.height / 2 - size * 0.38 - reaction * size * 0.02,
+        w: size * 0.76,
+        h: size * 0.79,
+        cx: this.width / 2,
+        cy: this.height / 2 + size * 0.012 - reaction * size * 0.02
+      };
 
-  function startDrag(event) {
-    if (pointerId !== null) return;
-    pointerId = event.pointerId;
-    dragStartX = event.clientX;
-    dragAngle = angle;
-    dragged = false;
-    lastInteraction = performance.now();
-    stage.classList.add('is-dragging');
-    stage.setPointerCapture?.(pointerId);
-  }
+      ctx.save();
+      ctx.filter = `blur(${size * 0.013}px)`;
+      this.ellipse(rect.cx + pose.side * size * 0.025, rect.y + rect.h * 0.98, rect.w * (0.37 + reaction * 0.035), size * 0.046, 'rgba(0,0,0,.29)');
+      ctx.restore();
 
-  function moveDrag(event) {
-    if (event.pointerId !== pointerId) return;
-    const delta = event.clientX - dragStartX;
-    if (Math.abs(delta) > 5) dragged = true;
-    angle = dragAngle + delta / (Math.max(1, stage.clientWidth) * 0.62) * TAU;
-    lastInteraction = performance.now();
-  }
+      const body = makeBodyPath(rect, seconds / 6.4, 1, 0.12 + reaction * 0.23, lean);
+      ctx.save();
+      ctx.shadowColor = skinPulse > 0 ? rgba(palette.light, 0.72) : 'rgba(0,0,0,.48)';
+      ctx.shadowBlur = size * (0.045 + skinPulse * 0.075);
+      ctx.shadowOffsetY = skinPulse > 0 ? 0 : size * 0.025;
+      ctx.fillStyle = palette.shade;
+      ctx.fill(body);
+      ctx.restore();
 
-  function endDrag(event) {
-    if (event.pointerId !== pointerId) return;
-    stage.releasePointerCapture?.(pointerId);
-    pointerId = null;
-    stage.classList.remove('is-dragging');
-    if (!dragged) reactionAt = performance.now();
-    lastInteraction = performance.now();
-  }
+      const bodyGradient = ctx.createLinearGradient(0, rect.y, 0, rect.y + rect.h);
+      bodyGradient.addColorStop(0, palette.glow);
+      bodyGradient.addColorStop(0.24, palette.light);
+      bodyGradient.addColorStop(0.52, palette.mid);
+      bodyGradient.addColorStop(0.79, palette.deep);
+      bodyGradient.addColorStop(1, palette.shade);
+      ctx.fillStyle = bodyGradient;
+      ctx.fill(body);
 
-  stage.addEventListener('pointerdown', startDrag);
-  stage.addEventListener('pointermove', moveDrag);
-  stage.addEventListener('pointerup', endDrag);
-  stage.addEventListener('pointercancel', endDrag);
-  stage.addEventListener('keydown', event => {
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-      event.preventDefault();
-      angle += event.key === 'ArrowLeft' ? -Math.PI / 4 : Math.PI / 4;
-      lastInteraction = performance.now();
-    } else if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      reactionAt = performance.now();
-      lastInteraction = performance.now();
+      ctx.save();
+      ctx.clip(body);
+      this.drawPattern(rect, pose, seconds);
+      const crown = ctx.createRadialGradient(rect.x + rect.w * (0.28 + pose.lightOffsetX * 0.08), rect.y + rect.h * 0.2, 0, rect.x + rect.w * (0.28 + pose.lightOffsetX * 0.08), rect.y + rect.h * 0.2, rect.w * 0.61);
+      crown.addColorStop(0, rgba(palette.glow, 0.30));
+      crown.addColorStop(0.54, rgba(palette.glow, 0.30));
+      crown.addColorStop(0.57, rgba(palette.glow, 0.05));
+      crown.addColorStop(0.60, rgba(palette.glow, 0));
+      ctx.fillStyle = crown;
+      ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+
+      const lowerBand = ctx.createLinearGradient(0, rect.y, 0, rect.y + rect.h);
+      lowerBand.addColorStop(0, rgba(palette.ink, 0));
+      lowerBand.addColorStop(0.58, rgba(palette.ink, 0));
+      lowerBand.addColorStop(0.60, rgba(palette.ink, 0.10));
+      lowerBand.addColorStop(0.74, rgba(palette.ink, 0.10));
+      lowerBand.addColorStop(0.76, rgba(palette.ink, 0.20));
+      lowerBand.addColorStop(0.90, rgba(palette.ink, 0.20));
+      lowerBand.addColorStop(1, rgba(palette.ink, 0.28));
+      ctx.fillStyle = lowerBand;
+      ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+
+      const contourX = rect.cx + rect.w * (0.34 - pose.lightOffsetX * 0.7);
+      const contour = ctx.createRadialGradient(contourX, rect.y + rect.h * 0.76, 0, contourX, rect.y + rect.h * 0.76, rect.w * 0.62);
+      contour.addColorStop(0, rgba(palette.ink, 0.18 + pose.back * 0.08));
+      contour.addColorStop(0.52, rgba(palette.ink, 0.18 + pose.back * 0.08));
+      contour.addColorStop(0.56, rgba(palette.ink, 0.03));
+      contour.addColorStop(0.59, rgba(palette.ink, 0));
+      ctx.fillStyle = contour;
+      ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+      if (pose.back > 0.01) {
+        ctx.globalAlpha = pose.back * 0.72;
+        ctx.strokeStyle = rgba(palette.glow, 0.28);
+        ctx.lineWidth = size * 0.012;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(rect.cx - pose.side * rect.w * 0.11, rect.cy - rect.h * 0.06, rect.w * 0.22, 0.2 * Math.PI, 1.46 * Math.PI);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      ctx.strokeStyle = rgba(palette.ink, 0.86);
+      ctx.lineWidth = size * 0.018;
+      ctx.lineJoin = 'round';
+      ctx.stroke(body);
+      ctx.strokeStyle = rgba(palette.glow, 0.52);
+      ctx.lineWidth = size * 0.006;
+      ctx.stroke(body);
+      ctx.save();
+      ctx.clip(body);
+      this.drawFace(rect, pose, seconds, mouthOpen);
+      ctx.restore();
+      ctx.restore();
+
+      if (this.mode === 'hero') {
+        const degrees = Math.round(((normalizedAngle(displayAngle) * 180 / Math.PI) + 360) % 360);
+        const direction = degrees < 45 || degrees >= 315 ? 'front' : degrees < 135 ? 'right side' : degrees < 225 ? 'back' : 'left side';
+        this.stage.setAttribute('aria-valuenow', String(degrees));
+        this.stage.setAttribute('aria-valuetext', `${direction} view, ${palette.name} skin`);
+      }
     }
-  });
-
-  if ('ResizeObserver' in window) new ResizeObserver(resize).observe(canvas);
-  else window.addEventListener('resize', resize);
-  if ('IntersectionObserver' in window) {
-    new IntersectionObserver(entries => {
-      visible = entries.some(entry => entry.isIntersecting);
-    }, { rootMargin: '120px' }).observe(stage);
   }
-  resize();
-  requestAnimationFrame(draw);
+
+  document.querySelectorAll('[data-slop-toon]').forEach(stage => new SlopToon(stage));
 })();
