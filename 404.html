@@ -8,7 +8,7 @@
 <!--
   GitHub Pages serves this file for any path it can't find on disk. We use it as
   a tiny client-side router so the pretty URLs work on the static site:
-    /play/{slug}  → the player page (play.html), which restores the pretty URL
+    /play/{slug}  → the dedicated app-opening page
     /{username}   → the profile page (profile.html)
   Real files (js/, css/, games/, *.html …) are served directly and never hit this.
 -->
@@ -17,12 +17,24 @@
   var path = location.pathname.replace(/^\/+|\/+$/g, '');
   var parts = path ? path.split('/') : [];
   // top-level names that are real files/folders, not usernames
-  var reserved = { play:1, studio:1, index:1, profile:1, legacy:1, NewSite:1, js:1, css:1, assets:1,
+  var reserved = { play:1, open:1, studio:1, index:1, profile:1, legacy:1, NewSite:1, js:1, css:1, assets:1,
                    games:1, scripts:1, supabase:1, '.well-known':1, 'apple-app-site-association':1,
                    'favicon.ico':1, 'robots.txt':1, 'sitemap.xml':1 };
   var search = location.search || '';
   if (parts[0] === 'play' && parts[1]) {
-    location.replace('/play.html?slug=' + encodeURIComponent(parts[1]) + search.replace(/^\?/, '&'));
+    var target = new URL('/open/', location.origin);
+    var slug = '';
+    try { slug = decodeURIComponent(parts[1]); } catch (_) {}
+    if (parts.length === 2 && /^[a-z0-9][a-z0-9_-]{0,119}$/i.test(slug)) {
+      target.searchParams.set('game', slug);
+      var incoming = new URLSearchParams(search);
+      ['beat', 'by', 'room'].forEach(function (key) {
+        incoming.getAll(key).forEach(function (value) {
+          target.searchParams.append(key, value);
+        });
+      });
+    }
+    location.replace(target.href);
   } else if (parts.length === 1 && parts[0] && !reserved[parts[0].toLowerCase()] && parts[0].indexOf('.') === -1) {
     location.replace('/profile.html?u=' + encodeURIComponent(parts[0]));
   } else {
